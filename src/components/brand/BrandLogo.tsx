@@ -17,6 +17,8 @@ export type BrandLogoProps = {
   onNavigate?: () => void;
   /** Sapuan cahaya pada lambang (default aktif). */
   shine?: boolean;
+  /** `light` — wordmark putih untuk navbar overlay di atas foto. */
+  tone?: "default" | "light";
 };
 
 function layoutToMarkSize(layout: BrandLogoProps["layout"]): BrandLogoMarkSize {
@@ -27,7 +29,7 @@ function layoutToMarkSize(layout: BrandLogoProps["layout"]): BrandLogoMarkSize {
 }
 
 /**
- * Logo + wordmark SMK — lambang di `public/brand/logo.png` (`BRAND_LOGO_SRC`).
+ * Logo + wordmark SMK — lambang di R2 (`BRAND_LOGO_SRC`).
  */
 export function BrandLogo({
   className,
@@ -35,23 +37,28 @@ export function BrandLogo({
   layout = "compact",
   onNavigate,
   shine = true,
+  tone = "default",
 }: BrandLogoProps): ReactElement {
   const iconNode = (
     <BrandLogoMark size={layoutToMarkSize(layout)} shine={shine} priority={layout === "full"} />
   );
 
+  const wordmarkTone =
+    tone === "light" ? "text-white" : "text-slate-900 dark:text-white";
+  const subTone = tone === "light" ? "text-white/75" : "text-slate-600 dark:text-slate-400";
+
   const compactWordmark = (
-    <span className="min-w-0 truncate text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+    <span className={cn("min-w-0 truncate text-lg font-bold tracking-tight", wordmarkTone)}>
       SMK {BRAND_SHORT}
     </span>
   );
 
   const fullWordmark = (
     <span className="flex min-w-0 flex-col leading-tight">
-      <span className="text-lg font-bold tracking-tight text-slate-900 dark:text-white sm:text-xl">
+      <span className={cn("text-lg font-bold tracking-tight sm:text-xl", wordmarkTone)}>
         SMK {BRAND_SHORT}
       </span>
-      <span className="mt-0.5 max-w-[20rem] text-xs font-medium text-slate-600 dark:text-slate-400">
+      <span className={cn("mt-0.5 max-w-[20rem] text-xs font-medium", subTone)}>
         {BRAND_SCHOOL_FULL}
       </span>
     </span>

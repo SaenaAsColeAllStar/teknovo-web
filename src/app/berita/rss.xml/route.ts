@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { buildBeritaRssXml } from "@/lib/berita-rss";
+import { buildBeritaRssXml } from "@/lib/seo/rss";
 
 export const revalidate = 300;
 

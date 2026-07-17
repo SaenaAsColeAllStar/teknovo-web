@@ -38,7 +38,7 @@ export function BeritaReadingProgress(): ReactElement {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 top-[var(--public-nav-bottom,4.25rem)] z-50 h-0.5 bg-slate-200/80 dark:bg-slate-800/80"
+      className="pointer-events-none fixed inset-x-0 top-[var(--public-nav-bottom,10.5rem)] z-50 h-0.5 bg-slate-200/80 dark:bg-slate-800/80"
       aria-hidden
     >
       <div

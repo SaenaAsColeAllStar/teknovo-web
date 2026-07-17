@@ -14,6 +14,19 @@ export function r2ObjectUrl(key: string): string {
   return `${getR2PublicUrl()}/${normalized}`;
 }
 
+/**
+ * Resolve a site asset path (`/media/...`, `/brand/...`) to the R2 public URL.
+ * Absolute http(s) URLs are returned unchanged.
+ */
+export function publicAssetUrl(path: string): string {
+  const trimmed = path.trim();
+  if (!trimmed) return trimmed;
+  if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+    return trimmed;
+  }
+  return r2ObjectUrl(trimmed.replace(/^\//, ""));
+}
+
 /** R2 bucket bound as `CMS_BUCKET` in wrangler.toml. */
 export async function getCmsBucket() {
   const { env } = await getCloudflareContext({ async: true });

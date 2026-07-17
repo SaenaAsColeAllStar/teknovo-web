@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { buildLandingAbsoluteUrl } from "@/lib/berita-seo";
+import { buildLandingAbsoluteUrl } from "@/lib/seo";
 
 /**
  * Kebijakan crawler — mesin pencari tradisional & AI search.

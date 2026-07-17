@@ -1,6 +1,6 @@
 /**
- * Tautan footer situs publik — portal internal (env) & referensi instansi pendidikan.
- * Dipakai `PublicFooter`; jangan duplikasi di `apps/web` / `apps/admissions`.
+ * Tautan portal & referensi pendidikan untuk footer / halaman terkait.
+ * Kolom sitemap pemasaran ada di `PUBLIC_SITE_FOOTER_SECTIONS` (`public-site-nav`).
  */
 
 import {

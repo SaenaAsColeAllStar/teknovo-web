@@ -14,7 +14,7 @@ export const BERITA_PAGE_LEDE =
 
 export const BERITA_HERO_EYEBROW = "Arsip & pengumuman" as const;
 
-export const BERITA_HERO_IMAGE_SRC = LANDING_MEDIA.kegiatan.ekstraBloggerClubJpg;
+export const BERITA_HERO_IMAGE_SRC = LANDING_MEDIA.kegiatan.ekstraBloggerClubWebp;
 
 export const BERITA_TERBARU_PAGE_TITLE = "Berita terbaru" as const;
 

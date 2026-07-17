@@ -1,5 +1,6 @@
 import type { ReactElement } from "react";
 
+import { JsonLdScript } from "@/lib/seo/json-ld";
 import {
   buildLmsBreadcrumbJsonLd,
   buildLmsEducationalOrganizationJsonLd,
@@ -9,20 +10,11 @@ import {
   LMS_PAGE_SEO,
   LMS_PUBLIC_PATHS,
   type LmsPageId,
-} from "@/lib/lms-dashboard-seo";
+} from "@/lib/seo/lms";
 
 type LmsJsonLdProps = {
   pageId: LmsPageId;
 };
-
-function JsonLdScript({ data }: { data: object }): ReactElement {
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
-  );
-}
 
 /** JSON-LD terstruktur untuk halaman LMS (server component). */
 export function LmsJsonLd({ pageId }: LmsJsonLdProps): ReactElement {
@@ -67,7 +59,11 @@ export function LmsJsonLd({ pageId }: LmsJsonLdProps): ReactElement {
             : pageId === "dashboard-login"
               ? [
                   { name: "Beranda", path: "/" },
-                  { name: "Portal LMS", path: LMS_PUBLIC_PATHS.portalLogin, origin: "console" as const },
+                  {
+                    name: "Portal LMS",
+                    path: LMS_PUBLIC_PATHS.portalLogin,
+                    origin: "console" as const,
+                  },
                 ]
               : [{ name: "Beranda", path: "/" }, { name: seo.title }];
 

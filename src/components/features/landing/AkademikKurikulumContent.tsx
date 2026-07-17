@@ -111,7 +111,7 @@ export function AkademikKurikulumContent(): ReactElement {
           <PublicSplitContentCard
             tone="plain"
             image={{
-              src: LANDING_MEDIA.fasilitas.lmsJpg,
+              src: LANDING_MEDIA.fasilitas.lmsWebp,
               alt: "LMS sekolah sebagai ilustrasi kurikulum digital",
               quality: 65,
             }}

@@ -20,7 +20,7 @@ export const KESISWAAN_EKSTRA_VARIANT_LEDE =
 
 export const KESISWAAN_METADATA_DESCRIPTION = KESISWAAN_HUB_PAGE_LEDE;
 
-export const KESISWAAN_HUB_HERO_IMAGE_SRC = LANDING_MEDIA.kegiatan.ekstraOsisJpg;
+export const KESISWAAN_HUB_HERO_IMAGE_SRC = LANDING_MEDIA.kegiatan.ekstraOsisWebp;
 
 export const KESISWAAN_HUB_HERO_CARD_TAGLINE = "Kehidupan siswa terstruktur" as const;
 

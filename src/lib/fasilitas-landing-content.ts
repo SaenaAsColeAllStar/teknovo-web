@@ -69,7 +69,7 @@ export const FASILITAS_PAGE_LEDE =
 
 export const FASILITAS_HERO_EYEBROW = "Sarana & teknologi sekolah" as const;
 
-export const FASILITAS_HUB_HERO_IMAGE_SRC = LANDING_MEDIA.fasilitas.laboratoriumJpg;
+export const FASILITAS_HUB_HERO_IMAGE_SRC = LANDING_MEDIA.fasilitas.laboratoriumWebp;
 
 export type FasilitasSubNavItem = {
   id: FasilitasSlug | "ringkasan";
@@ -126,7 +126,7 @@ export const FASILITAS_ITEMS: readonly FasilitasLandingItem[] = [
     title: "Lab Komputer",
     description:
       "Ruang praktik dengan perangkat mutakhir untuk pemrograman, desain, dan simulasi — mendukung proyek digital serta persiapan sertifikasi kompetensi.",
-    coverSrc: LANDING_MEDIA.fasilitas.laboratoriumJpg,
+    coverSrc: LANDING_MEDIA.fasilitas.laboratoriumWebp,
     highlights: ["Perangkat praktik mutakhir", "Proyek kejuruan", "Simulasi industri"],
     paragraphs: [
       "Laboratorium komputer dirancang sebagai ruang produksi digital: siswa berlatih pemrograman, desain grafis, jaringan, dan simulasi sesuai kompetensi kejuruan masing-masing. Tata letak meja memudahkan kolaborasi proyek kecil maupun bimbingan guru mapel produktif.",
@@ -156,7 +156,7 @@ export const FASILITAS_ITEMS: readonly FasilitasLandingItem[] = [
     title: "Perpustakaan Digital",
     description:
       "Pusat informasi dengan katalog daring, akses e-book, dan ruang baca yang mendukung literasi serta riset mandiri siswa.",
-    coverSrc: LANDING_MEDIA.fasilitas.perpustakaanJpg,
+    coverSrc: LANDING_MEDIA.fasilitas.perpustakaanWebp,
     highlights: ["Katalog daring", "E-book & referensi", "Ruang baca nyaman", "Literasi digital"],
     paragraphs: [
       "Perpustakaan digital SMK TEKNOVO menggabungkan koleksi cetak terkurasi dengan katalog daring dan akses e-book untuk mendukung tugas sekolah, riset proyek, dan kebiasaan membaca mandiri. Siswa dapat menelusuri referensi kejuruan maupun literasi umum dari perangkat kelas atau area baca.",
@@ -214,7 +214,7 @@ export const FASILITAS_ITEMS: readonly FasilitasLandingItem[] = [
     title: "LMS Sekolah",
     description:
       "Platform pembelajaran daring terintegrasi untuk materi, tugas, dan evaluasi — menghubungkan guru, siswa, dan orang tua melalui portal TEKNOVO yang selaras dengan rapor digital.",
-    coverSrc: LANDING_MEDIA.fasilitas.lmsJpg,
+    coverSrc: LANDING_MEDIA.fasilitas.lmsWebp,
     highlights: [
       "Portal guru & siswa",
       "Tugas ber-deadline",

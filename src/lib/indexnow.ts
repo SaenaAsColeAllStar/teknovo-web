@@ -1,11 +1,11 @@
+import { FASILITAS_SLUGS, getFasilitasDetailPath } from "@/lib/fasilitas-landing-content";
 import {
   buildLandingAbsoluteUrl,
   getBeritaKegiatanDetailPath,
   getBeritaSiswaDetailPath,
-} from "@/lib/berita-seo";
-import { FASILITAS_SLUGS, getFasilitasDetailPath } from "@/lib/fasilitas-landing-content";
-import { LOCAL_SEO_SITEMAP_ENTRIES } from "@/lib/local-seo-keywords";
-import { PPDB_SITEMAP_ENTRIES } from "@/lib/ppdb-seo";
+  LOCAL_SEO_SITEMAP_ENTRIES,
+  PPDB_SITEMAP_ENTRIES,
+} from "@/lib/seo";
 import { getPublicAppBaseUrl } from "@/lib/public-app-url";
 import { listPublishedArtikelSiswaSitemapEntries } from "@/services/artikel-berita-publik";
 import { listBeritaKegiatanSitemapEntries } from "@/services/berita-kegiatan-publik";

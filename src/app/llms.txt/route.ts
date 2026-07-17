@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { buildLlmsTxtContent } from "@/lib/llms-txt-content";
+import { buildLlmsTxtContent } from "@/lib/seo/llms";
 
 export function GET(): NextResponse {
   return new NextResponse(`${buildLlmsTxtContent()}\n`, {

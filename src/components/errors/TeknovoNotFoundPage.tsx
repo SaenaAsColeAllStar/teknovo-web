@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactElement } from "react";
 
+import { SHARED_MEDIA } from "@/lib/public-media-paths";
 import { type TeknovoNotFoundApp } from "@/lib/teknovo-not-found";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,7 @@ type TeknovoNotFoundPageProps = {
 
 /**
  * Halaman 404 bermerek SMK Teknovo.
- * Ilustrasi: `/public/media/shared/404-teknovo.jpg`.
+ * Ilustrasi: R2 `media/shared/404-teknovo.webp`.
  */
 export function TeknovoNotFoundPage({
   app,
@@ -44,7 +45,7 @@ export function TeknovoNotFoundPage({
         <div className="w-full">
           <div className="overflow-hidden rounded-2xl shadow-lg ring-1 ring-slate-200/90 dark:ring-slate-700">
             <img
-              src="/media/shared/404-teknovo.jpg"
+              src={SHARED_MEDIA.notFoundWebp}
               alt="Oops! Halaman tidak ditemukan"
               className="h-auto w-full object-cover"
             />

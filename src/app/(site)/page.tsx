@@ -60,9 +60,7 @@ export default function HomePage(): ReactElement {
   return (
     <>
       <LocalSeoJsonLd pageId="home" includeWebSite includeFaq useGraph />
-      <header>
-        <HeroSection />
-      </header>
+      <HeroSection />
       <FasilitasSection embedded />
       <HomeFlashMarqueeSection />
       <Suspense fallback={<StatsSectionSkeleton />}>

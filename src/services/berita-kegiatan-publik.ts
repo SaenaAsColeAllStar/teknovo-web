@@ -31,7 +31,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
     ringkasan:
       "Pendaftaran peserta didik baru gelombang pertama dibuka; orang tua dapat memulai lewat WhatsApp resmi atau formulir PPDB.",
     tanggalIso: "2026-03-01T00:00:00.000Z",
-    coverSrc: LANDING_MEDIA.ppdb.heroJpg,
+    coverSrc: LANDING_MEDIA.ppdb.heroWebp,
     penulisNama: "Humas sekolah",
     konten:
       "<p>SMK Teknovo membuka Penerimaan Peserta Didik Baru tahun ajaran 2026/2027 gelombang pertama.</p><p>Calon siswa dan orang tua dapat memeriksa jadwal, persyaratan berkas, dan kanal pendaftaran pada halaman PPDB resmi sekolah.</p>",
@@ -50,7 +50,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
     ringkasan:
       "Sorotan program keahlian vokasi, praktik industri, dan pembinaan karakter untuk calon siswa jenjang menengah atas.",
     tanggalIso: "2026-02-15T00:00:00.000Z",
-    coverSrc: LANDING_MEDIA.misc.aktivitasUmumJpg,
+    coverSrc: LANDING_MEDIA.misc.aktivitasUmumWebp,
     penulisNama: "Humas sekolah",
     konten:
       "<p>Sekolah menyelenggarakan pendidikan menengah kejuruan dengan fokus kompetensi teknologi, etos kerja, dan kesiapan dunia usaha.</p><p>Informasi jurusan, fasilitas praktik, dan kegiatan siswa tersedia di situs resmi — hubungi Tata Usaha untuk jadwal kunjungan sekolah.</p>",
@@ -65,7 +65,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
 ];
 
 
-const FALLBACK_COVER = LANDING_MEDIA.misc.aktivitasUmumJpg;
+const FALLBACK_COVER = LANDING_MEDIA.misc.aktivitasUmumWebp;
 
 function detailToCard(detail: BeritaKegiatanPublikDetail): BeritaKegiatanPublikCard {
   const { konten: _konten, publishedAt: _publishedAt, ...card } = detail;

@@ -79,7 +79,7 @@ export const AKADEMIK_PAGE_LEDE =
 
 export const AKADEMIK_HERO_EYEBROW = "Program akademik" as const;
 
-export const AKADEMIK_HERO_IMAGE_SRC = LANDING_MEDIA.fasilitas.laboratoriumJpg;
+export const AKADEMIK_HERO_IMAGE_SRC = LANDING_MEDIA.fasilitas.laboratoriumWebp;
 
 export const AKADEMIK_SUB_NAV_ITEMS: readonly AkademikSubNavItem[] = [
   { id: "ringkasan", label: "Ringkasan akademik", href: "/akademik", exact: true },
@@ -375,10 +375,10 @@ export const JURUSAN_HIGHLIGHTS_BY_KODE: Readonly<Record<string, readonly string
 };
 
 const JURUSAN_COVER_ROTATION = [
-  LANDING_MEDIA.fasilitas.laboratoriumJpg,
-  LANDING_MEDIA.fasilitas.lmsJpg,
-  LANDING_MEDIA.fasilitas.perpustakaanJpg,
-  LANDING_MEDIA.kegiatan.ekstraCodingClubJpg,
+  LANDING_MEDIA.fasilitas.laboratoriumWebp,
+  LANDING_MEDIA.fasilitas.lmsWebp,
+  LANDING_MEDIA.fasilitas.perpustakaanWebp,
+  LANDING_MEDIA.kegiatan.ekstraCodingClubWebp,
 ] as const;
 
 const KODE_TO_LANDING_SLUG: Record<string, string> = {

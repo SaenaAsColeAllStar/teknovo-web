@@ -3,7 +3,8 @@ import type { ReactElement } from "react";
 import {
   buildBeritaNewsArticleJsonLd,
   type BeritaArticleSeoInput,
-} from "@/lib/berita-seo";
+} from "@/lib/seo/berita";
+import { JsonLdScript } from "@/lib/seo/json-ld";
 
 type BeritaArticleJsonLdProps = {
   seo: BeritaArticleSeoInput;
@@ -11,11 +12,5 @@ type BeritaArticleJsonLdProps = {
 
 /** JSON-LD NewsArticle untuk halaman detail berita (server component). */
 export function BeritaArticleJsonLd({ seo }: BeritaArticleJsonLdProps): ReactElement {
-  const jsonLd = buildBeritaNewsArticleJsonLd(seo);
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-    />
-  );
+  return <JsonLdScript data={buildBeritaNewsArticleJsonLd(seo)} />;
 }

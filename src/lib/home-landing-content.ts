@@ -1,19 +1,25 @@
 import { BRAND_SCHOOL_FULL, BRAND_SHORT } from "@/lib/branding";
 
-/** Eyebrow hero beranda — orientasi jenjang untuk orang tua & calon siswa. */
-export const HOME_HERO_EYEBROW = "SMK · Pendidikan menengah kejuruan" as const;
+/** Watermark tipografi besar di hero beranda. */
+export const HOME_HERO_WATERMARK = BRAND_SHORT;
 
-export const HOME_HERO_TITLE =
-  `${BRAND_SHORT}: kompetensi kejuruan, karakter, dan kesiapan kerja atau studi lanjut` as const;
+export const HOME_HERO_TITLE = "Kompetensi kejuruan untuk masa depan" as const;
 
 export const HOME_HERO_LEDE =
-  `${BRAND_SCHOOL_FULL} menyelenggarakan pembelajaran vokasi terstruktur—praktik bengkel, PKL, penilaian autentik, dan layanan digital—agar orang tua dapat memantau perkembangan anak dan memahami jalur setelah lulus.` as const;
+  `${BRAND_SCHOOL_FULL} menyiapkan siswa melalui praktik bengkel, PKL, dan layanan digital yang terukur.` as const;
 
-export const HOME_HERO_CTA_PPDB_LABEL = "Lihat PPDB" as const;
-
-export const HOME_HERO_CTA_EXPLORE_LABEL = "Profil & program sekolah" as const;
+export const HOME_HERO_CTA_LABEL = "Lihat PPDB" as const;
 
 export const HOME_HERO_CTA_EXPLORE_HREF = "/profil/program-sekolah" as const;
+
+/** @deprecated Diganti CTA tunggal di hero foto. */
+export const HOME_HERO_EYEBROW = "SMK · Pendidikan menengah kejuruan" as const;
+
+/** @deprecated Diganti `HOME_HERO_CTA_LABEL`. */
+export const HOME_HERO_CTA_PPDB_LABEL = HOME_HERO_CTA_LABEL;
+
+/** @deprecated Hero foto memakai satu CTA. */
+export const HOME_HERO_CTA_EXPLORE_LABEL = "Profil & program sekolah" as const;
 
 /**
  * Teks marquee beranda — tanpa tanggal/prestasi spesifik yang belum diverifikasi.

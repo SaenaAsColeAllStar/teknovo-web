@@ -24,7 +24,7 @@ export const SEJARAH_PAGE_LEDE =
 /** @deprecated Gunakan {@link SEJARAH_PAGE_LEDE} untuk intro halaman. */
 export const SEJARAH_PAGE_SUBTITLE = SEJARAH_PAGE_LEDE;
 
-export const SEJARAH_HERO_IMAGE_SRC = LANDING_MEDIA.profil.sejarahSekolahJpg;
+export const SEJARAH_HERO_IMAGE_SRC = LANDING_MEDIA.profil.sejarahSekolahWebp;
 
 /** @deprecated Gunakan {@link SEJARAH_HERO_INTRO} pada kartu hero. */
 export const SEJARAH_INTRO_LEDE =

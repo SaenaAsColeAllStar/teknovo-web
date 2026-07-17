@@ -21,7 +21,7 @@ export const VISI_MISI_PAGE_LEDE =
 
 export const VISI_MISI_PAGE_SUBTITLE = VISI_MISI_PAGE_LEDE;
 
-export const VISI_MISI_HERO_IMAGE_SRC = LANDING_MEDIA.misc.aktivitasUmumJpg;
+export const VISI_MISI_HERO_IMAGE_SRC = LANDING_MEDIA.misc.aktivitasUmumWebp;
 
 export const VISI_MISI_HERO_INTRO = [
   `Visi dan misi menjadi landasan bagi calon siswa serta orang tua memahami arah pengembangan ${BRAND_SCHOOL_FULL} (${BRAND_SHORT}).`,

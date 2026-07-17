@@ -1,5 +1,5 @@
 import { BRAND_SCHOOL_FULL } from "@/lib/branding";
-import { LOCAL_SEO_SCHOOL } from "@/lib/local-seo-keywords";
+import { LOCAL_SEO_SCHOOL } from "@/lib/seo/school";
 import { PPDB_ACADEMIC_YEAR } from "@/lib/ppdb-landing-content";
 
 export type AiSearchFaqItem = {

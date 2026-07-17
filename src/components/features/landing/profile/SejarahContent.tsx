@@ -28,7 +28,7 @@ export function SejarahContent(): ReactElement {
           tone="neutral"
           insetImage
           image={{
-            src: LANDING_MEDIA.profil.sejarahSekolahJpg,
+            src: LANDING_MEDIA.profil.sejarahSekolahWebp,
             alt: `Ilustrasi ${SEJARAH_PAGE_TITLE} ${BRAND_SHORT}`,
             quality: 70,
           }}

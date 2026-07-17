@@ -1,79 +1,119 @@
+import { publicAssetUrl } from "@/lib/r2";
+
 /**
- * URL path aset statis situs publik (tanpa domain).
- *
- * **Disk:** `public/media/...` di root monorepo.
- * App Next.js: setiap app punya folder public symlink ke public monorepo.
+ * URL aset statis situs publik (CDN R2: `R2_PUBLIC_URL`).
+ * Object key di bucket = path tanpa leading slash, mis. `media/landing/hero/bg-01.webp`.
  */
+const asset = (path: `/${string}`) => publicAssetUrl(path);
+
+export type LandingHeroSlide = {
+  id: string;
+  label: string;
+  bg: string;
+  thumb: string;
+  videoMp4: string;
+};
+
 export const LANDING_MEDIA = {
   hero: {
-    welcomeJpg: "/media/landing/hero/welcome.jpg",
-    greetingPng: "/media/landing/hero/greeting.png",
-  },
-  video: {
-    heroSlides: [
-      "/media/landing/video/hero-slide-1.mp4",
-      "/media/landing/video/hero-slide-2.mp4",
-      "/media/landing/video/hero-slide-3.mp4",
-    ] as const,
+    /** Full-bleed beranda — slide pertama (preload / OG). */
+    bg01Webp: asset("/media/landing/hero/bg-01.webp"),
+    bg02Webp: asset("/media/landing/hero/bg-02.webp"),
+    bg03Webp: asset("/media/landing/hero/bg-03.webp"),
+    greetingWebp: asset("/media/landing/hero/greeting.webp"),
+    slides: [
+      {
+        id: "kampus",
+        label: "Kampus",
+        bg: asset("/media/landing/hero/bg-01.webp"),
+        thumb: asset("/media/landing/hero/slide-thumb-01.webp"),
+        videoMp4: asset("/media/landing/hero/slide-01.mp4"),
+      },
+      {
+        id: "praktik",
+        label: "Praktik",
+        bg: asset("/media/landing/hero/bg-02.webp"),
+        thumb: asset("/media/landing/hero/slide-thumb-02.webp"),
+        videoMp4: asset("/media/landing/hero/slide-02.mp4"),
+      },
+      {
+        id: "kegiatan",
+        label: "Kegiatan",
+        bg: asset("/media/landing/hero/bg-03.webp"),
+        thumb: asset("/media/landing/hero/slide-thumb-03.webp"),
+        videoMp4: asset("/media/landing/hero/slide-03.mp4"),
+      },
+    ] as const satisfies readonly LandingHeroSlide[],
   },
   fasilitas: {
-    absensiDigitalJpg: "/media/landing/fasilitas/absensi-digital.jpg",
-    laboratoriumJpg: "/media/landing/fasilitas/laboratorium.jpg",
-    perpustakaanJpg: "/media/landing/fasilitas/perpustakaan.jpg",
-    lmsJpg: "/media/landing/fasilitas/lms.jpg",
+    absensiDigitalWebp: asset("/media/landing/fasilitas/absensi-digital.webp"),
+    laboratoriumWebp: asset("/media/landing/fasilitas/laboratorium.webp"),
+    perpustakaanWebp: asset("/media/landing/fasilitas/perpustakaan.webp"),
+    lmsWebp: asset("/media/landing/fasilitas/lms.webp"),
   },
   kegiatan: {
-    ekstraOsisJpg: "/media/landing/kegiatan/ekstra-osis.jpg",
-    ekstraPramukaJpg: "/media/landing/kegiatan/ekstra-pramuka.jpg",
-    ekstraPaskibrakaJpg: "/media/landing/kegiatan/ekstra-paskibraka.jpg",
-    ekstraFutsalJpg: "/media/landing/kegiatan/ekstra-futsal.jpg",
-    ekstraPencakSilatJpg: "/media/landing/kegiatan/ekstra-pencak-silat.jpg",
-    ekstraBloggerClubJpg: "/media/landing/kegiatan/ekstra-blogger-club.jpg",
-    ekstraCodingClubJpg: "/media/landing/kegiatan/ekstra-coding-club.jpg",
+    ekstraOsisWebp: asset("/media/landing/kegiatan/ekstra-osis.webp"),
+    ekstraPramukaWebp: asset("/media/landing/kegiatan/ekstra-pramuka.webp"),
+    ekstraPaskibrakaWebp: asset("/media/landing/kegiatan/ekstra-paskibraka.webp"),
+    ekstraFutsalWebp: asset("/media/landing/kegiatan/ekstra-futsal.webp"),
+    ekstraPencakSilatWebp: asset("/media/landing/kegiatan/ekstra-pencak-silat.webp"),
+    ekstraBloggerClubWebp: asset("/media/landing/kegiatan/ekstra-blogger-club.webp"),
+    ekstraCodingClubWebp: asset("/media/landing/kegiatan/ekstra-coding-club.webp"),
   },
   profil: {
-    sejarahSekolahJpg: "/media/landing/profil/sejarah-sekolah.jpg",
+    sejarahSekolahWebp: asset("/media/landing/profil/sejarah-sekolah.webp"),
   },
   ppdb: {
-    heroJpg: "/media/landing/ppdb/hero.jpg",
+    heroWebp: asset("/media/landing/ppdb/hero.webp"),
   },
   misc: {
-    aktivitasUmumJpg: "/media/landing/misc/aktivitas-umum.jpg",
+    aktivitasUmumWebp: asset("/media/landing/misc/aktivitas-umum.webp"),
   },
   berita: {
-    ppdb2026Webp: "/media/landing/berita/cover-ppdb-2026.webp",
-    labKomputerWebp: "/media/landing/berita/cover-lab-komputer.webp",
-    lmsOnlineWebp: "/media/landing/berita/cover-lms-online.webp",
-    cbtOnlineWebp: "/media/landing/berita/cover-cbt-online.webp",
-    akreditasiAWebp: "/media/landing/berita/cover-akreditasi-a.webp",
-    jurusanTmWebp: "/media/landing/berita/cover-jurusan-tm.webp",
-    jurusanUlwWebp: "/media/landing/berita/cover-jurusan-ulw.webp",
-    profilSmkWebp: "/media/landing/berita/cover-profil-smk-teknovo.webp",
-    memilihSmkVokasiWebp: "/media/landing/berita/cover-memilih-smk-vokasi.webp",
-    tmProspekKerjaWebp: "/media/landing/berita/cover-tm-prospek-kerja.webp",
-    ulwPariwisataWebp: "/media/landing/berita/cover-ulw-pariwisata.webp",
-    pklIndustriWebp: "/media/landing/berita/cover-pkl-industri.webp",
-    lmsHybridWebp: "/media/landing/berita/cover-lms-hybrid.webp",
-    cbtTerintegrasiWebp: "/media/landing/berita/cover-cbt-terintegrasi.webp",
-    labBengkelWebp: "/media/landing/berita/cover-lab-bengkel.webp",
-    ekstrakurikulerWebp: "/media/landing/berita/cover-ekstrakurikuler.webp",
-    ppdbPanduanWebp: "/media/landing/berita/cover-ppdb-panduan.webp",
-    akreditasiCalonSiswaWebp: "/media/landing/berita/cover-akreditasi-calon-siswa.webp",
-    visiTeknovoWebp: "/media/landing/berita/cover-visi-teknovo.webp",
+    ppdb2026Webp: asset("/media/landing/berita/cover-ppdb-2026.webp"),
+    labKomputerWebp: asset("/media/landing/berita/cover-lab-komputer.webp"),
+    lmsOnlineWebp: asset("/media/landing/berita/cover-lms-online.webp"),
+    cbtOnlineWebp: asset("/media/landing/berita/cover-cbt-online.webp"),
+    akreditasiAWebp: asset("/media/landing/berita/cover-akreditasi-a.webp"),
+    jurusanTmWebp: asset("/media/landing/berita/cover-jurusan-tm.webp"),
+    jurusanUlwWebp: asset("/media/landing/berita/cover-jurusan-ulw.webp"),
+    profilSmkWebp: asset("/media/landing/berita/cover-profil-smk-teknovo.webp"),
+    memilihSmkVokasiWebp: asset("/media/landing/berita/cover-memilih-smk-vokasi.webp"),
+    tmProspekKerjaWebp: asset("/media/landing/berita/cover-tm-prospek-kerja.webp"),
+    ulwPariwisataWebp: asset("/media/landing/berita/cover-ulw-pariwisata.webp"),
+    pklIndustriWebp: asset("/media/landing/berita/cover-pkl-industri.webp"),
+    lmsHybridWebp: asset("/media/landing/berita/cover-lms-hybrid.webp"),
+    cbtTerintegrasiWebp: asset("/media/landing/berita/cover-cbt-terintegrasi.webp"),
+    labBengkelWebp: asset("/media/landing/berita/cover-lab-bengkel.webp"),
+    ekstrakurikulerWebp: asset("/media/landing/berita/cover-ekstrakurikuler.webp"),
+    ppdbPanduanWebp: asset("/media/landing/berita/cover-ppdb-panduan.webp"),
+    akreditasiCalonSiswaWebp: asset("/media/landing/berita/cover-akreditasi-calon-siswa.webp"),
+    visiTeknovoWebp: asset("/media/landing/berita/cover-visi-teknovo.webp"),
   },
-  notFoundHeroPng: "/media/landing/404-hero.png",
+  notFoundHeroWebp: asset("/media/landing/404-hero.webp"),
   akademik: {
-    jurusanTeknikMesinWebp: "/media/landing/akademik/jurusan-teknik-mesin.webp",
-    jurusanUlwWebp: "/media/landing/akademik/jurusan-ulw.webp",
-    pklKompetensiIndustriWebp: "/media/landing/akademik/pkl-kompetensi-industri.webp",
+    jurusanTeknikMesinWebp: asset("/media/landing/akademik/jurusan-teknik-mesin.webp"),
+    jurusanUlwWebp: asset("/media/landing/akademik/jurusan-ulw.webp"),
+    pklKompetensiIndustriWebp: asset("/media/landing/akademik/pkl-kompetensi-industri.webp"),
+  },
+  navbar: {
+    base: asset("/media/landing/navbar"),
+    profilWebp: asset("/media/landing/navbar/profil.webp"),
+    akademikWebp: asset("/media/landing/navbar/akademik.webp"),
+    kesiswaanWebp: asset("/media/landing/navbar/kesiswaan.webp"),
+    fasilitasWebp: asset("/media/landing/navbar/fasilitas.webp"),
+    beritaWebp: asset("/media/landing/navbar/berita.webp"),
+    kontakWebp: asset("/media/landing/navbar/kontak.webp"),
   },
 } as const;
 
 export const BRAND_MEDIA = {
-  notFoundPng: "/brand/404-teknovo.png",
+  logoWebp: asset("/brand/logo.webp"),
+  kepalaSekolahWebp: asset("/brand/kepala-sekolah.webp"),
+  notFoundWebp: asset("/brand/404-teknovo.webp"),
 } as const;
 
-/** @deprecated Gunakan `BRAND_MEDIA.notFoundPng`. */
+/** @deprecated Gunakan `BRAND_MEDIA.notFoundWebp` atau `SHARED_MEDIA.notFoundWebp`. */
 export const SHARED_MEDIA = {
-  notFoundJpg: "/media/shared/404-teknovo.jpg",
+  notFoundWebp: asset("/media/shared/404-teknovo.webp"),
 } as const;

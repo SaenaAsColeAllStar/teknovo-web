@@ -32,7 +32,7 @@ const navLinkBase =
   "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40";
 
 const navShellClassName =
-  "sticky top-[var(--public-nav-bottom,4.25rem)] z-40 border-b border-slate-200/90 bg-white/95 backdrop-blur-md dark:border-slate-800/90 dark:bg-slate-950/95";
+  "sticky top-[var(--public-nav-bottom,10.5rem)] z-40 border-b border-slate-200/90 bg-white/95 backdrop-blur-md dark:border-slate-800/90 dark:bg-slate-950/95";
 
 const navInsetClassName = "-mx-4 px-4 sm:-mx-6 sm:px-6";
 

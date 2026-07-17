@@ -5,10 +5,14 @@ import type { ReactElement, ReactNode } from "react";
 
 import { AppProviders } from "@/components/providers/AppProviders";
 import { BRAND_LOGO_SRC, BRAND_SCHOOL_FULL, BRAND_SHORT } from "@/lib/branding";
-import { buildLandingAbsoluteUrl } from "@/lib/berita-seo";
 import { getPublicAppBaseUrl } from "@/lib/public-app-url";
 import { LANDING_MEDIA } from "@/lib/public-media-paths";
-import { buildSiteVerificationMetadata } from "@/lib/seo-site-verification";
+import {
+  buildLandingAbsoluteUrl,
+  buildSiteVerificationMetadata,
+  SEO_PRIMARY_LANGUAGE,
+  SEO_PRIMARY_LOCALE,
+} from "@/lib/seo";
 
 import "./globals.css";
 
@@ -34,7 +38,7 @@ export const metadata: Metadata = {
     "LMS online SMK",
   ],
   openGraph: {
-    locale: "id_ID",
+    locale: SEO_PRIMARY_LOCALE,
     siteName: BRAND_SCHOOL_FULL,
     type: "website",
     images: [
@@ -52,6 +56,9 @@ export const metadata: Metadata = {
     images: [buildLandingAbsoluteUrl(BRAND_LOGO_SRC)],
   },
   alternates: {
+    languages: {
+      [SEO_PRIMARY_LANGUAGE]: "/",
+    },
     types: {
       "application/rss+xml": [
         { url: "/berita/rss.xml", title: `Berita ${BRAND_SHORT}` },
@@ -73,7 +80,7 @@ export default function RootLayout({
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link rel="alternate" type="application/rss+xml" title={`Berita ${BRAND_SHORT}`} href="/berita/rss.xml" />
-          <link rel="preload" as="image" href={LANDING_MEDIA.hero.welcomeJpg} fetchPriority="high" />
+          <link rel="preload" as="image" href={LANDING_MEDIA.hero.bg01Webp} fetchPriority="high" />
         </head>
         <body
           className={`${poppins.className} flex min-h-screen min-h-dvh flex-col overflow-x-hidden bg-slate-50 font-sans text-slate-900 dark:bg-slate-950 dark:text-slate-100`}

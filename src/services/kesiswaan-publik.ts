@@ -34,7 +34,7 @@ const EKSKUL_DATA: EkskulPublikCard[] = [
     fullDescription:
       "Blogger Club membina literasi digital, penulisan berita, dan etika publikasi konten sekolah.",
     kategori: "TEKNOLOGI",
-    previewSrc: LANDING_MEDIA.kegiatan.ekstraBloggerClubJpg,
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraBloggerClubWebp,
     relatedAchievements: ["Juara 2 Lomba Blog Pelajar Kabupaten", "50+ artikel siswa terbit tiap semester"],
   },
   {
@@ -44,7 +44,7 @@ const EKSKUL_DATA: EkskulPublikCard[] = [
     fullDescription:
       "Coding Club berfokus pada pemecahan masalah, kolaborasi tim, dan pembuatan produk digital sederhana.",
     kategori: "TEKNOLOGI",
-    previewSrc: LANDING_MEDIA.kegiatan.ekstraCodingClubJpg,
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraCodingClubWebp,
     relatedAchievements: ["Finalis Hackathon Pelajar Jawa Barat", "Proyek website internal sekolah"],
   },
   {
@@ -54,7 +54,7 @@ const EKSKUL_DATA: EkskulPublikCard[] = [
     fullDescription:
       "Ekskul futsal menekankan disiplin latihan, kerja sama tim, dan gaya hidup sehat.",
     kategori: "OLAHRAGA",
-    previewSrc: LANDING_MEDIA.kegiatan.ekstraFutsalJpg,
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraFutsalWebp,
     relatedAchievements: ["Juara 1 Turnamen Futsal Antar SMK Subang"],
   },
   {
@@ -64,7 +64,7 @@ const EKSKUL_DATA: EkskulPublikCard[] = [
     fullDescription:
       "Paskibra membentuk karakter, ketegasan, dan tanggung jawab melalui program latihan rutin.",
     kategori: "AKADEMIK",
-    previewSrc: LANDING_MEDIA.kegiatan.ekstraPaskibrakaJpg,
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraPaskibrakaWebp,
     relatedAchievements: ["Petugas upacara tingkat kecamatan", "Delegasi lomba PBB kabupaten"],
   },
   {
@@ -74,7 +74,7 @@ const EKSKUL_DATA: EkskulPublikCard[] = [
     fullDescription:
       "Ekskul pencak silat melatih teknik dasar, ketahanan fisik, dan nilai-nilai sportivitas.",
     kategori: "OLAHRAGA",
-    previewSrc: LANDING_MEDIA.kegiatan.ekstraPencakSilatJpg,
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraPencakSilatWebp,
     relatedAchievements: ["Medali perunggu O2SN tingkat kabupaten"],
   },
 ];

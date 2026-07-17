@@ -8,8 +8,20 @@ const manifest = blurManifest as Record<string, string>;
 
 function normalizeMediaPath(src: string): string | null {
   const trimmed = src.trim();
-  if (!trimmed.startsWith("/media/")) return null;
   const noQuery = trimmed.split("?")[0]?.split("#")[0] ?? trimmed;
+
+  // Absolute R2 / CDN URL → extract `/media/...` path for blur manifest lookup.
+  if (noQuery.startsWith("http://") || noQuery.startsWith("https://")) {
+    try {
+      const { pathname } = new URL(noQuery);
+      if (pathname.startsWith("/media/")) return pathname;
+    } catch {
+      return null;
+    }
+    return null;
+  }
+
+  if (!noQuery.startsWith("/media/")) return null;
   return noQuery;
 }
 

@@ -28,7 +28,7 @@ export type BrandLogoMarkProps = {
 };
 
 /**
- * Lambang SMK Teknovo saja — `public/brand/logo.png` + opsi light sweep.
+ * Lambang SMK Teknovo saja — R2 `brand/logo.webp` + opsi light sweep.
  */
 export function BrandLogoMark({
   className,

@@ -1,7 +1,7 @@
-import { LANDING_MEDIA } from "@/lib/public-media-paths";
+import { BRAND_MEDIA, LANDING_MEDIA } from "@/lib/public-media-paths";
 
-/** Lambang resmi SMK Teknovo — `public/brand/logo.png` (perbarui berkas ini untuk rebrand). */
-export const BRAND_LOGO_SRC = "/brand/logo.png" as const;
+/** Lambang resmi SMK Teknovo (R2: `brand/logo.webp`). */
+export const BRAND_LOGO_SRC = BRAND_MEDIA.logoWebp;
 
 /** Nama singkat pada logo. */
 export const BRAND_SHORT = "TEKNOVO";
@@ -19,11 +19,38 @@ export const BRAND_MAPS_URL =
 /** Sumber iframe peta (output=embed). */
 export const BRAND_MAP_EMBED_URL = `${BRAND_MAPS_URL}&output=embed&hl=id&z=17` as const;
 
-/** Foto hero beranda — `public/media/landing/hero/welcome.jpg`. */
-export const BRAND_HERO_IMAGE_SRC = LANDING_MEDIA.hero.welcomeJpg;
+/**
+ * Tautan media sosial footer — ganti ke akun resmi sekolah bila sudah tersedia.
+ * Maps memakai `BRAND_MAPS_URL`.
+ */
+export const BRAND_SOCIAL_LINKS = [
+  {
+    id: "instagram",
+    label: "Instagram",
+    href: "https://www.instagram.com/smateknovo/",
+  },
+  {
+    id: "youtube",
+    label: "YouTube",
+    href: "https://www.youtube.com/@smateknovo",
+  },
+  {
+    id: "facebook",
+    label: "Facebook",
+    href: "https://www.facebook.com/smateknovo",
+  },
+  {
+    id: "maps",
+    label: "Google Maps",
+    href: BRAND_MAPS_URL,
+  },
+] as const;
 
-/** Foto kepala sekolah di blok sambutan — berkas di `public/brand/`. */
-export const BRAND_KEPALA_FOTO_SRC = "/brand/kepala-sekolah.jpg" as const;
+/** Foto hero beranda — R2 `media/landing/hero/bg-01.webp`. */
+export const BRAND_HERO_IMAGE_SRC = LANDING_MEDIA.hero.bg01Webp;
+
+/** Foto kepala sekolah di blok sambutan — R2 `brand/kepala-sekolah.webp`. */
+export const BRAND_KEPALA_FOTO_SRC = BRAND_MEDIA.kepalaSekolahWebp;
 
 /** Nama & jabatan untuk blok sambutan di beranda / profil (sesuaikan dengan SK resmi). */
 export const BRAND_KEPALA_NAMA = "Fajar Nugraha Yusman, M.M. P.d" as const;

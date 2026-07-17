@@ -53,6 +53,28 @@ body {
   .dashboard-app-container {
     @apply mx-auto w-full min-w-0 max-w-6xl px-3 sm:px-6 ps-[max(0.75rem,env(safe-area-inset-left,0px))] pe-[max(0.75rem,env(safe-area-inset-right,0px))] xl:max-w-7xl 2xl:max-w-[min(100%,96rem)] min-[1920px]:max-w-[min(100%,112rem)] min-[2560px]:max-w-[min(100%,150rem)];
   }
+
+  /**
+   * Marketing navbar hamburger — base `inline-flex` icon buttons often defeat Tailwind
+   * `hidden`/`md:hidden`. Force-hide at ≥768px via explicit media query.
+   */
+  .ds-menu-toggle {
+    display: inline-flex;
+  }
+
+  .ds-mobile-nav {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .ds-menu-toggle {
+    display: none !important;
+  }
+
+  .ds-mobile-nav {
+    display: none !important;
+  }
 }
 
 /* Drawer navigasi mobile */

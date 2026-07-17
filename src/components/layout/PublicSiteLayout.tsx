@@ -8,7 +8,7 @@ import { PublicMotionProvider } from "@/components/motion/PublicMotionProvider";
 
 /**
  * Chrome situs publik (navbar + footer) dipakai bersama `apps/web` dan `apps/admissions`.
- * Jangan duplikasi markup atau menu di masing-masing app — ubah `PublicNavbar` dan `public-site-nav`.
+ * Jangan duplikasi markup atau menu di masing-masing app — ubah `PublicMarketingNavbar` / `PublicNavbar` dan `public-site-nav`.
  */
 export function PublicSiteLayout({
   children,

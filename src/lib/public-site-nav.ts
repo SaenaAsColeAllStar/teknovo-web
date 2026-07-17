@@ -106,10 +106,10 @@ export type PublicSiteFooterSection = {
   links: readonly PublicSiteNavLeaf[];
 };
 
-/** Kolom tautan footer situs publik — hanya route yang ada di `apps/web`. */
+/** Kolom tautan footer situs publik — empat band IA selaras `PUBLIC_SITE_MAIN_NAV`. */
 export const PUBLIC_SITE_FOOTER_SECTIONS: readonly PublicSiteFooterSection[] = [
   {
-    title: "Profil Sekolah",
+    title: "Profil",
     links: [
       { label: "Sambutan Kepala Sekolah", href: "/profil/sambutan" },
       { label: "Visi & Misi", href: "/profil/visi-misi" },
@@ -118,22 +118,31 @@ export const PUBLIC_SITE_FOOTER_SECTIONS: readonly PublicSiteFooterSection[] = [
     ],
   },
   {
-    title: "Akademik & Sarana",
+    title: "Akademik",
     links: [
-      { label: "Ringkasan Akademik", href: "/akademik" },
+      { label: "Ringkasan Jurusan", href: "/akademik" },
       { label: "Kurikulum", href: "/akademik/kurikulum" },
-      { label: "Fasilitas", href: "/fasilitas" },
-      { label: "PPDB", href: "/ppdb/" },
+      { label: "Program Jurusan", href: "/akademik/jurusan" },
+      { label: "Tenaga Pengajar", href: "/akademik/pengajar" },
     ],
   },
   {
-    title: "Kesiswaan & Media",
+    title: "Kesiswaan & Fasilitas",
     links: [
       { label: "Ringkasan Kesiswaan", href: "/kesiswaan" },
       { label: "Ekstrakurikuler", href: "/kesiswaan/ekstrakurikuler" },
       { label: "Prestasi", href: "/kesiswaan/prestasi" },
-      { label: "Berita Sekolah", href: "/berita" },
-      { label: "RSS Berita", href: "/berita/rss.xml" },
+      { label: "Fasilitas Sekolah", href: "/fasilitas" },
+      { label: "LMS Sekolah", href: "/fasilitas/lms-sekolah" },
+    ],
+  },
+  {
+    title: "Informasi",
+    links: [
+      { label: "Berita Terbaru", href: "/berita/berita-terbaru" },
+      { label: "Kegiatan Sekolah", href: "/berita/kegiatan-sekolah" },
+      { label: "Kontak & Lokasi", href: "/kontak" },
+      { label: "PPDB", href: PUBLIC_SITE_PPDB_HREF },
     ],
   },
 ] as const;

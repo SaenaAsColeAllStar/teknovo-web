@@ -36,7 +36,7 @@ export const PROGRAM_SEKOLAH_PAGE_LEDE =
 /** @deprecated Gunakan {@link PROGRAM_SEKOLAH_PAGE_LEDE} untuk intro halaman. */
 export const PROGRAM_SEKOLAH_PAGE_SUBTITLE = PROGRAM_SEKOLAH_PAGE_LEDE;
 
-export const PROGRAM_SEKOLAH_HERO_IMAGE_SRC = LANDING_MEDIA.misc.aktivitasUmumJpg;
+export const PROGRAM_SEKOLAH_HERO_IMAGE_SRC = LANDING_MEDIA.misc.aktivitasUmumWebp;
 
 export const PROGRAM_SEKOLAH_HERO_INTRO = [
   `${BRAND_SCHOOL_FULL} (${BRAND_SHORT}) menyelenggarakan program pembinaan terpadu: kurikulum kejuruan, praktik industri, sertifikasi kompetensi, dan literasi digital berkarakter.`,
@@ -55,7 +55,7 @@ export const PROGRAM_SEKOLAH_PEMBINAAN_ITEMS: readonly ProgramPembinaanItem[] = 
     summary: "Pembelajaran berbasis proyek dan capaian lulusan terukur.",
     description:
       "Kurikulum Merdeka diperkuat muatan kejuruan per jurusan, P5, portofolio siswa, serta penilaian autentik. Rapor digital dan LMS memudahkan guru, siswa, dan orang tua memantau perkembangan kompetensi secara transparan.",
-    coverSrc: LANDING_MEDIA.fasilitas.lmsJpg,
+    coverSrc: LANDING_MEDIA.fasilitas.lmsWebp,
   },
   {
     id: "pkl",
@@ -63,7 +63,7 @@ export const PROGRAM_SEKOLAH_PEMBINAAN_ITEMS: readonly ProgramPembinaanItem[] = 
     summary: "Kemitraan DU/DI dan pengalaman kerja nyata.",
     description:
       "PKL terstruktur dengan mitra dunia usaha dan industri setempat. Siswa mengenal budaya kerja, standar keselamatan, serta tanggung jawab profesional sebelum melangkah ke dunia kerja atau pendidikan lanjutan.",
-    coverSrc: LANDING_MEDIA.kegiatan.ekstraCodingClubJpg,
+    coverSrc: LANDING_MEDIA.kegiatan.ekstraCodingClubWebp,
   },
   {
     id: "sertifikasi",
@@ -71,7 +71,7 @@ export const PROGRAM_SEKOLAH_PEMBINAAN_ITEMS: readonly ProgramPembinaanItem[] = 
     summary: "Uji kompetensi keahlian dan sertifikasi bidang.",
     description:
       "Program persiapan uji kompetensi keahlian (UKK) dan sertifikasi yang relevan dengan jurusan — dari workshop teknik mesin hingga layanan wisata — agar lulusan memiliki bukti kompetensi yang diakui industri.",
-    coverSrc: LANDING_MEDIA.fasilitas.laboratoriumJpg,
+    coverSrc: LANDING_MEDIA.fasilitas.laboratoriumWebp,
   },
   {
     id: "literasi-digital",
@@ -79,7 +79,7 @@ export const PROGRAM_SEKOLAH_PEMBINAAN_ITEMS: readonly ProgramPembinaanItem[] = 
     summary: "Teknologi etis, kepemimpinan siswa, dan karakter unggulan.",
     description:
       "Literasi digital, etika daring, kegiatan ekstrakurikuler teknologi, serta pembinaan karakter melalui OSIS, pramuka, dan program rutin sekolah — menyelaraskan kompetensi teknis dengan integritas dan sportivitas.",
-    coverSrc: LANDING_MEDIA.kegiatan.ekstraBloggerClubJpg,
+    coverSrc: LANDING_MEDIA.kegiatan.ekstraBloggerClubWebp,
   },
 ] as const;
 

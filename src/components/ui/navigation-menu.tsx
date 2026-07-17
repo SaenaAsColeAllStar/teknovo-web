@@ -98,7 +98,7 @@ const NavigationMenuViewport = forwardRef<
     className={cn(
       "absolute left-0 top-full flex justify-center",
       variant === "public-mega" &&
-        "pointer-events-none fixed inset-x-0 top-[var(--public-nav-bottom,4.25rem)] z-40 justify-center px-4 lg:top-16",
+        "pointer-events-none fixed inset-x-0 top-[var(--public-nav-bottom,10.5rem)] z-40 justify-center px-4",
     )}
   >
     <NavigationMenuPrimitive.Viewport

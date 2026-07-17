@@ -194,7 +194,7 @@ export const ABSENSI_LANDING_ITEM: FasilitasLandingItem = {
   title: "Absensi Digital",
   description:
     "Sistem absensi terintegrasi — dari tap masuk harian hingga daftar hadir per pertemuan mapel, dengan dashboard sekolah dan portal orang tua untuk transparansi kedisiplinan.",
-  coverSrc: LANDING_MEDIA.fasilitas.absensiDigitalJpg,
+  coverSrc: LANDING_MEDIA.fasilitas.absensiDigitalWebp,
   highlights: [
     "Tap masuk real-time",
     "Absensi kelas per mapel",
