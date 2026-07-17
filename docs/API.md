@@ -2,6 +2,17 @@
 
 Base URL: `API_URL` / `NEXT_PUBLIC_API_URL` (tanpa trailing slash).
 
+## Env (teknovo-web)
+
+| Variable | Required | Keterangan |
+|----------|----------|------------|
+| `API_URL` | Ya (server) | Base URL api-web, mis. `http://127.0.0.1:4010` |
+| `NEXT_PUBLIC_API_URL` | Ya (CMS browser) | Sama dengan `API_URL` agar form dashboard memanggil API dari klien |
+| `REVALIDATE_SECRET` | Ya (callback) | Shared secret untuk `POST /api/revalidate` dari api-web |
+| Clerk keys | Ya (CMS) | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` |
+
+Tanpa `API_URL` / `NEXT_PUBLIC_API_URL`, dashboard menampilkan error state yang jelas; halaman publik berita kegiatan memakai konten fallback lokal.
+
 Semua respons sukses berbentuk:
 
 ```json

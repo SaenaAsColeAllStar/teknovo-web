@@ -1,7 +1,12 @@
 import type { BeritaRelatedItem } from "@/lib/berita-seo";
 import { getBeritaKegiatanDetailPath } from "@/lib/berita-seo";
+import {
+  fetchBeritaBySlugOrNull,
+  fetchBeritaListOrNull,
+} from "@/lib/api-client";
 import { LANDING_MEDIA } from "@/lib/public-media-paths";
 import { LMS_BERITA_KEGIATAN_SLUG } from "@/lib/seo/lms";
+import type { Berita, BeritaListItem } from "@/types/berita";
 
 export type BeritaKegiatanPublikCard = {
   id: string;
@@ -23,6 +28,8 @@ export type BeritaKegiatanPublikDetail = BeritaKegiatanPublikCard & {
   ogImageOverride: string | null;
   kategori: string | null;
 };
+
+const FALLBACK_COVER = LANDING_MEDIA.berita.profilSmkWebp;
 
 const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
   {
@@ -161,8 +168,15 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
 ];
 
 function detailToCard(detail: BeritaKegiatanPublikDetail): BeritaKegiatanPublikCard {
-  const { konten: _konten, publishedAt: _publishedAt, ...card } = detail;
-  return card;
+  return {
+    id: detail.id,
+    slug: detail.slug,
+    judul: detail.judul,
+    ringkasan: detail.ringkasan,
+    tanggalIso: detail.tanggalIso,
+    coverSrc: detail.coverSrc,
+    penulisNama: detail.penulisNama,
+  };
 }
 
 function fallbackCards(limit: number): BeritaKegiatanPublikCard[] {
@@ -173,20 +187,88 @@ function fallbackDetailBySlug(slug: string): BeritaKegiatanPublikDetail | null {
   return FALLBACK_BERITA_KEGIATAN.find((item) => item.slug === slug) ?? null;
 }
 
-export async function getPublishedBeritaKegiatanCards(limit = 48): Promise<BeritaKegiatanPublikCard[]> {
-  return fallbackCards(limit);
+function listItemToCard(item: BeritaListItem): BeritaKegiatanPublikCard {
+  const tanggalIso =
+    item.publishedAt ?? new Date().toISOString();
+  return {
+    id: item.id,
+    slug: item.slug,
+    judul: item.judul,
+    ringkasan: item.ringkasan?.trim() || item.judul,
+    tanggalIso,
+    coverSrc: item.coverUrl?.trim() || FALLBACK_COVER,
+    penulisNama: "Humas sekolah",
+  };
+}
+
+function beritaToDetail(row: Berita): BeritaKegiatanPublikDetail {
+  const publishedAt = row.publishedAt
+    ? new Date(row.publishedAt)
+    : new Date(row.updatedAt || row.createdAt);
+  return {
+    id: row.id,
+    slug: row.slug,
+    judul: row.judul,
+    ringkasan: row.ringkasan?.trim() || row.judul,
+    tanggalIso: publishedAt.toISOString(),
+    coverSrc: row.coverUrl?.trim() || FALLBACK_COVER,
+    penulisNama: row.penulis?.nama?.trim() || "Humas sekolah",
+    konten: row.konten,
+    publishedAt,
+    coverAlt: null,
+    metaTitle: null,
+    metaDescription: row.ringkasan,
+    metaKeywords: null,
+    ogImageOverride: row.coverUrl,
+    kategori: row.kategori?.nama ?? null,
+  };
+}
+
+export async function getPublishedBeritaKegiatanCards(
+  limit = 48,
+): Promise<BeritaKegiatanPublikCard[]> {
+  const fromApi = await fetchBeritaListOrNull({
+    page: 1,
+    limit,
+    status: "PUBLISHED",
+  });
+  if (fromApi === null) {
+    return fallbackCards(limit);
+  }
+  return fromApi.map(listItemToCard);
 }
 
 export async function getBeritaKegiatanPublikBySlug(
   slug: string,
 ): Promise<BeritaKegiatanPublikDetail | null> {
-  return fallbackDetailBySlug(slug);
+  const fromApi = await fetchBeritaBySlugOrNull(slug);
+  if (fromApi === undefined) {
+    return fallbackDetailBySlug(slug);
+  }
+  if (fromApi === null) {
+    return fallbackDetailBySlug(slug);
+  }
+  return beritaToDetail(fromApi);
 }
 
 export async function getRelatedBeritaKegiatan(
   excludeSlug: string,
   limit = 3,
 ): Promise<BeritaRelatedItem[]> {
+  const cards = await getPublishedBeritaKegiatanCards(limit + 4);
+  const related = cards
+    .filter((item) => item.slug !== excludeSlug)
+    .slice(0, limit)
+    .map((item) => ({
+      href: getBeritaKegiatanDetailPath(item.slug),
+      judul: item.judul,
+      ringkasan: item.ringkasan,
+      tanggalIso: item.tanggalIso,
+      kind: "kegiatan" as const,
+    }));
+
+  if (related.length > 0) return related;
+
   return FALLBACK_BERITA_KEGIATAN.filter((item) => item.slug !== excludeSlug)
     .slice(0, limit)
     .map((item) => ({
@@ -203,9 +285,24 @@ export type BeritaKegiatanSitemapEntry = {
   lastModified: Date;
 };
 
-export async function listBeritaKegiatanSitemapEntries(): Promise<BeritaKegiatanSitemapEntry[]> {
-  return FALLBACK_BERITA_KEGIATAN.map((item) => ({
+export async function listBeritaKegiatanSitemapEntries(): Promise<
+  BeritaKegiatanSitemapEntry[]
+> {
+  const fromApi = await fetchBeritaListOrNull({
+    page: 1,
+    limit: 200,
+    status: "PUBLISHED",
+  });
+  if (fromApi === null) {
+    return FALLBACK_BERITA_KEGIATAN.map((item) => ({
+      slug: item.slug,
+      lastModified: item.publishedAt,
+    }));
+  }
+  return fromApi.map((item) => ({
     slug: item.slug,
-    lastModified: item.publishedAt,
+    lastModified: item.publishedAt
+      ? new Date(item.publishedAt)
+      : new Date(),
   }));
 }

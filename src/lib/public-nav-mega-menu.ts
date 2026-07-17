@@ -45,11 +45,4 @@ export const PUBLIC_SITE_NAV_MEGA_PANELS: Record<PublicSiteNavGroup["id"], Publi
     secondaryLabel: "Baca berita terbaru",
     secondaryHref: "/berita/berita-terbaru",
   },
-  kontak: {
-    imageSrc: LANDING_MEDIA.navbar.kontakWebp,
-    imageAlt: "Lokasi dan layanan hubungi SMK TEKNOVO",
-    headline: "Kunjungi sekolah atau hubungi Tata Usaha untuk pertanyaan.",
-    secondaryLabel: "Buka halaman kontak",
-    secondaryHref: "/kontak",
-  },
 };
