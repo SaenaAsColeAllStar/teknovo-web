@@ -1,66 +1,374 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+@import "../vendor/teknovo-ui/styles.css";
+@source "../**/*.{js,jsx,ts,tsx,mdx}";
+
+/* Varian `dark:` Tailwind — kelas `.dark` tidak lagi diset oleh pengguna (hanya terang). */
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  --color-brand: #1313ba;
-  --color-brand-strong: #0e0e8c;
-  --color-heading: #1313ba;
-  --color-body: #6363c6;
-  --color-body-subtle: #9090ce;
-  --color-border: #e8e8f8;
-  --color-neutral-soft: #f7f7fc;
-  --color-danger: #c81e1e;
   --background: #ffffff;
-  --foreground: #1313ba;
+  --foreground: #171717;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-brand: var(--color-brand);
-  --color-brand-strong: var(--color-brand-strong);
-  --color-heading: var(--color-heading);
-  --color-body: var(--color-body);
-  --color-body-subtle: var(--color-body-subtle);
-  --color-border: var(--color-border);
-  --color-neutral-soft: var(--color-neutral-soft);
-  --color-danger: var(--color-danger);
+  --color-lamaSky: #C3EBFA;
+  --color-lamaSkyLight: #EDF9FD;
+  --color-lamaPurple: #CFCEFF;
+  --color-lamaPurpleLight: #F1F0FF;
+  --color-lamaYellow: #FAE27C;
+  --color-lamaYellowLight: #FEFCE8;
   --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
+  /* Mencegah loncatan lebar saat scrollbar muncul/hilang — `.public-site-container` tetap selaras antar halaman */
   scrollbar-gutter: stable;
 }
 
 body {
   background: var(--background);
-  color: var(--color-body);
+  color: var(--foreground);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 }
 
-@keyframes fade-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
+/**
+ * Situs publik: lebar penuh di desktop (padding horizontal saja);
+ * dashboard tetap kolom terbatas agar form/tabel mudah dibaca.
+ */
+@layer components {
+  /** Landing & halaman publik — full-bleed dari `md:` ke atas, padding aman di tepi. */
+  .public-site-container {
+    @apply mx-auto w-full min-w-0 max-w-none px-3 sm:px-6 ps-[max(0.75rem,env(safe-area-inset-left,0px))] pe-[max(0.75rem,env(safe-area-inset-right,0px))] md:px-8 lg:px-10 xl:px-12;
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  .dashboard-app-container {
+    @apply mx-auto w-full min-w-0 max-w-6xl px-3 sm:px-6 ps-[max(0.75rem,env(safe-area-inset-left,0px))] pe-[max(0.75rem,env(safe-area-inset-right,0px))] xl:max-w-7xl 2xl:max-w-[min(100%,96rem)] min-[1920px]:max-w-[min(100%,112rem)] min-[2560px]:max-w-[min(100%,150rem)];
   }
 }
 
-@keyframes soft-zoom {
+/* Drawer navigasi mobile */
+@keyframes teknovo-slide-in-right {
   from {
-    transform: scale(1.04);
+    transform: translateX(100%);
   }
   to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes teknovo-slide-in-down {
+  from {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* CTA hero PPDB — denyut bayangan + sapuan kilau */
+@keyframes teknovo-cta-glow-pulse {
+  0%,
+  100% {
+    box-shadow:
+      0 10px 25px -5px rgb(37 99 235 / 0.38),
+      0 0 0 0 rgb(59 130 246 / 0);
+  }
+  50% {
+    box-shadow:
+      0 14px 40px -8px rgb(37 99 235 / 0.55),
+      0 0 28px 2px rgb(96 165 250 / 0.4);
+  }
+}
+
+@keyframes teknovo-cta-shine-sweep {
+  0% {
+    transform: translateX(-130%) skewX(-14deg);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.95;
+  }
+  38% {
+    transform: translateX(130%) skewX(-14deg);
+    opacity: 0.95;
+  }
+  45%,
+  100% {
+    opacity: 0;
+    transform: translateX(130%) skewX(-14deg);
+  }
+}
+
+@layer utilities {
+  .animate-teknovo-slide-in-right {
+    animation: teknovo-slide-in-right 0.22s ease-out both;
+  }
+
+  .animate-teknovo-slide-in-down {
+    animation: teknovo-slide-in-down 0.22s ease-out both;
+  }
+
+  .animate-teknovo-cta-glow {
+    animation: teknovo-cta-glow-pulse 2.8s ease-in-out infinite;
+  }
+
+  .animate-teknovo-cta-shine {
+    animation: teknovo-cta-shine-sweep 3.8s ease-in-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-teknovo-slide-in-right,
+  .animate-teknovo-slide-in-down {
+    animation: none;
+  }
+  .animate-teknovo-cta-glow,
+  .animate-teknovo-cta-shine {
+    animation: none;
+  }
+}
+
+/* —— Route loading & navigasi —— */
+@keyframes teknovo-public-bars {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+    opacity: 0.45;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+@keyframes teknovo-dash-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes teknovo-dash-orbit-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@keyframes teknovo-ppdb-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
+}
+
+@keyframes teknovo-auth-breathe {
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes teknovo-nav-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
+
+/* Border avatar ekskul — tema api / hutan / blogger / gelombang / dll. */
+@keyframes teknovo-ekskul-flame-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes teknovo-ekskul-forest-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.78;
+  }
+  50% {
+    transform: scale(1.045);
+    opacity: 1;
+  }
+}
+
+@keyframes teknovo-ekskul-wave-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes teknovo-ekskul-spark-dot {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(0.88);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+}
+
+@keyframes teknovo-ekskul-circuit-dash {
+  to {
+    stroke-dashoffset: -72;
+  }
+}
+
+@keyframes teknovo-ekskul-bar-beat {
+  0%,
+  100% {
+    transform: scaleY(0.35);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes teknovo-ekskul-pulse-heart {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.48;
+  }
+  14% {
+    transform: scale(1.07);
+    opacity: 0.92;
+  }
+  28% {
+    transform: scale(1);
+    opacity: 0.52;
+  }
+  42% {
+    transform: scale(1.05);
+    opacity: 0.88;
+  }
+  56% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+}
+
+@keyframes teknovo-ekskul-mist-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@layer utilities {
+  .animate-teknovo-public-bars {
+    animation: teknovo-public-bars 0.85s ease-in-out infinite;
+    transform-origin: center bottom;
+  }
+
+  .animate-teknovo-dash-orbit {
+    animation: teknovo-dash-orbit 2.4s linear infinite;
+  }
+
+  .animate-teknovo-dash-orbit-reverse {
+    animation: teknovo-dash-orbit-reverse 1.8s linear infinite;
+  }
+
+  .animate-teknovo-ppdb-shimmer {
+    animation: teknovo-ppdb-shimmer 1.35s ease-in-out infinite;
+  }
+
+  .animate-teknovo-auth-breathe {
+    animation: teknovo-auth-breathe 1.2s ease-in-out infinite;
+  }
+
+  .animate-teknovo-nav-sweep {
+    animation: teknovo-nav-sweep 0.65s ease-in-out infinite;
+  }
+
+  .animate-teknovo-ekskul-flame-spin {
+    animation: teknovo-ekskul-flame-spin 2.8s linear infinite;
+  }
+
+  .animate-teknovo-ekskul-forest-breathe {
+    animation: teknovo-ekskul-forest-breathe 2.6s ease-in-out infinite;
+  }
+
+  .animate-teknovo-ekskul-wave-rotate {
+    animation: teknovo-ekskul-wave-rotate 4s linear infinite;
+  }
+
+  .animate-teknovo-ekskul-spark {
+    transform-origin: center;
+    animation: teknovo-ekskul-spark 1.15s ease-in-out infinite;
+  }
+
+  .animate-teknovo-ekskul-circuit-dash {
+    stroke-dashoffset: 0;
+    animation: teknovo-ekskul-circuit-dash 1.15s linear infinite;
+  }
+
+  .animate-teknovo-ekskul-bar-beat-1 {
+    transform-origin: center bottom;
+    animation: teknovo-ekskul-bar-beat 0.42s ease-in-out infinite;
+  }
+
+  .animate-teknovo-ekskul-bar-beat-2 {
+    transform-origin: center bottom;
+    animation: teknovo-ekskul-bar-beat 0.52s ease-in-out infinite 0.08s;
+  }
+
+  .animate-teknovo-ekskul-bar-beat-3 {
+    transform-origin: center bottom;
+    animation: teknovo-ekskul-bar-beat 0.46s ease-in-out infinite 0.16s;
+  }
+
+  .animate-teknovo-ekskul-pulse-heart {
+    animation: teknovo-ekskul-pulse-heart 1.85s ease-in-out infinite;
+  }
+
+  .animate-teknovo-ekskul-mist-rotate {
+    animation: teknovo-ekskul-mist-rotate 14s linear infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .teknovo-ekskul-decor-root,
+  .teknovo-ekskul-decor-root * {
+    animation: none !important;
+  }
+
+  .teknovo-ekskul-spark-dot {
+    opacity: 0.9;
     transform: scale(1);
   }
+
+  .animate-teknovo-ekskul-circuit-dash {
+    stroke-dashoffset: 0;
+  }
 }
 
-.animate-fade-up {
-  animation: fade-up 0.7s ease-out both;
-}
-
-.animate-soft-zoom {
-  animation: soft-zoom 1.2s ease-out both;
+/* Marker tanggal kalender dashboard (DayPicker) */
+@layer components {
+  .teknovo-calendar-has-data > button::after {
+    content: "";
+    @apply absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-indigo-500 dark:bg-indigo-400;
+  }
 }

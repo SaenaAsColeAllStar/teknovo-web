@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.join(__dirname),
   },
+  transpilePackages: [],
   images: {
     remotePatterns: [
       {
@@ -24,16 +25,32 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "img.clerk.com",
       },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
     ],
     qualities: [60, 70, 75],
     minimumCacheTTL: 60 * 60 * 24 * 30,
+    deviceSizes: [384, 640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
   async redirects() {
     return [
       {
-        source: "/tentang-smk-teknovo",
-        destination: "/tentang",
+        source: "/profil",
+        destination: "/profil/sambutan",
+        permanent: false,
+      },
+      {
+        source: "/kesiswaan/beranda",
+        destination: "/kesiswaan",
         permanent: true,
+      },
+      {
+        source: "/tentang",
+        destination: "/tentang-smk-teknovo",
+        permanent: false,
       },
     ];
   },
@@ -48,6 +65,7 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
         ],
       },
     ];

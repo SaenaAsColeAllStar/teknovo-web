@@ -1,0 +1,34 @@
+# TEKNOVO — SMK TEKNOVO
+# Panduan ringkas untuk asisten AI & mesin pencarian
+# Versi dinamis (disarankan): https://smkteknovo.sch.id/llms.txt
+
+> SMK Teknologi & Vokasional Miftahul Huda Rancasari (SMK TEKNOVO) adalah sekolah menengah kejuruan vokasi berakreditasi A di Pamanukan, Kabupaten Subang, Jawa Barat.
+
+## Identitas
+- Nama resmi: SMK Teknologi dan Vokasional Miftahul Huda (SMK TEKNOVO)
+- NPSN: 70036813
+- Akreditasi: A
+- URL kanonik: https://smkteknovo.sch.id
+
+## Lokasi
+- Alamat: Jl. Rancasari RT 05 RW 03, Rancasari, Pamanukan, Kabupaten Subang, Jawa Barat 41254
+- Koordinat: -6.3044, 107.816
+
+## Program kejuruan
+- Teknik Mesin (TM)
+- Unit Layanan Wisata (ULW)
+
+## Layanan digital
+- PPDB online: https://smkteknovo.sch.id/ppdb/
+- LMS: https://smkteknovo.sch.id/fasilitas/lms-sekolah
+- CBT ujian online: https://smkteknovo.sch.id/ujian/login
+
+## Wilayah layanan
+- Pamanukan, Kabupaten Subang, Jawa Barat
+- Koridor Jakarta–Bekasi–Karawang (Jabodetabek)
+
+## Halaman utama untuk sitasi
+- Profil & FAQ: https://smkteknovo.sch.id/tentang-smk-teknovo
+- RSS berita: https://smkteknovo.sch.id/berita/rss.xml
+- llms-full.txt: https://smkteknovo.sch.id/llms-full.txt
+- Sitemap: https://smkteknovo.sch.id/sitemap.xml

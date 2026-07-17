@@ -19,7 +19,7 @@ Homelab (masa depan)
 
 | Group | Path | Auth |
 |-------|------|------|
-| `(public)` | `/`, `/berita`, `/tentang`, `/kontak` | Publik |
+| `(site)` | `/`, `/profil/*`, `/akademik/*`, `/kesiswaan/*`, `/fasilitas/*`, `/berita/*`, `/kontak`, SEO landing, dll. | Publik |
 | `(dashboard)` | `/dashboard/*` | Clerk `auth.protect()` |
 | Auth UI | `/sign-in`, `/sign-up` | Clerk components |
 | API | `/api/webhook/clerk`, `/api/revalidate`, `/api/health` | Secret / stub |
@@ -36,4 +36,4 @@ Homelab (masa depan)
 
 `apps/web` di monorepo tetap ada (nginx path `/`). Repo ini adalah **split** untuk Cloudflare Pages/Workers: marketing + CMS ringan, API konten di homelab.
 
-Brand assets (`public/brand`, hero) disalin dari monorepo. Halaman publik disederhanakan (bukan 1:1 seluruh SEO landing monorepo).
+Brand assets (`public/brand`, hero) disalin dari monorepo. Halaman publik dimigrasi **1:1** dari monorepo `apps/web` (komponen landing + aset `public/media`). Service yang bergantung Postgres diganti fallback/static di CF; konten CMS tetap lewat `API_URL` bila tersedia.

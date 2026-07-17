@@ -1,9 +1,5 @@
-import { NextResponse } from "next/server";
+import { createHealthResponse } from "@/lib/health-api";
 
-export async function GET() {
-  return NextResponse.json({
-    ok: true,
-    service: "teknovo-web",
-    ts: new Date().toISOString(),
-  });
+export function GET() {
+  return createHealthResponse("landing");
 }

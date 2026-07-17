@@ -1,0 +1,132 @@
+import { LANDING_MEDIA } from "@/lib/public-media-paths";
+import { getKesiswaanEkstraPublikStats } from "@/services/kesiswaan-publik-stats";
+
+export type EkskulPublikKategori = "TEKNOLOGI" | "OLAHRAGA" | "AKADEMIK" | "SENI";
+
+export type EkskulPublikCard = {
+  slug: string;
+  name: string;
+  detail: string;
+  fullDescription: string;
+  kategori: EkskulPublikKategori;
+  previewSrc: string;
+  relatedAchievements: string[];
+  jadwalRingkas?: string;
+  lokasiLatihan?: string;
+  pembinaNama?: string;
+};
+
+export type PrestasiPublikCard = {
+  id: string;
+  judul: string;
+  penyelenggara: string;
+  tanggalIso: string;
+  siswaLabel: string;
+  ringkasan: string;
+  fileUrl: string;
+};
+
+const EKSKUL_DATA: EkskulPublikCard[] = [
+  {
+    slug: "blogger",
+    name: "Blogger Club",
+    detail: "Kontributor artikel sekolah dengan moderasi pembina sebelum tayang.",
+    fullDescription:
+      "Blogger Club membina literasi digital, penulisan berita, dan etika publikasi konten sekolah.",
+    kategori: "TEKNOLOGI",
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraBloggerClubJpg,
+    relatedAchievements: ["Juara 2 Lomba Blog Pelajar Kabupaten", "50+ artikel siswa terbit tiap semester"],
+  },
+  {
+    slug: "codingclub",
+    name: "Coding Club",
+    detail: "Kegiatan pemrograman, web, dan project teknologi siswa.",
+    fullDescription:
+      "Coding Club berfokus pada pemecahan masalah, kolaborasi tim, dan pembuatan produk digital sederhana.",
+    kategori: "TEKNOLOGI",
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraCodingClubJpg,
+    relatedAchievements: ["Finalis Hackathon Pelajar Jawa Barat", "Proyek website internal sekolah"],
+  },
+  {
+    slug: "futsal",
+    name: "Futsal",
+    detail: "Pembinaan fisik, sportivitas, dan kompetisi antar sekolah.",
+    fullDescription:
+      "Ekskul futsal menekankan disiplin latihan, kerja sama tim, dan gaya hidup sehat.",
+    kategori: "OLAHRAGA",
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraFutsalJpg,
+    relatedAchievements: ["Juara 1 Turnamen Futsal Antar SMK Subang"],
+  },
+  {
+    slug: "paskibra",
+    name: "Paskibra",
+    detail: "Latihan baris-berbaris, kepemimpinan, dan kedisiplinan.",
+    fullDescription:
+      "Paskibra membentuk karakter, ketegasan, dan tanggung jawab melalui program latihan rutin.",
+    kategori: "AKADEMIK",
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraPaskibrakaJpg,
+    relatedAchievements: ["Petugas upacara tingkat kecamatan", "Delegasi lomba PBB kabupaten"],
+  },
+  {
+    slug: "pencaksilat",
+    name: "Pencak Silat",
+    detail: "Pelestarian seni bela diri nusantara dan penguatan mental.",
+    fullDescription:
+      "Ekskul pencak silat melatih teknik dasar, ketahanan fisik, dan nilai-nilai sportivitas.",
+    kategori: "OLAHRAGA",
+    previewSrc: LANDING_MEDIA.kegiatan.ekstraPencakSilatJpg,
+    relatedAchievements: ["Medali perunggu O2SN tingkat kabupaten"],
+  },
+];
+
+const PRESTASI_DATA: PrestasiPublikCard[] = [
+  {
+    id: "prestasi-1",
+    judul: "Juara 1 Lomba Robotik Nasional",
+    penyelenggara: "Kemendikbud",
+    tanggalIso: "2026-03-18T00:00:00.000Z",
+    siswaLabel: "Tim Robotik TEKNOVO",
+    ringkasan: "Tim robotik meraih juara 1 kategori autonomous challenge tingkat nasional.",
+    fileUrl: "https://images.unsplash.com/photo-1581092335397-9583eb92d232?w=1200&h=800&fit=crop&q=80",
+  },
+  {
+    id: "prestasi-2",
+    judul: "Finalis Hackathon Pelajar Jawa Barat",
+    penyelenggara: "Disdik Jabar",
+    tanggalIso: "2026-02-07T00:00:00.000Z",
+    siswaLabel: "Coding Club",
+    ringkasan: "Siswa berhasil membangun aplikasi prototipe layanan akademik berbasis web.",
+    fileUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=800&fit=crop&q=80",
+  },
+];
+
+export async function getEkskulPublikCards(): Promise<EkskulPublikCard[]> {
+  return EKSKUL_DATA;
+}
+
+export async function countEkskulPublikAktif(): Promise<number> {
+  return EKSKUL_DATA.length;
+}
+
+export async function getPrestasiPublikTerverifikasi(limit = 24): Promise<PrestasiPublikCard[]> {
+  return PRESTASI_DATA.slice(0, Math.max(0, limit));
+}
+
+export async function getPrestasiPublikCards(limit = 24): Promise<PrestasiPublikCard[]> {
+  return getPrestasiPublikTerverifikasi(limit);
+}
+
+export type EkskulPublikHeroStats = {
+  unitCount: number;
+  kategoriCount: number;
+  prestasiCount: number;
+};
+
+export async function getEkskulPublikHeroStats(): Promise<EkskulPublikHeroStats> {
+  const stats = await getKesiswaanEkstraPublikStats();
+  return {
+    unitCount: stats.unitCount,
+    kategoriCount: stats.kategoriCount,
+    prestasiCount: stats.prestasiCount,
+  };
+}

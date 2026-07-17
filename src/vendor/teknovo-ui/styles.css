@@ -1,0 +1,16 @@
+/**
+ * Token @theme untuk @teknovo/ui — impor di app globals.css:
+ * @import "@teknovo/ui/styles.css";
+ */
+@theme inline {
+  --color-brand: #1313BA;
+  --color-brand-strong: #0E0E8C;
+  --color-heading: #1313BA;
+  --color-body: #6363C6;
+  --color-body-subtle: #9090CE;
+  --color-border-default: #E8E8F8;
+  --color-surface: #FFFFFF;
+  --color-danger: #BE123C;
+  --color-success: #15A34A;
+  --color-warning: #F97316;
+}

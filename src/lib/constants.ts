@@ -19,7 +19,7 @@ export const BRAND_KEPALA_JABATAN = "Kepala Sekolah" as const;
 export const SITE_NAV = [
   { href: "/", label: "Beranda" },
   { href: "/berita", label: "Berita" },
-  { href: "/tentang", label: "Tentang" },
+  { href: "/tentang-smk-teknovo", label: "Tentang" },
   { href: "/kontak", label: "Kontak" },
 ] as const;
 

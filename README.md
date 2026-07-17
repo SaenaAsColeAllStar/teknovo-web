@@ -4,6 +4,8 @@ Portal publik + CMS SMK Teknovo untuk **Cloudflare** (`@opennextjs/cloudflare`).
 
 Split dari monorepo [`rtek`](https://github.com/SaenaAsColeAllStar) `apps/web` — lihat `docs/ARSITEKTUR.md`.
 
+**Public UI** dimigrasi 1:1 dari `apps/web` (hero, navbar, SEO landing, berita, akademik, kesiswaan, fasilitas, profil). CMS Clerk `/dashboard` tetap. Data dinamis berita/statistik memakai fallback lokal hingga `API_URL` (homelab) siap.
+
 ## Quick start
 
 ```bash
