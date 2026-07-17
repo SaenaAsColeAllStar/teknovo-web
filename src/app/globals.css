@@ -6,9 +6,26 @@
 /* Varian `dark:` Tailwind — kelas `.dark` tidak lagi diset oleh pengguna (hanya terang). */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/**
+ * Atlas / Teknovo palette (canonical — sebelum drift slate/blue Tailwind).
+ * Brand #1313BA, borders #E8E8F8, surface putih, soft #F7F7FC.
+ * `:root` for `var(--color-*)` di komponen; `@theme` untuk utilitas Tailwind.
+ */
 :root {
+  --color-brand: #1313ba;
+  --color-brand-strong: #0e0e8c;
+  --color-heading: #1313ba;
+  --color-body: #6363c6;
+  --color-body-subtle: #9090ce;
+  --color-border: #e8e8f8;
+  --color-border-default: #e8e8f8;
+  --color-neutral-soft: #f7f7fc;
+  --color-surface: #ffffff;
+  --color-danger: #be123c;
+  --color-success: #15a34a;
+  --color-warning: #f97316;
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1313ba;
 }
 
 .dark {
@@ -19,6 +36,18 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand: #1313BA;
+  --color-brand-strong: #0E0E8C;
+  --color-heading: #1313BA;
+  --color-body: #6363C6;
+  --color-body-subtle: #9090CE;
+  --color-border: #E8E8F8;
+  --color-border-default: #E8E8F8;
+  --color-neutral-soft: #F7F7FC;
+  --color-surface: #FFFFFF;
+  --color-danger: #BE123C;
+  --color-success: #15A34A;
+  --color-warning: #F97316;
   --color-lamaSky: #C3EBFA;
   --color-lamaSkyLight: #EDF9FD;
   --color-lamaPurple: #CFCEFF;
@@ -36,7 +65,7 @@ html {
 
 body {
   background: var(--background);
-  color: var(--foreground);
+  color: var(--color-body);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -98,18 +127,18 @@ body {
   }
 }
 
-/* CTA hero PPDB — denyut bayangan + sapuan kilau */
+/* CTA hero PPDB — denyut bayangan + sapuan kilau (brand #1313BA) */
 @keyframes teknovo-cta-glow-pulse {
   0%,
   100% {
     box-shadow:
-      0 10px 25px -5px rgb(37 99 235 / 0.38),
-      0 0 0 0 rgb(59 130 246 / 0);
+      0 10px 25px -5px rgb(19 19 186 / 0.38),
+      0 0 0 0 rgb(19 19 186 / 0);
   }
   50% {
     box-shadow:
-      0 14px 40px -8px rgb(37 99 235 / 0.55),
-      0 0 28px 2px rgb(96 165 250 / 0.4);
+      0 14px 40px -8px rgb(19 19 186 / 0.55),
+      0 0 28px 2px rgb(99 99 198 / 0.4);
   }
 }
 
@@ -391,6 +420,6 @@ body {
 @layer components {
   .teknovo-calendar-has-data > button::after {
     content: "";
-    @apply absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-indigo-500 dark:bg-indigo-400;
+    @apply absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-brand;
   }
 }

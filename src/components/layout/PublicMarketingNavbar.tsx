@@ -4,11 +4,12 @@
  * Three-tier marketing navbar — announcement + main (contact/brand/actions) + bottom (nav/search).
  * Self-contained chrome for the public site layout.
  */
-import { Mail, Menu, Phone, Search, X } from "lucide-react";
+import { ChevronDown, Mail, Menu, Phone, Search, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
   useId,
+  useRef,
   useState,
   type FormEvent,
   type ReactElement,
@@ -41,6 +42,7 @@ import {
   PUBLIC_SITE_MAIN_NAV,
   PUBLIC_SITE_PORTAL_LOGIN_HREF,
   PUBLIC_SITE_PPDB_HREF,
+  type PublicSiteNavGroup,
 } from "@/lib/public-site-nav";
 import { cn } from "@/lib/utils";
 
@@ -77,7 +79,8 @@ const navLinkClassName = cn(
   "h-auto rounded-none bg-transparent px-0 text-sm font-medium text-[color:var(--color-heading)] shadow-none hover:bg-transparent hover:text-[color:var(--color-brand-strong)] focus:bg-transparent focus:text-[color:var(--color-brand-strong)] data-[state=open]:bg-transparent data-[state=open]:text-[color:var(--color-brand)] data-[state=open]:shadow-none",
 );
 
-const navLinkActiveClassName = "text-[color:var(--color-brand)] underline decoration-2 underline-offset-4";
+const navLinkActiveClassName =
+  "text-[color:var(--color-brand)] underline decoration-2 underline-offset-4";
 
 function buildSearchHref(categoryId: SearchCategoryId, query: string): string {
   const category =
@@ -90,9 +93,57 @@ function buildSearchHref(categoryId: SearchCategoryId, query: string): string {
   return `${category.href}?${params.toString()}`;
 }
 
+function MobileNavGroup({
+  entry,
+  onNavigate,
+}: {
+  entry: PublicSiteNavGroup;
+  onNavigate: () => void;
+}): ReactElement {
+  const groupId = useId();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="border-t border-[color:var(--color-border-default)] first:border-t-0">
+      <button
+        type="button"
+        id={`${groupId}-trigger`}
+        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm font-medium text-[color:var(--color-heading)]"
+        aria-expanded={open}
+        aria-controls={`${groupId}-panel`}
+        onClick={() => setOpen((value) => !value)}
+      >
+        {entry.label}
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-[color:var(--color-body-subtle)] transition-transform duration-200",
+            open && "rotate-180 text-[color:var(--color-brand)]",
+          )}
+          aria-hidden
+        />
+      </button>
+      {open ? (
+        <div id={`${groupId}-panel`} role="region" aria-labelledby={`${groupId}-trigger`} className="space-y-0.5 pb-2">
+          {entry.items.map((item) => (
+            <PublicSiteLink
+              key={item.href}
+              href={item.href}
+              className="block px-3 py-2 pl-5 text-sm text-[color:var(--color-body)] hover:text-[color:var(--color-heading)]"
+              onClick={onNavigate}
+            >
+              {item.label}
+            </PublicSiteLink>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function PublicMarketingNavbar(): ReactElement {
   const pathname = usePublicSitePathname();
   const router = useRouter();
+  const headerRef = useRef<HTMLElement>(null);
   const mobileNavId = useId();
   const searchInputId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -112,6 +163,21 @@ export function PublicMarketingNavbar(): ReactElement {
     return () => window.removeEventListener("keydown", onKey);
   }, [mobileOpen]);
 
+  /** Keep sticky offset tokens in sync with real three-tier (+ mobile) height. */
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header || typeof ResizeObserver === "undefined") return;
+
+    const syncNavBottom = () => {
+      header.style.setProperty("--public-nav-bottom", `${header.offsetHeight}px`);
+    };
+
+    syncNavBottom();
+    const observer = new ResizeObserver(syncNavBottom);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, [mobileOpen]);
+
   function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     router.push(buildSearchHref(searchCategory, searchQuery));
@@ -120,9 +186,10 @@ export function PublicMarketingNavbar(): ReactElement {
 
   return (
     <header
+      ref={headerRef}
       className={cn(
         "sticky top-0 z-50 w-full overflow-visible bg-[color:var(--color-surface)]",
-        "[--public-nav-bottom:10.5rem] sm:[--public-nav-bottom:10.75rem]",
+        "[--public-nav-bottom:11rem]",
       )}
     >
       {/* Announcement bar */}
@@ -171,7 +238,7 @@ export function PublicMarketingNavbar(): ReactElement {
             className="col-start-2 justify-self-center shrink-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20"
             aria-label={`Beranda ${BRAND_SHORT}`}
           >
-            <BrandLogoMark pixelSize={32} shine priority roundedClassName="rounded-none" />
+            <BrandLogoMark pixelSize={48} shine priority roundedClassName="rounded-none" />
           </PublicSiteLink>
 
           {/* Actions — end */}
@@ -206,14 +273,20 @@ export function PublicMarketingNavbar(): ReactElement {
         </div>
       </div>
 
-      {/* Bottom bar */}
-      <div className="border-b border-[color:var(--color-border-default)] py-3">
-        <div className={cn(tierContainerClassName, "justify-between gap-4")}>
+      {/* Bottom bar — primary nav (≥768) + search */}
+      <div className="overflow-visible border-b border-[color:var(--color-border-default)] py-3">
+        <div
+          className={cn(
+            tierContainerClassName,
+            "flex-col items-stretch gap-3 overflow-visible lg:flex-row lg:items-center lg:justify-between lg:gap-4",
+          )}
+        >
           <NavigationMenu
-            className="hidden max-w-none min-w-0 flex-1 justify-start lg:flex"
+            className="hidden max-w-none min-w-0 flex-1 justify-start md:flex"
             viewportVariant="public-mega"
+            delayDuration={120}
           >
-            <NavigationMenuList className="flex-nowrap justify-start gap-6">
+            <NavigationMenuList className="flex-wrap justify-start gap-x-6 gap-y-2">
               {PUBLIC_SITE_MAIN_NAV.map((entry) => {
                 const active = isPublicSiteNavEntryActive(pathname, entry);
 
@@ -251,7 +324,7 @@ export function PublicMarketingNavbar(): ReactElement {
 
           <form
             onSubmit={onSearchSubmit}
-            className="ml-auto hidden w-full max-w-[480px] md:flex"
+            className="hidden w-full max-w-none md:flex lg:ml-auto lg:max-w-[480px]"
             role="search"
             aria-label="Cari konten sekolah"
           >
@@ -263,7 +336,7 @@ export function PublicMarketingNavbar(): ReactElement {
                 id={`${searchInputId}-category`}
                 value={searchCategory}
                 onChange={(event) => setSearchCategory(event.target.value as SearchCategoryId)}
-                className="h-10 shrink-0 border-0 border-r border-[color:var(--color-border-default)] bg-[color:var(--color-surface)] px-3 text-sm font-medium text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20"
+                className="hidden h-10 shrink-0 border-0 border-r border-[color:var(--color-border-default)] bg-[color:var(--color-surface)] px-3 text-sm font-medium text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 lg:block"
               >
                 {SEARCH_CATEGORIES.map((category) => (
                   <option key={category.id} value={category.id}>
@@ -293,14 +366,17 @@ export function PublicMarketingNavbar(): ReactElement {
         </div>
       </div>
 
-      {/* Mobile menu — ≤768px via .ds-menu-toggle companion panel */}
+      {/* Mobile menu — &lt;768px via .ds-menu-toggle companion panel */}
       {mobileOpen ? (
         <div
           id={mobileNavId}
           className="ds-mobile-nav border-b border-[color:var(--color-border-default)] bg-[color:var(--color-surface)]"
         >
           <nav
-            className={cn(tierContainerClassName, "max-h-[70vh] flex-col items-stretch gap-1 overflow-y-auto py-3")}
+            className={cn(
+              tierContainerClassName,
+              "max-h-[70vh] flex-col items-stretch gap-1 overflow-y-auto py-3",
+            )}
             aria-label="Menu situs"
           >
             {PUBLIC_SITE_MAIN_NAV.map((entry) => {
@@ -312,7 +388,8 @@ export function PublicMarketingNavbar(): ReactElement {
                     href={entry.href}
                     className={cn(
                       "block border border-transparent px-3 py-2.5 text-sm font-medium text-[color:var(--color-heading)]",
-                      active && "border-[color:var(--color-border-default)] bg-[color:var(--color-border-default)]/40",
+                      active &&
+                        "border-[color:var(--color-border-default)] bg-[color:var(--color-border-default)]/40",
                     )}
                     onClick={() => setMobileOpen(false)}
                   >
@@ -322,24 +399,11 @@ export function PublicMarketingNavbar(): ReactElement {
               }
 
               return (
-                <div
+                <MobileNavGroup
                   key={entry.id}
-                  className="space-y-1 border-t border-[color:var(--color-border-default)] pt-2 first:border-t-0 first:pt-0"
-                >
-                  <p className="px-3 text-xs font-semibold uppercase tracking-wide text-[color:var(--color-body-subtle)]">
-                    {entry.label}
-                  </p>
-                  {entry.items.map((item) => (
-                    <PublicSiteLink
-                      key={item.href}
-                      href={item.href}
-                      className="block px-3 py-2 text-sm text-[color:var(--color-body)] hover:text-[color:var(--color-heading)]"
-                      onClick={() => setMobileOpen(false)}
-                    >
-                      {item.label}
-                    </PublicSiteLink>
-                  ))}
-                </div>
+                  entry={entry}
+                  onNavigate={() => setMobileOpen(false)}
+                />
               );
             })}
 

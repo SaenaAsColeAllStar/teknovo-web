@@ -83,7 +83,7 @@ export default function RootLayout({
           <link rel="preload" as="image" href={LANDING_MEDIA.hero.bg01Webp} fetchPriority="high" />
         </head>
         <body
-          className={`${poppins.className} flex min-h-screen min-h-dvh flex-col overflow-x-hidden bg-slate-50 font-sans text-slate-900 dark:bg-slate-950 dark:text-slate-100`}
+          className={`${poppins.className} flex min-h-screen min-h-dvh flex-col overflow-x-hidden bg-surface font-sans text-body`}
         >
           <AppProviders>{children}</AppProviders>
         </body>

@@ -49,7 +49,7 @@ NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName;
 const NavigationMenuItem = NavigationMenuPrimitive.Item;
 
 const navigationMenuTriggerStyle = cva(
-  "group inline-flex h-9 w-max items-center justify-center rounded-md px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-blue-600 focus:bg-slate-100 focus:text-blue-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-blue-600 data-[state=open]:text-white data-[state=open]:shadow-sm hover:data-[state=open]:bg-blue-700 hover:data-[state=open]:text-white focus:data-[state=open]:bg-blue-700 focus:data-[state=open]:text-white dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-blue-400 dark:focus:bg-slate-800 dark:focus:text-blue-400 dark:data-[state=open]:bg-blue-500 dark:data-[state=open]:text-white dark:hover:data-[state=open]:bg-blue-600 dark:focus:data-[state=open]:bg-blue-600 dark:focus-visible:ring-offset-slate-950",
+  "group inline-flex h-9 w-max items-center justify-center rounded-none px-2.5 text-sm font-medium text-heading transition-colors hover:bg-border-default/55 hover:text-brand-strong focus:bg-border-default/55 focus:text-brand-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 focus-visible:ring-offset-2 focus-visible:ring-offset-surface disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-brand data-[state=open]:text-white data-[state=open]:shadow-none hover:data-[state=open]:bg-brand-strong hover:data-[state=open]:text-white focus:data-[state=open]:bg-brand-strong focus:data-[state=open]:text-white",
 );
 
 const NavigationMenuTrigger = forwardRef<
@@ -63,7 +63,7 @@ const NavigationMenuTrigger = forwardRef<
   >
     {children}
     <ChevronDown
-      className="relative top-px ml-1 h-3.5 w-3.5 shrink-0 opacity-70 transition duration-300 group-data-[state=open]:rotate-180 group-data-[state=open]:text-white"
+      className="relative top-px ml-1 size-3.5 shrink-0 opacity-70 transition duration-300 group-data-[state=open]:rotate-180"
       aria-hidden
     />
   </NavigationMenuPrimitive.Trigger>
@@ -97,15 +97,16 @@ const NavigationMenuViewport = forwardRef<
   <div
     className={cn(
       "absolute left-0 top-full flex justify-center",
+      // Anchor to sticky header bottom (nearest positioned ancestor), not a guessed rem offset.
       variant === "public-mega" &&
-        "pointer-events-none fixed inset-x-0 top-[var(--public-nav-bottom,10.5rem)] z-40 justify-center px-4",
+        "pointer-events-none inset-x-0 z-[60] justify-center px-4",
     )}
   >
     <NavigationMenuPrimitive.Viewport
       className={cn(
-        "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-xl border border-slate-200 bg-white text-slate-900 shadow-lg transition-[width,height] duration-300 ease-out dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 md:w-[var(--radix-navigation-menu-viewport-width)]",
+        "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-none border border-border-default bg-surface text-heading shadow-[0_16px_40px_-24px_rgb(19_19_186/0.28)] transition-[width,height] duration-300 ease-out md:w-[var(--radix-navigation-menu-viewport-width)]",
         variant === "public-mega" &&
-          "pointer-events-auto mt-0 w-[min(100vw-2rem,72rem)] max-w-[min(100vw-2rem,72rem)] origin-top rounded-b-xl rounded-t-none border-x-0 border-t border-slate-200/90 shadow-2xl md:w-[min(100vw-2rem,72rem)]",
+          "pointer-events-auto mt-0 w-[min(100vw-2rem,72rem)] max-w-[min(100vw-2rem,72rem)] origin-top rounded-none border border-border-default bg-surface text-heading shadow-[0_16px_40px_-24px_rgb(19_19_186/0.35)] md:w-[min(100vw-2rem,72rem)]",
         className,
       )}
       ref={ref}
@@ -127,7 +128,7 @@ const NavigationMenuIndicator = forwardRef<
     )}
     {...props}
   >
-    <div className="relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-blue-600 shadow-md dark:bg-blue-400" />
+    <div className="relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-brand shadow-md" />
   </NavigationMenuPrimitive.Indicator>
 ));
 NavigationMenuIndicator.displayName = NavigationMenuPrimitive.Indicator.displayName;

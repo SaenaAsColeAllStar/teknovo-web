@@ -28,12 +28,14 @@ export const BERITA_KEGIATAN_PAGE_LEDE =
 
 export const BERITA_HOME_ARCHIVE_EYEBROW = "Arsip berita" as const;
 
-export const BERITA_HOME_ARCHIVE_TITLE = "Artikel siswa & berita sekolah" as const;
+export const BERITA_HOME_ARCHIVE_TITLE = "Berita & Artikel" as const;
 
 export const BERITA_HOME_ARCHIVE_LEDE =
-  "Tulisan siswa yang telah disetujui redaksi dan berita kegiatan resmi—satu arsip untuk mengikuti kehidupan sekolah." as const;
+  "Sorotan kegiatan sekolah, tulisan siswa setelah redaksi, dan pengumuman resmi—ikuti kabar terbaru dari SMK Teknovo." as const;
 
 export const BERITA_HOME_ARCHIVE_LINK_LABEL = "Lihat semua berita" as const;
+
+export const BERITA_HOME_READ_MORE_LABEL = "Baca selengkapnya" as const;
 
 export const BERITA_EMPTY_TERBARU =
   "Belum ada berita yang dipublikasikan. Artikel siswa dan berita kegiatan akan tampil di sini setelah proses redaksi dan persetujuan selesai." as const;
