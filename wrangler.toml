@@ -15,6 +15,11 @@ binding = "ASSETS"
 binding = "WORKER_SELF_REFERENCE"
 service = "teknovo-web"
 
+# CMS content + media (JSON berita/kategori + uploads)
+[[r2_buckets]]
+binding = "CMS_BUCKET"
+bucket_name = "teknovo"
+
 # Optional: incremental cache via R2 — uncomment after creating the bucket
 # [[r2_buckets]]
 # binding = "NEXT_INC_CACHE_R2_BUCKET"
@@ -26,3 +31,4 @@ service = "teknovo-web"
 
 [vars]
 NEXT_PUBLIC_APP_URL = "https://www.smkteknovo.sch.id"
+R2_PUBLIC_URL = "https://r2.ctos.web.id"

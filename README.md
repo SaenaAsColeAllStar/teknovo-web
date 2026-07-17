@@ -35,6 +35,21 @@ pnpm dev
 ## Deploy notes
 
 1. Cloudflare account + Workers (OpenNext memakai Workers, bukan Pages legacy `next-on-pages`).
-2. Set secrets/vars (Clerk, `API_URL`, `REVALIDATE_SECRET`).
-3. CI: `.github/workflows/deploy.yml` membutuhkan `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, dan Clerk secrets.
-4. Opsional: R2 bucket untuk incremental cache (`wrangler.toml`).
+2. Set secrets/vars di Workers (Clerk, `R2_PUBLIC_URL`, `REVALIDATE_SECRET`, dll.).
+3. Binding R2: `CMS_BUCKET` → bucket `teknovo` (lihat `wrangler.toml`).
+4. CI GitHub: `.github/workflows/deploy.yml` membutuhkan `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, dan Clerk secrets.
+
+### Workers Builds (dashboard Cloudflare)
+
+Jangan pakai `pnpm run build` — itu hanya `next build` dan **tidak** menghasilkan `.open-next/`.
+
+Di **Workers → Settings → Build**:
+
+| Setting | Nilai |
+|---------|--------|
+| Build command | `pnpm run build:cf` |
+| Deploy command | `npx wrangler deploy` |
+
+Alternatif resmi OpenNext: build `npx opennextjs-cloudflare build`, deploy `npx opennextjs-cloudflare deploy`.
+
+Setelah ubah setting, trigger ulang deploy.

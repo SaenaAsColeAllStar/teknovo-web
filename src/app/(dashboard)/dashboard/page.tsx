@@ -86,7 +86,7 @@ export default async function DashboardHomePage() {
             </code>
           </p>
           <p>
-            Clerk: autentikasi aktif via middleware. Webhook stub di{" "}
+            Clerk: autentikasi aktif via proxy. Webhook stub di{" "}
             <code>/api/webhook/clerk</code>.
           </p>
         </CardContent>

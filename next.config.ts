@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "r2.ctos.web.id",
+      },
+      {
+        protocol: "https",
         hostname: "img.clerk.com",
       },
     ],

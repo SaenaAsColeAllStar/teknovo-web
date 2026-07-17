@@ -23,10 +23,10 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 
 Jangan commit `.env.local`. Placeholder `GANTI_*` di `.env.example` sengaja aman.
 
-## 3. Paths & middleware
+## 3. Paths & proxy
 
 - `ClerkProvider` di `src/app/layout.tsx`
-- `clerkMiddleware` + `auth.protect()` untuk `/dashboard(.*)` di `src/middleware.ts`
+- `clerkMiddleware` + `auth.protect()` untuk `/dashboard(.*)` di `src/proxy.ts`
 - UI: `/sign-in`, `/sign-up` (Clerk `<SignIn />` / `<SignUp />`)
 - Sidebar CMS: `<UserButton />`
 
