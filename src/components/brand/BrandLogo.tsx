@@ -44,7 +44,7 @@ export function BrandLogo({
   );
 
   const wordmarkTone =
-    tone === "light" ? "text-white" : "text-slate-900 dark:text-white";
+    tone === "light" ? "text-white" : "text-heading";
   const subTone = tone === "light" ? "text-white/75" : "text-slate-600 dark:text-slate-400";
 
   const compactWordmark = (
@@ -100,7 +100,7 @@ export function BrandLogo({
   return (
     <PublicSiteLink
       href={href}
-      className="inline-flex min-w-0 shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+      className="inline-flex min-w-0 shrink-0 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
       onClick={onNavigate}
     >
       {inner}

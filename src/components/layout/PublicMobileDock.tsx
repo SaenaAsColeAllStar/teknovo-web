@@ -39,7 +39,7 @@ function DockWave(): ReactElement {
     <svg
       viewBox="0 0 390 36"
       preserveAspectRatio="none"
-      className="pointer-events-none absolute inset-x-0 -top-[1.65rem] h-9 w-full text-white dark:text-slate-950"
+      className="pointer-events-none absolute inset-x-0 -top-[1.65rem] h-9 w-full text-white text-surface"
       aria-hidden
     >
       <path
@@ -79,7 +79,7 @@ function DockTab({
           {active ? (
             <m.span
               layoutId="public-mobile-dock-active"
-              className="absolute inset-0 rounded-2xl bg-blue-600 shadow-md shadow-blue-600/25"
+              className="absolute inset-0 rounded-2xl bg-brand shadow-md shadow-brand/25"
               transition={reduceMotion ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }}
             />
           ) : null}
@@ -104,7 +104,7 @@ function DockPpdbPill({ active, reduceMotion }: { active: boolean; reduceMotion:
         aria-current={active ? "page" : undefined}
         className={cn(
           "pointer-events-auto relative isolate flex w-full items-center justify-center gap-2 overflow-hidden rounded-t-[1.75rem] px-5 py-2.5 text-sm font-semibold tracking-wide text-white shadow-[0_12px_28px_-12px_rgba(37,99,235,0.65)] transition-colors",
-          active ? "bg-blue-700 ring-2 ring-blue-300/70" : "bg-blue-600 hover:bg-blue-700",
+          active ? "bg-brand-strong ring-2 ring-brand/40" : "bg-brand hover:bg-brand-strong",
         )}
       >
         <WhiteLightSweep roundedClassName="rounded-t-[1.75rem]" />
@@ -130,7 +130,7 @@ export function PublicMobileDock(): ReactElement {
         transition={dockEnterTransition}
       >
         <div className="relative mx-auto max-w-lg px-2 pb-[max(0.35rem,env(safe-area-inset-bottom,0px))]">
-          <div className="relative overflow-hidden rounded-t-[1.75rem] border border-slate-200/90 bg-white pt-8 shadow-[0_-18px_40px_-24px_rgba(15,23,42,0.45)] dark:border-slate-800/90 dark:bg-slate-950">
+          <div className="relative overflow-hidden rounded-t-[1.75rem] border border-border-default/90 bg-surface pt-8 shadow-[0_-18px_40px_-24px_rgb(19_19_186/0.28)]">
             <DockWave />
             <DockPpdbPill active={ppdbActive} reduceMotion={Boolean(reduceMotion)} />
             <ul className="relative grid grid-cols-5 items-end px-1 pb-1">

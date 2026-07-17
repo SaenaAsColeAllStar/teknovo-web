@@ -20,9 +20,11 @@ export const TEKNOVO_UI_COLORS = {
 /** Nama variabel CSS — konsumsi via globals.css @theme di masing-masing app. */
 export const TEKNOVO_UI_CSS_VARS = {
   brand: "--color-brand",
+  border: "--color-border",
   borderDefault: "--color-border-default",
   heading: "--color-heading",
   body: "--color-body",
+  neutralSoft: "--color-neutral-soft",
   surface: "--color-surface",
 } as const;
 

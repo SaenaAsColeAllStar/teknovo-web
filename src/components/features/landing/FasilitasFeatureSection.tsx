@@ -161,7 +161,7 @@ function LmsMock(): ReactElement {
           ].map((row) => (
             <div
               key={row.label}
-              className="flex items-center justify-between gap-2 rounded-lg bg-[#F8F8FC] px-2 py-1"
+              className="flex items-center justify-between gap-2 rounded-lg bg-neutral-soft px-2 py-1"
             >
               <span className="text-[10px] font-medium text-heading">{row.label}</span>
               <span
@@ -239,7 +239,7 @@ function LabMock(): ReactElement {
           {["CAD", "CNC", "Hotel"].map((label) => (
             <span
               key={label}
-              className="rounded-md bg-[#F8F8FC] py-1 text-center text-[9px] font-semibold text-body"
+              className="rounded-md bg-neutral-soft py-1 text-center text-[9px] font-semibold text-body"
             >
               {label}
             </span>
@@ -258,7 +258,7 @@ function PerpustakaanMock(): ReactElement {
   return (
     <div className="relative h-[11.5rem] w-full sm:h-[12.5rem]" aria-hidden>
       <div className="absolute -left-1 top-1 z-10 w-[64%] rounded-xl border border-border-default bg-white p-2.5 shadow-sm">
-        <div className="flex items-center gap-2 rounded-lg bg-[#F8F8FC] px-2 py-1.5">
+        <div className="flex items-center gap-2 rounded-lg bg-neutral-soft px-2 py-1.5">
           <Search className="size-3.5 shrink-0 text-body-subtle" />
           <span className="truncate text-[10px] text-body">Cari judul / penulis…</span>
         </div>
@@ -324,7 +324,7 @@ export function FasilitasFeatureSection({
     >
       <div className="public-site-container">
         <MotionInView as="header" className="mx-auto max-w-3xl text-center">
-          <p className="inline-flex items-center gap-1.5 rounded-full border border-border-default bg-[#F8F8FC] px-3 py-1 text-xs font-semibold text-brand">
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-border-default bg-neutral-soft px-3 py-1 text-xs font-semibold text-brand">
             <Sparkles className="size-3.5 shrink-0" aria-hidden />
             Fasilitas digital
           </p>
@@ -337,7 +337,7 @@ export function FasilitasFeatureSection({
         </MotionInView>
 
         <div className="mt-8 flex justify-center sm:mt-10" role="tablist" aria-label="Pilih fasilitas">
-          <div className="inline-flex max-w-full flex-wrap justify-center gap-0.5 rounded-full border border-border-default bg-[#F8F8FC] p-1">
+          <div className="inline-flex max-w-full flex-wrap justify-center gap-0.5 rounded-full border border-border-default bg-neutral-soft p-1">
             {FEATURES.map((feature) => {
               const isActive = feature.id === activeId;
               return (
@@ -405,7 +405,7 @@ export function FasilitasFeatureSection({
                       </p>
                     </div>
 
-                    <div className="relative mt-auto overflow-hidden border-t border-border-default bg-[#F8F8FC] px-3 pb-2 pt-4">
+                    <div className="relative mt-auto overflow-hidden border-t border-border-default bg-neutral-soft px-3 pb-2 pt-4">
                       {feature.mock}
                     </div>
                   </button>

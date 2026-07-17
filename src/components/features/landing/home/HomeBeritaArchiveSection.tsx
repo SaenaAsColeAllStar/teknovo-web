@@ -45,7 +45,7 @@ function BacaSelengkapnya({ className }: { className?: string }): ReactElement {
   return (
     <span
       className={cn(
-        "inline-flex w-fit items-center gap-1.5 border border-[#E8E8F8] bg-transparent px-3 py-1.5 text-sm font-medium text-[#1313BA] transition-colors group-hover:border-[#1313BA]/40 group-hover:bg-[#E8E8F8]/60",
+        "inline-flex w-fit items-center gap-1.5 border border-border-default bg-transparent px-3 py-1.5 text-sm font-medium text-brand transition-colors group-hover:border-brand/40 group-hover:bg-border-default/60",
         className,
       )}
     >
@@ -65,7 +65,7 @@ function BlogFeaturedCard({ item }: { item: BeritaItem }): ReactElement {
         className={cn(
           "relative w-full shrink-0 overflow-hidden rounded-lg",
           "aspect-[4/3] sm:aspect-[5/4] lg:aspect-auto lg:h-[48%] lg:min-h-[12rem]",
-          hasCover ? publicOptimizedImageContainerClassName : "bg-[#1313BA]",
+          hasCover ? publicOptimizedImageContainerClassName : "bg-brand",
         )}
       >
         {hasCover ? (
@@ -85,22 +85,22 @@ function BlogFeaturedCard({ item }: { item: BeritaItem }): ReactElement {
       </div>
 
       <div className="mt-5 flex min-h-0 flex-1 flex-col">
-        <h3 className="text-left text-xl font-bold leading-snug tracking-tight text-slate-900 sm:text-2xl">
+        <h3 className="text-left text-xl font-bold leading-snug tracking-tight text-heading sm:text-2xl">
           <PublicSiteLink
             href={href}
-            className="transition-colors hover:text-[#1313BA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1313BA]/30"
+            className="transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
           >
             {item.judul}
           </PublicSiteLink>
         </h3>
 
-        <p className="mt-3 line-clamp-4 text-left text-sm leading-relaxed text-slate-600 sm:text-[15px]">
+        <p className="mt-3 line-clamp-4 text-left text-sm leading-relaxed text-body sm:text-[15px]">
           {item.ringkasan}
         </p>
 
         <PublicSiteLink
           href={href}
-          className="group mt-auto inline-flex pt-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1313BA]/30"
+          className="group mt-auto inline-flex pt-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
         >
           <BacaSelengkapnya />
         </PublicSiteLink>
@@ -113,21 +113,21 @@ function BlogStandardCard({ item }: { item: BeritaItem }): ReactElement {
   const href = item.detailHref ?? "/berita/berita-terbaru";
 
   return (
-    <article className="flex h-full min-h-0 flex-col border border-[#E8E8F8] bg-white p-5 sm:p-6">
-      <h3 className="text-left text-base font-bold leading-snug tracking-tight text-slate-900 sm:text-lg">
+    <article className="flex h-full min-h-0 flex-col border border-border-default bg-surface p-5 sm:p-6">
+      <h3 className="text-left text-base font-bold leading-snug tracking-tight text-heading sm:text-lg">
         <PublicSiteLink
           href={href}
-          className="transition-colors hover:text-[#1313BA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1313BA]/30"
+          className="transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
         >
           {item.judul}
         </PublicSiteLink>
       </h3>
 
-      <p className="mt-2 line-clamp-3 text-left text-sm leading-relaxed text-slate-600">{item.ringkasan}</p>
+      <p className="mt-2 line-clamp-3 text-left text-sm leading-relaxed text-body">{item.ringkasan}</p>
 
       <PublicSiteLink
         href={href}
-        className="group mt-auto inline-flex pt-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1313BA]/30"
+        className="group mt-auto inline-flex pt-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
       >
         <BacaSelengkapnya />
       </PublicSiteLink>
@@ -153,18 +153,18 @@ export function HomeBeritaArchiveSection({
       as="section"
       id="berita-terbaru"
       aria-labelledby="berita-terbaru-heading"
-      className="scroll-mt-20 border-b border-[#E8E8F8] bg-white py-14 sm:py-16 lg:py-20"
+      className="scroll-mt-20 border-b border-border-default bg-surface py-14 sm:py-16 lg:py-20"
     >
       <div className="public-site-container">
         <div className="mx-auto max-w-6xl">
           <MotionInView as="header" className="mx-auto max-w-2xl text-center">
             <h2
               id="berita-terbaru-heading"
-              className="text-3xl font-bold tracking-tight text-[#1313BA] sm:text-4xl"
+              className="text-3xl font-bold tracking-tight text-heading sm:text-4xl"
             >
               {BERITA_HOME_ARCHIVE_TITLE}
             </h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
+            <p className="mt-3 text-sm leading-relaxed text-body sm:text-base">
               {BERITA_HOME_ARCHIVE_LEDE}
             </p>
           </MotionInView>

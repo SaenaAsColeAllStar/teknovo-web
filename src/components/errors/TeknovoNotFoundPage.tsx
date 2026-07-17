@@ -47,7 +47,7 @@ export function TeknovoNotFoundPage({
   return (
     <main
       className={cn(
-        "relative isolate flex min-h-[100dvh] w-full flex-col overflow-x-hidden bg-white",
+        "relative isolate flex min-h-[100dvh] w-full flex-col overflow-x-hidden bg-surface",
         escapePublicChrome && "fixed inset-0 z-[200] overflow-y-auto",
         className,
       )}
@@ -80,7 +80,7 @@ export function TeknovoNotFoundPage({
                   href={href}
                   className={cn(
                     "group flex min-w-0 flex-1 flex-col items-center justify-center gap-2 border border-border-default bg-surface px-2 py-4",
-                    "transition-colors hover:border-brand/40 hover:bg-[#E8E8F8]/60",
+                    "transition-colors hover:border-brand/40 hover:bg-border-default/60",
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2",
                   )}
                 >

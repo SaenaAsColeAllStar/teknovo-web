@@ -111,7 +111,7 @@ export function SocialProofCarousel({ slides }: SocialProofCarouselProps): React
           <button
             type="button"
             onClick={goPrev}
-            className="absolute top-1/2 left-0 z-10 flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border-default bg-white text-heading shadow-sm transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:size-11"
+            className="absolute top-1/2 left-0 z-10 flex size-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border-default bg-surface text-heading shadow-sm transition hover:bg-neutral-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:size-11"
             aria-label="Slide sebelumnya"
           >
             <IcoChevronLeft className="size-5" />
@@ -119,7 +119,7 @@ export function SocialProofCarousel({ slides }: SocialProofCarouselProps): React
           <button
             type="button"
             onClick={goNext}
-            className="absolute top-1/2 right-0 z-10 flex size-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border-default bg-white text-heading shadow-sm transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:size-11"
+            className="absolute top-1/2 right-0 z-10 flex size-10 translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-border-default bg-surface text-heading shadow-sm transition hover:bg-neutral-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 sm:size-11"
             aria-label="Slide berikutnya"
           >
             <IcoChevronRight className="size-5" />

@@ -5,7 +5,7 @@ import { WhiteLightSweep } from "@/components/motion/WhiteLightSweep";
 import { cn } from "@/lib/utils";
 
 const ppdbCtaBaseClass =
-  "relative isolate inline-flex items-center justify-center overflow-hidden rounded-xl bg-blue-600 text-sm font-semibold text-white ring-2 ring-blue-300/70 ring-offset-2 ring-offset-slate-50 transition hover:bg-blue-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:ring-blue-400/50 dark:ring-offset-slate-950 dark:focus-visible:ring-offset-slate-950";
+  "relative isolate inline-flex items-center justify-center overflow-hidden rounded-none bg-brand text-sm font-semibold text-white ring-2 ring-brand/30 ring-offset-2 ring-offset-surface transition hover:bg-brand-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface";
 
 type PpdbCtaLinkProps = {
   href: string;

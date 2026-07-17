@@ -56,25 +56,25 @@ function MatrixCell({
       delay={0.04 * index}
       className={cn(
         "flex flex-col items-center px-4 py-8 text-center sm:px-5 sm:py-10",
-        !isLast && "border-b border-[#E8E8F8]",
+        !isLast && "border-b border-border-default",
         "sm:border-b-0",
-        isNotLastRow && "sm:border-b sm:border-[#E8E8F8]",
-        isNotLastCol && "sm:border-r sm:border-[#E8E8F8]",
+        isNotLastRow && "sm:border-b sm:border-border-default",
+        isNotLastCol && "sm:border-r sm:border-border-default",
       )}
     >
       <span
-        className="flex size-11 items-center justify-center rounded-full border border-[#E8E8F8] bg-white text-[#1313BA]"
+        className="flex size-11 items-center justify-center rounded-full border border-border-default bg-surface text-brand"
         aria-hidden
       >
         <Icon className="size-5" strokeWidth={1.75} />
       </span>
       <PublicSiteLink
         href={item.href}
-        className="mt-4 text-base font-bold tracking-tight text-slate-900 transition-colors hover:text-[#1313BA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1313BA]/30"
+        className="mt-4 text-base font-bold tracking-tight text-heading transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30"
       >
         {item.title}
       </PublicSiteLink>
-      <p className="mt-2 max-w-[16rem] text-sm leading-relaxed text-slate-600">{item.description}</p>
+      <p className="mt-2 max-w-[16rem] text-sm leading-relaxed text-body">{item.description}</p>
     </MotionInView>
   );
 }
@@ -90,24 +90,24 @@ export function ActivitiesShowcaseSectionClient({
     <section
       id="program-ekstrakurikuler"
       aria-labelledby="program-ekstrakurikuler-heading"
-      className="scroll-mt-20 border-b border-[#E8E8F8] bg-white py-14 sm:py-16 lg:py-20"
+      className="scroll-mt-20 border-b border-border-default bg-surface py-14 sm:py-16 lg:py-20"
     >
       <div className="public-site-container">
         <MotionInView as="header" className="mx-auto max-w-2xl text-center">
           <h2
             id="program-ekstrakurikuler-heading"
-            className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl"
+            className="text-3xl font-bold tracking-tight text-heading sm:text-4xl"
           >
             Program & Ekstrakurikuler
           </h2>
-          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-body sm:text-lg">
             {EKSTRA_PAGE_LEDE[0]}
           </p>
         </MotionInView>
 
         <MotionInView
           as="div"
-          className="mt-10 rounded-2xl border border-[#E8E8F8] p-3 sm:mt-12 sm:p-4"
+          className="mt-10 rounded-2xl border border-border-default p-3 sm:mt-12 sm:p-4"
           delay={0.06}
         >
           <ul className="grid grid-cols-1 sm:grid-cols-3">

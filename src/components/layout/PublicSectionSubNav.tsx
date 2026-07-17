@@ -32,7 +32,7 @@ const navLinkBase =
   "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40";
 
 const navShellClassName =
-  "sticky top-[var(--public-nav-bottom,10.5rem)] z-40 border-b border-slate-200/90 bg-white/95 backdrop-blur-md dark:border-slate-800/90 dark:bg-slate-950/95";
+  "sticky top-[var(--public-nav-bottom,10.5rem)] z-40 border-b border-border-default/90 bg-surface/95 backdrop-blur-md";
 
 const navInsetClassName = "-mx-4 px-4 sm:-mx-6 sm:px-6";
 
@@ -59,8 +59,8 @@ export function PublicSectionSubNav({
                 className={cn(
                   navLinkBase,
                   isActive
-                    ? "bg-blue-600 text-white shadow-sm dark:bg-blue-500"
-                    : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
+                    ? "bg-brand text-white shadow-none"
+                    : "text-body hover:bg-neutral-soft",
                 )}
               >
                 {item.label}

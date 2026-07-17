@@ -20,7 +20,7 @@ export async function SocialProofSection(): Promise<ReactElement> {
     <MotionInView
       as="section"
       aria-labelledby="social-proof-heading"
-      className="border-y border-border-default bg-white py-14 sm:py-16"
+      className="border-y border-border-default bg-surface py-14 sm:py-16"
     >
       <div className="public-site-container">
         <MotionInView as="header" className="mx-auto max-w-2xl text-center">
@@ -52,7 +52,7 @@ export async function SocialProofSection(): Promise<ReactElement> {
                   <CounterUpNumber value={s.value} suffix={s.suffix} />
                 </span>
               </p>
-              <p className="mt-1 text-sm font-medium text-slate-600">{s.label}</p>
+              <p className="mt-1 text-sm font-medium text-body">{s.label}</p>
             </li>
           ))}
         </ul>

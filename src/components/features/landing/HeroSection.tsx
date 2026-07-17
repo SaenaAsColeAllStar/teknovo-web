@@ -50,7 +50,7 @@ export function HeroSection(): ReactElement {
   return (
     <section
       id="beranda"
-      className="relative isolate min-h-[100svh] w-full overflow-hidden bg-slate-900 text-white"
+      className="relative isolate min-h-[100svh] w-full overflow-hidden bg-brand-strong text-white"
       aria-label="Beranda SMK TEKNOVO"
     >
       {/* Full-bleed media */}
@@ -94,7 +94,7 @@ export function HeroSection(): ReactElement {
 
         {/* Soft readability wash — not a card/badge overlay */}
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/25 to-slate-950/35"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-strong/80 via-brand-strong/30 to-brand-strong/40"
           aria-hidden
         />
       </div>
@@ -125,7 +125,7 @@ export function HeroSection(): ReactElement {
             <p className="max-w-md text-base leading-relaxed text-white/85 sm:text-lg">{HOME_HERO_LEDE}</p>
             <PublicSiteLink
               href={PUBLIC_SITE_PPDB_HREF}
-              className="group inline-flex items-center gap-2 border border-[#E8E8F8]/40 bg-[#1313BA] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1010a0] focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              className="group inline-flex items-center gap-2 border border-border-default/40 bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
             >
               {HOME_HERO_CTA_LABEL}
               <ArrowRight
@@ -166,7 +166,7 @@ export function HeroSection(): ReactElement {
                         className={cn(
                           "relative block size-14 overflow-hidden rounded-md border-2 transition sm:size-16",
                           selected
-                            ? "border-white ring-2 ring-[#1313BA]"
+                            ? "border-white ring-2 ring-brand"
                             : "border-white/30 opacity-80 hover:opacity-100",
                         )}
                       >

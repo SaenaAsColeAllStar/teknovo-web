@@ -69,7 +69,7 @@ export function SignInIllustration({ className }: SignInIllustrationProps): Reac
 
       {/* Monitor */}
       <rect x="168" y="168" width="144" height="96" rx="8" fill="#1313BA" />
-      <rect x="176" y="176" width="128" height="72" rx="4" fill="#EEF0FA" />
+      <rect x="176" y="176" width="128" height="72" rx="4" fill="#F7F7FC" />
       <rect x="188" y="190" width="56" height="8" rx="2" fill="#1313BA" fillOpacity="0.35" />
       <rect x="188" y="206" width="88" height="6" rx="2" fill="#9090CE" fillOpacity="0.55" />
       <rect x="188" y="218" width="72" height="6" rx="2" fill="#9090CE" fillOpacity="0.4" />

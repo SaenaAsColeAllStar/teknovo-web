@@ -34,10 +34,10 @@ export function LandingContactForm(): ReactElement {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="mt-6 space-y-4 rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-950"
+      className="mt-6 space-y-4 rounded-none border border-border-default bg-surface p-6"
       noValidate
     >
-      <p className="text-sm font-semibold text-slate-900 dark:text-white">Kirim pertanyaan</p>
+      <p className="text-sm font-semibold text-heading">Kirim pertanyaan</p>
       <div>
         <label htmlFor="landing-contact-name" className="sr-only">
           Nama
@@ -48,14 +48,13 @@ export function LandingContactForm(): ReactElement {
           autoComplete="name"
           placeholder="Nama lengkap"
           className={cn(
-            "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900",
-            "placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
-            "dark:border-slate-700 dark:bg-slate-900 dark:text-white",
+            "w-full rounded-none border border-border-default bg-surface px-3 py-2 text-sm text-heading",
+            "placeholder:text-body-subtle focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20",
           )}
           {...register("name")}
         />
         {errors.name ? (
-          <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.name.message}</p>
+          <p className="mt-1 text-xs text-red-600">{errors.name.message}</p>
         ) : null}
       </div>
       <div>
@@ -68,14 +67,13 @@ export function LandingContactForm(): ReactElement {
           autoComplete="email"
           placeholder="Email"
           className={cn(
-            "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900",
-            "placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
-            "dark:border-slate-700 dark:bg-slate-900 dark:text-white",
+            "w-full rounded-none border border-border-default bg-surface px-3 py-2 text-sm text-heading",
+            "placeholder:text-body-subtle focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20",
           )}
           {...register("email")}
         />
         {errors.email ? (
-          <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.email.message}</p>
+          <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
         ) : null}
       </div>
       <div>
@@ -87,31 +85,30 @@ export function LandingContactForm(): ReactElement {
           rows={4}
           placeholder="Pertanyaan atau pesan Anda"
           className={cn(
-            "w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900",
-            "placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
-            "dark:border-slate-700 dark:bg-slate-900 dark:text-white",
+            "w-full resize-y rounded-none border border-border-default bg-surface px-3 py-2 text-sm text-heading",
+            "placeholder:text-body-subtle focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20",
           )}
           {...register("message")}
         />
         {errors.message ? (
-          <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors.message.message}</p>
+          <p className="mt-1 text-xs text-red-600">{errors.message.message}</p>
         ) : null}
       </div>
       <button
         type="submit"
         className={cn(
-          "w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white",
-          "transition hover:bg-blue-700 dark:hover:bg-blue-500",
+          "w-full rounded-none bg-brand px-4 py-2.5 text-sm font-semibold text-white",
+          "transition hover:bg-brand-strong",
         )}
       >
         Buka aplikasi email
       </button>
       {isSubmitSuccessful ? (
-        <p className="text-center text-xs text-emerald-600 dark:text-emerald-400">
+        <p className="text-center text-xs text-emerald-600">
           Form siap — aplikasi email akan terbuka. Jika tidak, periksa pengaturan perangkat Anda.
         </p>
       ) : null}
-      <p className="text-xs text-slate-500 dark:text-slate-500">
+      <p className="text-xs text-body-subtle">
         Pesan dikirim melalui aplikasi email di perangkat Anda. Untuk pertanyaan mendesak seputar PPDB,
         gunakan WhatsApp resmi di halaman kontak atau PPDB.
       </p>
