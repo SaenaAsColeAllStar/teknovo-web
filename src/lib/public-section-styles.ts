@@ -1,22 +1,22 @@
 /**
  * Lapisan lebar penuh untuk section konten publik — `main` + `.public-site-container` (full-bleed di landing).
+ * Atlas tokens: flat `#E8E8F8` border, surface white — no slate/dark chrome.
  */
 export const publicSectionShellBase =
-  "w-full min-w-0 scroll-mt-20 border-b border-slate-200 dark:border-slate-800";
+  "w-full min-w-0 scroll-mt-20 border-b border-border-default";
 
-/** Sambutan kepala sekolah — border sedikit lebih halus */
+/** Sambutan kepala sekolah */
 export const publicSectionShellSambutanClassName =
-  "w-full min-w-0 scroll-mt-20 border-b border-slate-200/90 dark:border-slate-800";
+  "w-full min-w-0 scroll-mt-20 border-b border-border-default";
 
-/** Kesiswaan, Akademik (latar slate lembut) */
-export const publicContentSectionClassName = `${publicSectionShellBase} bg-slate-50 py-16 dark:bg-slate-900/50 sm:py-20`;
+/** Kesiswaan & soft content bands */
+export const publicContentSectionClassName = `${publicSectionShellBase} bg-neutral-soft py-16 sm:py-20`;
 
-/** Berita, Visi & Misi, Program Sekolah, Sejarah, dll. */
-export const publicPageSectionWhiteClassName = `${publicSectionShellBase} bg-white py-16 dark:bg-slate-950 sm:py-20`;
+/** Berita, Visi & Misi, Program Sekolah, Sejarah, Akademik, dll. */
+export const publicPageSectionWhiteClassName = `${publicSectionShellBase} bg-surface py-16 sm:py-20`;
 
 /** Halaman Kontak */
-export const publicPageSectionContactClassName = `${publicSectionShellBase} bg-slate-100 py-14 dark:bg-slate-950 sm:py-16`;
-
+export const publicPageSectionContactClassName = `${publicSectionShellBase} bg-neutral-soft py-14 sm:py-16`;
 /** Paragraf isi publik formal: rata kiri–kanan (justifikasi). Jangan dipakai pada blok `text-center`. */
 export const publicFormalBodyClassName = "text-justify text-pretty";
 

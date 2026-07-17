@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Three-tier marketing navbar — announcement + main (contact/brand/actions) + bottom (nav/search).
+ * Three-tier marketing navbar — announcement + main (date/brand/actions) + bottom (nav/search).
  * Self-contained chrome for the public site layout.
  */
 import { ChevronDown, Mail, Menu, Phone, Search, X } from "lucide-react";
@@ -17,6 +17,7 @@ import {
 
 import { BrandLogoMark } from "@/components/brand/BrandLogoMark";
 import { PublicNavMegaPanel } from "@/components/layout/PublicNavMegaPanel";
+import { PublicNavbarClock } from "@/components/layout/PublicNavbarClock";
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,11 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { usePublicSitePathname } from "@/hooks/use-public-site-pathname";
-import { BRAND_SHORT } from "@/lib/branding";
+import {
+  BRAND_SHORT,
+  BRAND_WORDMARK_LINE1,
+  BRAND_WORDMARK_LINE2,
+} from "@/lib/branding";
 import { CONTACT } from "@/lib/constants";
 import {
   getPublikWhatsAppUrl,
@@ -40,7 +45,7 @@ import {
 import { isPublicSiteNavEntryActive } from "@/lib/public-site-nav-active";
 import {
   PUBLIC_SITE_MAIN_NAV,
-  PUBLIC_SITE_PORTAL_LOGIN_HREF,
+  PUBLIC_SITE_NAV_PPDB_CTA_LABEL,
   PUBLIC_SITE_PPDB_HREF,
   type PublicSiteNavGroup,
 } from "@/lib/public-site-nav";
@@ -71,8 +76,7 @@ const contactEmailDisplay =
 const contactPhoneHref = getPublikWhatsAppUrl();
 const contactEmailHref = `mailto:${contactEmailDisplay}`;
 
-const tierContainerClassName =
-  "mx-auto flex w-full max-w-7xl items-center px-4 2xl:px-0";
+const tierContainerClassName = "public-site-container flex items-center";
 
 const navLinkClassName = cn(
   navigationMenuTriggerStyle(),
@@ -212,47 +216,34 @@ export function PublicMarketingNavbar(): ReactElement {
             "relative grid grid-cols-[1fr_auto_1fr] items-center gap-3",
           )}
         >
-          {/* Contact — start */}
-          <div className="hidden min-w-0 items-center gap-4 sm:flex">
-            <a
-              href={contactPhoneHref}
-              className="inline-flex items-center gap-2 text-sm font-medium text-[color:var(--color-body-subtle)] transition-colors hover:text-[color:var(--color-heading)]"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <Phone className="size-[18px] shrink-0" aria-hidden />
-              <span className="truncate">{contactPhoneDisplay}</span>
-            </a>
-            <a
-              href={contactEmailHref}
-              className="inline-flex min-w-0 items-center gap-2 text-sm font-medium text-[color:var(--color-body-subtle)] transition-colors hover:text-[color:var(--color-heading)]"
-            >
-              <Mail className="size-[18px] shrink-0" aria-hidden />
-              <span className="truncate">{contactEmailDisplay}</span>
-            </a>
+          {/* Live date — start (replaces phone/email in top bar) */}
+          <div className="hidden min-w-0 items-center sm:flex">
+            <PublicNavbarClock />
           </div>
 
-          {/* Brand — center */}
+          {/* Brand — center: lambang above wordmark */}
           <PublicSiteLink
             href="/"
-            className="col-start-2 justify-self-center shrink-0 focus:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20"
+            className="col-start-2 inline-flex max-w-full shrink-0 flex-col items-center gap-1 justify-self-center text-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 sm:gap-1.5"
             aria-label={`Beranda ${BRAND_SHORT}`}
           >
-            <BrandLogoMark pixelSize={48} shine priority roundedClassName="rounded-none" />
+            <BrandLogoMark size="md" shine priority roundedClassName="rounded-none" />
+            <span className="flex min-w-0 flex-col items-center leading-none">
+              <span className="text-xs font-bold tracking-tight text-[color:var(--color-brand)] sm:text-sm">
+                {BRAND_WORDMARK_LINE1}
+              </span>
+              <span className="mt-0.5 max-w-[9.5rem] text-[8px] font-semibold uppercase tracking-[0.04em] text-[color:var(--color-heading)] sm:max-w-none sm:text-[10px] sm:tracking-[0.06em]">
+                {BRAND_WORDMARK_LINE2}
+              </span>
+            </span>
           </PublicSiteLink>
 
-          {/* Actions — end */}
-          <div className="col-start-3 flex items-center justify-end gap-4">
-            <PublicSiteLink
-              href="/kontak"
-              className="hidden items-center gap-2 text-sm font-medium text-[color:var(--color-heading)] transition-colors hover:text-[color:var(--color-brand-strong)] md:inline-flex"
-            >
-              Hubungi kami
-              <Phone className="size-[18px] shrink-0" aria-hidden />
-            </PublicSiteLink>
-
-            <Button asChild variant="secondary" className="h-auto px-5 py-2.5 text-sm font-medium">
-              <PublicSiteLink href={PUBLIC_SITE_PORTAL_LOGIN_HREF}>Login</PublicSiteLink>
+          {/* Actions — end: PPDB CTA + mobile menu */}
+          <div className="col-start-3 flex items-center justify-end gap-2 sm:gap-3">
+            <Button asChild className="h-auto px-3 py-2.5 text-sm font-medium sm:px-5">
+              <PublicSiteLink href={PUBLIC_SITE_PPDB_HREF}>
+                {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
+              </PublicSiteLink>
             </Button>
 
             <button
@@ -428,18 +419,13 @@ export function PublicMarketingNavbar(): ReactElement {
               </a>
             </div>
 
-            <div className="flex gap-2 border-t border-[color:var(--color-border-default)] pt-3 md:hidden">
-              <Button asChild variant="outline" className="h-auto flex-1 px-3 py-2.5 text-sm font-semibold">
-                <PublicSiteLink href="/kontak" onClick={() => setMobileOpen(false)}>
-                  Hubungi kami
-                </PublicSiteLink>
-              </Button>
-              <Button asChild variant="secondary" className="h-auto flex-1 px-3 py-2.5 text-sm font-semibold">
+            <div className="border-t border-[color:var(--color-border-default)] pt-3 md:hidden">
+              <Button asChild className="h-auto w-full px-3 py-2.5 text-sm font-semibold">
                 <PublicSiteLink
-                  href={PUBLIC_SITE_PORTAL_LOGIN_HREF}
+                  href={PUBLIC_SITE_PPDB_HREF}
                   onClick={() => setMobileOpen(false)}
                 >
-                  Login
+                  {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
                 </PublicSiteLink>
               </Button>
             </div>

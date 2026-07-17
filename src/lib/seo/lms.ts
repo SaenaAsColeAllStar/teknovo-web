@@ -47,7 +47,6 @@ export const LMS_PUBLIC_PATHS = {
   portalLogin: PUBLIC_SITE_PORTAL_LOGIN_HREF,
   fasilitasHub: "/fasilitas",
   fasilitasLms: getFasilitasDetailPath("lms-sekolah"),
-  akademikDigital: "/akademik/program-digital",
   akademikKurikulum: "/akademik/kurikulum",
   beritaLms: LMS_BERITA_KEGIATAN_PATH,
   guruPortal: "/guru",
@@ -60,7 +59,6 @@ export type LmsPageId =
   | "kurikulum-hub"
   | "fasilitas-hub"
   | "fasilitas-lms"
-  | "akademik-digital"
   | "akademik-kurikulum";
 
 export type LmsPageSeoInput = {
@@ -186,14 +184,6 @@ export const LMS_PAGE_SEO: Record<LmsPageId, LmsPageSeoInput> = {
       "pembelajaran hybrid",
     ],
   },
-  "akademik-digital": {
-    pageId: "akademik-digital",
-    title: "Program Digital SMK TEKNOVO — Portal & E-Learning",
-    description:
-      "Ekosistem digital SMK TEKNOVO: portal siswa & guru, LMS online, PPDB daring, dan rapor digital — pembelajaran terintegrasi Kurikulum Merdeka di Rancasari Subang.",
-    path: LMS_PUBLIC_PATHS.akademikDigital,
-    keywords: ["program digital sekolah", "portal siswa", "rapor digital"],
-  },
   "akademik-kurikulum": {
     pageId: "akademik-kurikulum",
     title: "Kurikulum SMK TEKNOVO — Merdeka & Pembelajaran Digital",
@@ -211,7 +201,7 @@ export function buildLmsDashboardMetadata(
 }
 
 export function buildLmsLandingMetadata(
-  pageId: Extract<LmsPageId, "fasilitas-hub" | "fasilitas-lms" | "akademik-digital" | "akademik-kurikulum">,
+  pageId: Extract<LmsPageId, "fasilitas-hub" | "fasilitas-lms" | "akademik-kurikulum">,
 ): Metadata {
   return buildLmsPageMetadata(LMS_PAGE_SEO[pageId]);
 }
@@ -339,7 +329,6 @@ export const LMS_SITEMAP_ENTRIES = [
   { path: "/lms-smk-subang", priority: 0.95, changeFrequency: "weekly" as const },
   { path: LMS_PUBLIC_PATHS.fasilitasLms, priority: 0.92, changeFrequency: "weekly" as const },
   { path: LMS_PUBLIC_PATHS.fasilitasHub, priority: 0.85, changeFrequency: "monthly" as const },
-  { path: LMS_PUBLIC_PATHS.akademikDigital, priority: 0.88, changeFrequency: "monthly" as const },
   { path: LMS_PUBLIC_PATHS.akademikKurikulum, priority: 0.82, changeFrequency: "monthly" as const },
   { path: LMS_PUBLIC_PATHS.beritaLms, priority: 0.8, changeFrequency: "monthly" as const },
 ] as const;

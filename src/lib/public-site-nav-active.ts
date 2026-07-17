@@ -40,7 +40,6 @@ const PUBLIC_SITE_NAV_GROUP_PREFIX: Record<PublicSiteNavGroup["id"], string> = {
   kesiswaan: "/kesiswaan",
   fasilitas: "/fasilitas",
   berita: "/berita",
-  kontak: "/kontak",
 };
 
 export function isPublicSiteNavGroupActive(pathname: string, entry: PublicSiteNavGroup): boolean {

@@ -24,7 +24,7 @@ export const SAMBUTAN_HERO_EYEBROW = "Profil sekolah" as const;
 export const SAMBUTAN_PAGE_TITLE = "Sambutan Kepala Sekolah" as const;
 
 export const SAMBUTAN_PAGE_LEDE =
-  "Pesan kepala sekolah untuk SMK TEKNOVO — arah pengembangan sekolah, komitmen terhadap siswa, dan kolaborasi dengan orang tua serta mitra industri." as const;
+  `Pesan ${BRAND_KEPALA_JABATAN.toLowerCase()} ${BRAND_KEPALA_NAMA} untuk ${BRAND_SHORT} — arah pengembangan sekolah, komitmen terhadap siswa, dan kolaborasi dengan orang tua serta mitra industri.` as const;
 
 /** Intro panjang di dalam section (kompatibilitas komponen lama). */
 export const SAMBUTAN_PAGE_INTRO = SAMBUTAN_PAGE_LEDE;

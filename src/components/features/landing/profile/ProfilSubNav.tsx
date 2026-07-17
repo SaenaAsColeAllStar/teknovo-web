@@ -12,7 +12,8 @@ export function ProfilSubNav(): ReactElement {
 
   return (
     <PublicSectionSubNav
-      ariaLabel="Navigasi halaman profil sekolah"
+      ariaLabel="Navigasi profil dalam kerangka"
+      menuAriaLabel="Buka menu profil"
       items={PROFIL_SUB_NAV_ITEMS}
       activeHref={activeHref}
     />

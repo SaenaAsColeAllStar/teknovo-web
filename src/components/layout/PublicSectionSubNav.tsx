@@ -1,8 +1,7 @@
-"use client";
+import type { ReactElement } from "react";
 
-import type { ComponentType, ReactElement } from "react";
-
-import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
+import { BlueprintPlusMark } from "@/components/features/landing/blueprint/BlueprintPlusMark";
+import { BlueprintSectionNav } from "@/components/features/landing/blueprint/BlueprintSectionNav";
 import { cn } from "@/lib/utils";
 
 export type PublicSectionSubNavItem = {
@@ -15,60 +14,35 @@ export type PublicSectionSubNavProps = {
   ariaLabel: string;
   items: readonly PublicSectionSubNavItem[];
   activeHref: string | null;
-  /**
-   * Sub-nav di dalam `public-site-container` (halaman landing) — bar penuh lebar
-   * dengan konten pill yang tetap sejajar container.
-   */
-  inset?: boolean;
-  LinkComponent?: ComponentType<{
-    href: string;
-    className?: string;
-    children: React.ReactNode;
-    "aria-current"?: "page" | undefined;
-  }>;
+  /** Accessible label for the mobile menu control. */
+  menuAriaLabel?: string;
+  className?: string;
 };
 
-const navLinkBase =
-  "shrink-0 rounded-full px-4 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40";
-
-const navShellClassName =
-  "sticky top-[var(--public-nav-bottom,10.5rem)] z-40 border-b border-border-default/90 bg-surface/95 backdrop-blur-md";
-
-const navInsetClassName = "-mx-4 px-4 sm:-mx-6 sm:px-6";
-
-const navListClassName =
-  "public-site-container flex gap-2 overflow-x-auto py-3 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
-
+/**
+ * Blueprint framed section subnav — brand left, section links right, plus marks
+ * at plate corners. Matches the in-frame nav on profil `BlueprintFramedHero`.
+ */
 export function PublicSectionSubNav({
   ariaLabel,
   items,
   activeHref,
-  inset = true,
-  LinkComponent = PublicSiteLink,
+  menuAriaLabel,
+  className,
 }: PublicSectionSubNavProps): ReactElement {
   return (
-    <nav aria-label={ariaLabel} className={cn(navShellClassName, inset && navInsetClassName)}>
-      <ul className={navListClassName}>
-        {items.map((item) => {
-          const isActive = item.href === activeHref;
-          return (
-            <li key={item.href}>
-              <LinkComponent
-                href={item.href}
-                aria-current={isActive ? "page" : undefined}
-                className={cn(
-                  navLinkBase,
-                  isActive
-                    ? "bg-brand text-white shadow-none"
-                    : "text-body hover:bg-neutral-soft",
-                )}
-              >
-                {item.label}
-              </LinkComponent>
-            </li>
-          );
-        })}
-      </ul>
-    </nav>
+    <div className={cn("relative border border-border-default bg-surface", className)}>
+      <BlueprintPlusMark className="left-0 top-0" />
+      <BlueprintPlusMark className="left-full top-0" />
+      <BlueprintPlusMark className="bottom-0 left-0 translate-y-1/2" />
+      <BlueprintPlusMark className="bottom-0 left-full translate-y-1/2" />
+
+      <BlueprintSectionNav
+        ariaLabel={ariaLabel}
+        menuAriaLabel={menuAriaLabel}
+        links={items}
+        activeHref={activeHref}
+      />
+    </div>
   );
 }

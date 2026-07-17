@@ -1,19 +1,12 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { AkademikIconGlyph } from "@/components/features/landing/AkademikIconGlyph";
+import { AkademikFeaturedFeed } from "@/components/features/landing/AkademikFeaturedFeed";
 import { AkademikSubNav } from "@/components/features/landing/AkademikSubNav";
-import { PublicPageHero } from "@/components/features/landing/PublicPageHero";
-import {
-  PublicSplitContentCard,
-  publicSplitCardShellClassName,
-} from "@/components/features/landing/PublicSplitContentCard";
 import { MotionInView } from "@/components/motion/MotionInView";
 import {
   AKADEMIK_HERO_EYEBROW,
-  AKADEMIK_HERO_IMAGE_SRC,
-  AKADEMIK_PAGE_TITLE,
+  type AkademikFeedKey,
 } from "@/lib/akademik-landing-content";
-import { BRAND_SHORT } from "@/lib/branding";
 import {
   publicFormalBodyClassName,
   publicPageSectionWhiteClassName,
@@ -23,54 +16,52 @@ import { cn } from "@/lib/utils";
 export type AkademikPageShellProps = {
   title: string;
   lede: string;
-  /** Kartu hero jalur belajar — hanya ringkasan `/akademik`. */
-  showPathwayHero?: boolean;
+  /**
+   * When set, replaces centered intro with featured + 3 compact articles
+   * for the given akademik tab key.
+   */
+  featuredFeedKey?: AkademikFeedKey;
   children: ReactNode;
 };
 
 export function AkademikPageShell({
   title,
   lede,
-  showPathwayHero = false,
+  featuredFeedKey,
   children,
 }: AkademikPageShellProps): ReactElement {
+  const showFeaturedFeed = featuredFeedKey != null;
+
   return (
-    <MotionInView as="section" id="akademik" className={publicPageSectionWhiteClassName}>
+    <MotionInView
+      as="section"
+      id="akademik"
+      className={cn(
+        publicPageSectionWhiteClassName,
+        showFeaturedFeed && "py-16 sm:py-20 lg:py-24",
+      )}
+    >
       <div className="public-site-container">
-        <PublicPageHero eyebrow={AKADEMIK_HERO_EYEBROW} title={title} lede={lede} />
-
-        {showPathwayHero ? (
-          <MotionInView
-            as="article"
-            className={cn(publicSplitCardShellClassName, "mt-10 min-h-[16rem] sm:min-h-[18rem]")}
-            delay={0.04}
-          >
-            <PublicSplitContentCard
-              tone="neutral"
-              insetImage
-              image={{
-                src: AKADEMIK_HERO_IMAGE_SRC,
-                alt: `Ilustrasi ${AKADEMIK_PAGE_TITLE}`,
-                quality: 70,
-                priority: true,
-              }}
+        {showFeaturedFeed ? (
+          <AkademikFeaturedFeed feedKey={featuredFeedKey} />
+        ) : (
+          <MotionInView as="header" className="mx-auto max-w-3xl text-center" delay={0.02}>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand">
+              {AKADEMIK_HERO_EYEBROW}
+            </p>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-heading sm:text-4xl">{title}</h1>
+            <p
+              className={cn(
+                "mx-auto mt-5 max-w-2xl text-base leading-relaxed text-body",
+                publicFormalBodyClassName,
+              )}
             >
-              <AkademikIconGlyph iconKey="pathway" className="size-8 text-blue-600 dark:text-blue-400" />
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
-                Jalur {BRAND_SHORT}
-              </p>
-              <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
-                Dari fondasi kelas X hingga PKL &amp; UKK
-              </h2>
-              <p className={cn("text-sm leading-relaxed text-slate-600 dark:text-slate-300", publicFormalBodyClassName)}>
-                Pembelajaran berjenjang mempersiapkan siswa menguasai kompetensi kejuruan, karakter, dan kesiapan kerja
-                — dengan dukungan digital yang transparan bagi orang tua.
-              </p>
-            </PublicSplitContentCard>
+              {lede}
+            </p>
           </MotionInView>
-        ) : null}
+        )}
 
-        <div className="mt-10">
+        <div className="mt-10 sm:mt-12">
           <AkademikSubNav />
         </div>
 

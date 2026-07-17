@@ -80,11 +80,11 @@ export type FasilitasSubNavItem = {
 
 /** Sub-nav halaman fasilitas — selaras `public-site-nav` dan route `[slug]`. */
 export const FASILITAS_SUB_NAV_ITEMS: readonly FasilitasSubNavItem[] = [
-  { id: "ringkasan", label: "Ringkasan fasilitas", href: "/fasilitas", exact: true },
-  { id: "absensi-digital", label: "Absensi Digital", href: "/fasilitas/absensi-digital" },
-  { id: "laboratorium-komputer", label: "Lab Komputer", href: "/fasilitas/laboratorium-komputer" },
-  { id: "perpustakaan-digital", label: "Perpustakaan Digital", href: "/fasilitas/perpustakaan-digital" },
-  { id: "lms-sekolah", label: "LMS Sekolah", href: "/fasilitas/lms-sekolah" },
+  { id: "ringkasan", label: "Ringkasan", href: "/fasilitas", exact: true },
+  { id: "absensi-digital", label: "Absensi", href: "/fasilitas/absensi-digital" },
+  { id: "laboratorium-komputer", label: "Lab", href: "/fasilitas/laboratorium-komputer" },
+  { id: "perpustakaan-digital", label: "Perpustakaan", href: "/fasilitas/perpustakaan-digital" },
+  { id: "lms-sekolah", label: "LMS", href: "/fasilitas/lms-sekolah" },
 ] as const;
 
 export function getFasilitasSubNavActiveHref(pathname: string): string | null {

@@ -5,44 +5,33 @@ import { useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
-const jakartaDisplayFormatter = new Intl.DateTimeFormat("id-ID", {
+/** WIB — weekday + long date for the marketing navbar top bar. */
+const jakartaDateFormatter = new Intl.DateTimeFormat("id-ID", {
   weekday: "long",
   day: "numeric",
   month: "long",
   year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
   timeZone: "Asia/Jakarta",
 });
 
-const jakartaIsoFormatter = new Intl.DateTimeFormat("en-GB", {
+const jakartaIsoDateFormatter = new Intl.DateTimeFormat("en-CA", {
   year: "numeric",
   month: "2-digit",
   day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  hour12: false,
   timeZone: "Asia/Jakarta",
 });
 
-function partValue(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes): string {
-  return parts.find((part) => part.type === type)?.value ?? "";
+function formatJakartaDateLabel(now: Date): string {
+  // id-ID typically yields "Sabtu, 18 Juli 2026"
+  return jakartaDateFormatter.format(now);
 }
 
-function formatJakartaClockLabel(now: Date): string {
-  const parts = jakartaDisplayFormatter.formatToParts(now);
-  return `${partValue(parts, "weekday")}, ${partValue(parts, "day")} ${partValue(parts, "month")} ${partValue(parts, "year")}, ${partValue(parts, "hour")}:${partValue(parts, "minute")}:${partValue(parts, "second")}`;
+function formatJakartaDateIso(now: Date): string {
+  // en-CA → YYYY-MM-DD
+  return jakartaIsoDateFormatter.format(now);
 }
 
-function formatJakartaClockDateTime(now: Date): string {
-  const parts = jakartaIsoFormatter.formatToParts(now);
-  return `${partValue(parts, "year")}-${partValue(parts, "month")}-${partValue(parts, "day")}T${partValue(parts, "hour")}:${partValue(parts, "minute")}:${partValue(parts, "second")}+07:00`;
-}
-
-type ClockState = {
+type DateState = {
   label: string;
   dateTime: string;
 };
@@ -51,33 +40,38 @@ type PublicNavbarClockProps = {
   className?: string;
 };
 
+/**
+ * Client “today” for the public navbar — Asia/Jakarta calendar date in Indonesian.
+ * Updates on mount and periodically so overnight sessions stay correct.
+ */
 export function PublicNavbarClock({ className }: PublicNavbarClockProps): ReactElement {
-  const [clock, setClock] = useState<ClockState | null>(null);
+  const [date, setDate] = useState<DateState | null>(null);
 
   useEffect(() => {
-    function tick(): void {
+    function sync(): void {
       const now = new Date();
-      setClock({
-        label: formatJakartaClockLabel(now),
-        dateTime: formatJakartaClockDateTime(now),
+      setDate({
+        label: formatJakartaDateLabel(now),
+        dateTime: formatJakartaDateIso(now),
       });
     }
-    tick();
-    const id = window.setInterval(tick, 1_000);
+
+    sync();
+    const id = window.setInterval(sync, 60_000);
     return () => window.clearInterval(id);
   }, []);
 
   return (
     <time
-      dateTime={clock?.dateTime}
+      dateTime={date?.dateTime}
       className={cn(
-        "hidden shrink-0 text-right text-[11px] font-medium tabular-nums leading-snug text-slate-600 lg:block lg:min-w-[11rem] xl:min-w-[15rem] xl:text-xs dark:text-slate-300",
+        "truncate text-sm font-medium text-[color:var(--color-body-subtle)]",
         className,
       )}
       aria-live="polite"
-      aria-label={clock ? `Waktu Jakarta: ${clock.label}` : "Memuat waktu"}
+      aria-label={date ? `Tanggal hari ini: ${date.label}` : "Memuat tanggal"}
     >
-      {clock?.label ?? "—"}
+      {date?.label ?? "\u00a0"}
     </time>
   );
 }

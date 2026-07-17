@@ -66,7 +66,7 @@ export type KesiswaanSubnavItem = {
 
 /** Sub-nav halaman kehidupan siswa. */
 export const KESISWAAN_SUBNAV_ITEMS: readonly KesiswaanSubnavItem[] = [
-  { href: KESISWAAN_PUBLIC_HUB_HREF, label: "Ringkasan kesiswaan", exact: true },
+  { href: KESISWAAN_PUBLIC_HUB_HREF, label: "Ringkasan", exact: true },
   { href: "/kesiswaan/ekstrakurikuler", label: "Ekstrakurikuler" },
   { href: "/kesiswaan/prestasi", label: "Prestasi" },
 ] as const;

@@ -6,7 +6,6 @@ import { ActivitiesShowcaseSection } from "@/components/features/landing/home/Ac
 import { HomeBeritaArchiveSection } from "@/components/features/landing/home/HomeBeritaArchiveSection";
 import { getPublishedArtikelSiswaCards } from "@/services/artikel-berita-publik";
 import { getPublishedBeritaKegiatanCards } from "@/services/berita-kegiatan-publik";
-import { HomeFlashMarqueeSection } from "@/components/features/landing/home/HomeFlashMarqueeSection";
 import { FinalCtaSection } from "@/components/features/landing/home/FinalCtaSection";
 import { SocialProofSection } from "@/components/features/landing/home/SocialProofSection";
 import { FasilitasSection } from "@/components/features/landing/FasilitasSection";
@@ -14,7 +13,7 @@ import { HeroSection } from "@/components/features/landing/HeroSection";
 import { LocalSeoJsonLd } from "@/components/features/landing/local-seo/LocalSeoJsonLd";
 import { buildLocalSeoPageMetadata } from "@/lib/local-seo-keywords";
 
-/** Jaga streaming: jika agregasi statistik DB lambat, marquee + blok di atas tetap tampil. */
+/** Jaga streaming: jika agregasi statistik DB lambat, blok di atas tetap tampil. */
 function SocialProofSectionSkeleton(): ReactElement {
   return (
     <section className="border-y border-border-default bg-surface py-14 sm:py-16" aria-hidden>
@@ -60,7 +59,7 @@ async function HomeBeritaArchiveBlock(): Promise<ReactElement> {
 }
 
 /**
- * Beranda — hero + fasilitas, pengumuman berjalan, social proof, etalase aktivitas, berita, dan CTA akhir.
+ * Beranda — hero + fasilitas, social proof, etalase aktivitas, berita, dan CTA akhir.
  */
 export default function HomePage(): ReactElement {
   return (
@@ -68,7 +67,6 @@ export default function HomePage(): ReactElement {
       <LocalSeoJsonLd pageId="home" includeWebSite includeFaq useGraph />
       <HeroSection />
       <FasilitasSection embedded />
-      <HomeFlashMarqueeSection />
       <Suspense fallback={<SocialProofSectionSkeleton />}>
         <SocialProofSection />
       </Suspense>

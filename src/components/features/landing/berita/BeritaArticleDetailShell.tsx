@@ -65,7 +65,9 @@ export function BeritaArticleDetailShell({
         }}
       />
       <BeritaReadingProgress />
-      <BeritaSubNav />
+      <div className="public-site-container pt-6 sm:pt-8">
+        <BeritaSubNav />
+      </div>
       <div className="public-site-container py-10 sm:py-14">
         <BeritaBreadcrumb
           className="mb-8"

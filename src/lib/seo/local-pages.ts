@@ -383,14 +383,14 @@ export const LOCAL_SEO_PAGES: Record<LocalSeoPageId, LocalSeoPageConfig> = {
         heading: "LMS untuk Calon Siswa & Orang Tua",
         paragraphs: [
           "Bagi calon siswa di Pamanukan dan Subang yang membandingkan SMK, keberadaan LMS terintegrasi menjadi indikator kesiapan sekolah menghadapi pembelajaran modern.",
-          "Pelajari juga program digital akademik dan berita sekolah tentang platform e-learning untuk memahami bagaimana teknologi mendukung jurusan Teknik Mesin dan Unit Layanan Wisata.",
+          "Pelajari juga fasilitas LMS sekolah dan berita tentang platform e-learning untuk memahami bagaimana teknologi mendukung jurusan Teknik Mesin dan Unit Layanan Wisata.",
         ],
       },
     ],
     internalLinks: [
       { label: "LMS SMK Jawa Barat", href: "/lms-smk-jawa-barat" },
       { label: "Fasilitas LMS Sekolah", href: "/fasilitas/lms-sekolah" },
-      { label: "Program Digital Akademik", href: "/akademik/program-digital" },
+      { label: "Kurikulum Akademik", href: "/akademik/kurikulum" },
       { label: "Tentang SMK TEKNOVO", href: "/tentang-smk-teknovo" },
       { label: "PPDB SMK Subang", href: "/ppdb-smk-pamanukan" },
     ],
@@ -429,14 +429,14 @@ export const LOCAL_SEO_PAGES: Record<LocalSeoPageId, LocalSeoPageConfig> = {
         heading: "Indikator untuk Calon Siswa",
         paragraphs: [
           "Keberadaan LMS terintegrasi menjadi indikator kesiapan sekolah menghadapi pembelajaran modern. SMK TEKNOVO berstatus akreditasi A (NPSN 70036813) — verifikasi di database Kemendikdasmen.",
-          "Pelajari detail fitur di halaman fasilitas LMS sekolah dan program digital akademik. PPDB terbuka seluruh Indonesia melalui portal resmi.",
+          "Pelajari detail fitur di halaman fasilitas LMS sekolah dan kurikulum akademik. PPDB terbuka seluruh Indonesia melalui portal resmi.",
         ],
       },
     ],
     internalLinks: [
       { label: "LMS SMK Subang", href: "/lms-smk-subang" },
       { label: "Fasilitas LMS Sekolah", href: "/fasilitas/lms-sekolah" },
-      { label: "Program Digital Akademik", href: "/akademik/program-digital" },
+      { label: "Kurikulum Akademik", href: "/akademik/kurikulum" },
       { label: "SMK Pamanukan", href: "/smk-pamanukan" },
       { label: "PPDB SMK Pamanukan", href: "/ppdb-smk-pamanukan" },
     ],

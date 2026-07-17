@@ -21,7 +21,6 @@ const LANDING_STATIC_PATHS = [
   "/akademik/jurusan",
   "/akademik/kurikulum",
   "/akademik/pengajar",
-  "/akademik/program-digital",
   "/fasilitas",
   "/kesiswaan",
   "/kesiswaan/ekstrakurikuler",
@@ -44,7 +43,6 @@ const LANDING_STATIC_PATHS = [
 
 const LMS_HIGH_PRIORITY_PATHS = new Set([
   "/fasilitas/lms-sekolah",
-  "/akademik/program-digital",
   "/akademik/kurikulum",
   "/lms-smk-subang",
   "/lms-smk-jawa-barat",

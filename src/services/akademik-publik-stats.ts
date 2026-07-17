@@ -1,4 +1,4 @@
-import { AKADEMIK_DIGITAL_ITEMS, AKADEMIK_JURUSAN_ITEMS } from "@/lib/akademik-landing-content";
+import { AKADEMIK_JURUSAN_ITEMS } from "@/lib/akademik-landing-content";
 import {
   getPengajarPublikSummary,
   type PengajarPublikSummary,
@@ -25,15 +25,7 @@ export type AkademikJurusanPublikStats = {
   fromDatabase: boolean;
 };
 
-export type AkademikDigitalPublikStats = {
-  kontenCount: number;
-  tugasAktifCount: number;
-  layananCount: number;
-  fromDatabase: boolean;
-};
-
 const FALLBACK_JURUSAN_AKTIF = AKADEMIK_JURUSAN_ITEMS.length;
-const FALLBACK_LAYANAN_DIGITAL = AKADEMIK_DIGITAL_ITEMS.length;
 
 export async function getAkademikOverviewPublikStats(): Promise<AkademikOverviewPublikStats> {
   return {
@@ -57,15 +49,6 @@ export async function getAkademikKurikulumPublikStats(): Promise<AkademikKurikul
 
 export async function getAkademikJurusanPublikStats(): Promise<AkademikJurusanPublikStats> {
   return { jurusanAktif: FALLBACK_JURUSAN_AKTIF, fromDatabase: false };
-}
-
-export async function getAkademikDigitalPublikStats(): Promise<AkademikDigitalPublikStats> {
-  return {
-    kontenCount: 0,
-    tugasAktifCount: 0,
-    layananCount: FALLBACK_LAYANAN_DIGITAL,
-    fromDatabase: false,
-  };
 }
 
 export async function getAkademikPengajarPublikStats(): Promise<PengajarPublikSummary> {

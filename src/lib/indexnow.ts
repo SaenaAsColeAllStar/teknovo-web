@@ -107,7 +107,6 @@ const LANDING_STATIC_PATHS = [
   "/akademik/jurusan",
   "/akademik/kurikulum",
   "/akademik/pengajar",
-  "/akademik/program-digital",
   "/fasilitas",
   "/kesiswaan",
   "/kesiswaan/ekstrakurikuler",

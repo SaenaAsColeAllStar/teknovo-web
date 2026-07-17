@@ -12,7 +12,8 @@ export function BeritaSubNav(): ReactElement {
 
   return (
     <PublicSectionSubNav
-      ariaLabel="Navigasi halaman berita"
+      ariaLabel="Navigasi berita dalam kerangka"
+      menuAriaLabel="Buka menu berita"
       items={BERITA_SUB_NAV_ITEMS}
       activeHref={activeHref}
     />

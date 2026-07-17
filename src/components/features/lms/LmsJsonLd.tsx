@@ -44,28 +44,22 @@ export function LmsJsonLd({ pageId }: LmsJsonLdProps): ReactElement {
             { name: "Beranda", path: "/" },
             { name: "Fasilitas", path: LMS_PUBLIC_PATHS.fasilitasHub },
           ]
-        : pageId === "akademik-digital"
+        : pageId === "akademik-kurikulum"
           ? [
               { name: "Beranda", path: "/" },
               { name: "Akademik", path: "/akademik" },
-              { name: "Program digital", path: LMS_PUBLIC_PATHS.akademikDigital },
+              { name: "Kurikulum", path: LMS_PUBLIC_PATHS.akademikKurikulum },
             ]
-          : pageId === "akademik-kurikulum"
+          : pageId === "dashboard-login"
             ? [
                 { name: "Beranda", path: "/" },
-                { name: "Akademik", path: "/akademik" },
-                { name: "Kurikulum", path: LMS_PUBLIC_PATHS.akademikKurikulum },
+                {
+                  name: "Portal LMS",
+                  path: LMS_PUBLIC_PATHS.portalLogin,
+                  origin: "console" as const,
+                },
               ]
-            : pageId === "dashboard-login"
-              ? [
-                  { name: "Beranda", path: "/" },
-                  {
-                    name: "Portal LMS",
-                    path: LMS_PUBLIC_PATHS.portalLogin,
-                    origin: "console" as const,
-                  },
-                ]
-              : [{ name: "Beranda", path: "/" }, { name: seo.title }];
+            : [{ name: "Beranda", path: "/" }, { name: seo.title }];
 
   const breadcrumb = buildLmsBreadcrumbJsonLd(breadcrumbItems);
 
@@ -81,7 +75,7 @@ export function LmsJsonLd({ pageId }: LmsJsonLdProps): ReactElement {
     );
   }
 
-  if (pageId === "fasilitas-lms" || pageId === "akademik-digital") {
+  if (pageId === "fasilitas-lms") {
     return (
       <>
         <JsonLdScript data={org} />

@@ -50,8 +50,8 @@ export const BERITA_ARTIKEL_KONTEN_FALLBACK =
   "Isi lengkap artikel akan ditampilkan setelah redaksi mempublikasikan dokumen ini." as const;
 
 export const BERITA_SUB_NAV_ITEMS: readonly BeritaSubNavItem[] = [
-  { id: "terbaru", label: "Berita terbaru", href: "/berita/berita-terbaru" },
-  { id: "kegiatan", label: "Berita kegiatan sekolah", href: "/berita/kegiatan-sekolah" },
+  { id: "terbaru", label: "Terbaru", href: "/berita/berita-terbaru" },
+  { id: "kegiatan", label: "Kegiatan", href: "/berita/kegiatan-sekolah" },
 ] as const;
 
 /** Pemetaan hash lama (halaman tunggal) ke route dedicated. */

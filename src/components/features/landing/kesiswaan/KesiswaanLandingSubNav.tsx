@@ -32,7 +32,8 @@ export function KesiswaanLandingSubNav(): ReactElement {
 
   return (
     <PublicSectionSubNav
-      ariaLabel="Navigasi kehidupan siswa"
+      ariaLabel="Navigasi kesiswaan dalam kerangka"
+      menuAriaLabel="Buka menu kesiswaan"
       items={KESISWAAN_SUBNAV_ITEMS}
       activeHref={activeHref}
     />

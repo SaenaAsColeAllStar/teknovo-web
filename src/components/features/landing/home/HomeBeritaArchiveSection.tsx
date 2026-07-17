@@ -156,30 +156,28 @@ export function HomeBeritaArchiveSection({
       className="scroll-mt-20 border-b border-border-default bg-surface py-14 sm:py-16 lg:py-20"
     >
       <div className="public-site-container">
-        <div className="mx-auto max-w-6xl">
-          <MotionInView as="header" className="mx-auto max-w-2xl text-center">
-            <h2
-              id="berita-terbaru-heading"
-              className="text-3xl font-bold tracking-tight text-heading sm:text-4xl"
-            >
-              {BERITA_HOME_ARCHIVE_TITLE}
-            </h2>
-            <p className="mt-3 text-sm leading-relaxed text-body sm:text-base">
-              {BERITA_HOME_ARCHIVE_LEDE}
-            </p>
+        <MotionInView as="header" className="mx-auto max-w-2xl text-center">
+          <h2
+            id="berita-terbaru-heading"
+            className="text-3xl font-bold tracking-tight text-heading sm:text-4xl"
+          >
+            {BERITA_HOME_ARCHIVE_TITLE}
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-body sm:text-base">
+            {BERITA_HOME_ARCHIVE_LEDE}
+          </p>
+        </MotionInView>
+
+        <div className="mt-10 grid grid-cols-1 gap-6 sm:mt-12 lg:grid-cols-3 lg:grid-rows-3 lg:gap-6">
+          <MotionInView as="div" className="h-full lg:row-span-3" delay={0.04}>
+            <BlogFeaturedCard item={featured} />
           </MotionInView>
 
-          <div className="mt-10 grid grid-cols-1 gap-6 sm:mt-12 lg:grid-cols-3 lg:grid-rows-3 lg:gap-6">
-            <MotionInView as="div" className="h-full lg:row-span-3" delay={0.04}>
-              <BlogFeaturedCard item={featured} />
+          {standard.map((item, idx) => (
+            <MotionInView key={item.id} as="div" className="h-full min-h-0" delay={0.08 + idx * 0.03}>
+              <BlogStandardCard item={item} />
             </MotionInView>
-
-            {standard.map((item, idx) => (
-              <MotionInView key={item.id} as="div" className="h-full min-h-0" delay={0.08 + idx * 0.03}>
-                <BlogStandardCard item={item} />
-              </MotionInView>
-            ))}
-          </div>
+          ))}
         </div>
       </div>
     </MotionInView>

@@ -12,7 +12,8 @@ export function FasilitasSubNav(): ReactElement {
 
   return (
     <PublicSectionSubNav
-      ariaLabel="Navigasi halaman fasilitas"
+      ariaLabel="Navigasi fasilitas dalam kerangka"
+      menuAriaLabel="Buka menu fasilitas"
       items={FASILITAS_SUB_NAV_ITEMS}
       activeHref={activeHref}
     />

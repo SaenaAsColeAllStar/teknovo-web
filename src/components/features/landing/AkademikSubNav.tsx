@@ -12,7 +12,8 @@ export function AkademikSubNav(): ReactElement {
 
   return (
     <PublicSectionSubNav
-      ariaLabel="Navigasi halaman akademik"
+      ariaLabel="Navigasi akademik dalam kerangka"
+      menuAriaLabel="Buka menu akademik"
       items={AKADEMIK_SUB_NAV_ITEMS}
       activeHref={activeHref}
     />

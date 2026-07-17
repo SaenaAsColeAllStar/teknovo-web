@@ -6,6 +6,12 @@ export const BRAND_LOGO_SRC = BRAND_MEDIA.logoWebp;
 /** Nama singkat pada logo. */
 export const BRAND_SHORT = "TEKNOVO";
 
+/** Wordmark header — baris atas (di samping lambang). */
+export const BRAND_WORDMARK_LINE1 = "SMK" as const;
+
+/** Wordmark header — baris bawah (di samping lambang). */
+export const BRAND_WORDMARK_LINE2 = "TEKNOLOGI DAN VOKASIONAL" as const;
+
 /** Nama lengkap sekolah (sesuai logo). */
 export const BRAND_SCHOOL_FULL = "SMK Teknologi & Vokasional Miftahul Huda Rancasari";
 

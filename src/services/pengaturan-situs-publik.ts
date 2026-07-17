@@ -27,10 +27,6 @@ export async function getForAdmin(): Promise<PengaturanSitusPublikData> {
   return defaultsToData();
 }
 
-export function landingMarqueeTexts(data: PengaturanSitusPublikData): readonly string[] {
-  return data.landingMarquee.map((m) => m.label);
-}
-
 export async function updatePengaturanSitusPublik(
   _input: PengaturanSitusPublikPatchInput,
 ): Promise<PengaturanSitusPublikData> {

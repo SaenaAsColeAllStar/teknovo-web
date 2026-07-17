@@ -27,7 +27,7 @@ export function AkademikLearnMoreLink({
     <Link
       href={href}
       className={cn(
-        "inline-flex items-center gap-1.5 text-sm font-semibold text-blue-700 underline-offset-4 transition hover:text-blue-800 hover:underline dark:text-blue-300 dark:hover:text-blue-200",
+        "inline-flex items-center gap-1.5 text-sm font-semibold text-brand underline-offset-4 transition hover:text-brand-strong hover:underline",
         className,
       )}
     >
