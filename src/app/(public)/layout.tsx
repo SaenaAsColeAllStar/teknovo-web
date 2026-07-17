@@ -1,0 +1,16 @@
+import type { ReactNode } from "react";
+
+import { SiteFooter } from "@/components/layout/SiteFooter";
+import { SiteHeader } from "@/components/layout/SiteHeader";
+
+export const revalidate = 60;
+
+export default function PublicLayout({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <SiteHeader />
+      <main className="flex-1">{children}</main>
+      <SiteFooter />
+    </>
+  );
+}

@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# teknovo-web
 
-## Getting Started
+Portal publik + CMS SMK Teknovo untuk **Cloudflare** (`@opennextjs/cloudflare`).
 
-First, run the development server:
+Split dari monorepo [`rtek`](https://github.com/SaenaAsColeAllStar) `apps/web` — lihat `docs/ARSITEKTUR.md`.
+
+## Quick start
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env.local
+# isi Clerk keys (docs/CLERK.md)
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Publik: http://localhost:3000  
+- CMS: http://localhost:3000/dashboard (login via `/sign-in`)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script | Keterangan |
+|--------|------------|
+| `pnpm dev` | Next.js local |
+| `pnpm build` | Next production build |
+| `pnpm build:cf` | OpenNext Cloudflare build |
+| `pnpm preview` | Build + Wrangler local preview |
+| `pnpm deploy` | Build + deploy ke Cloudflare Workers |
 
-## Learn More
+## Docs
 
-To learn more about Next.js, take a look at the following resources:
+- [ARSITEKTUR.md](docs/ARSITEKTUR.md)
+- [API.md](docs/API.md) — kontrak homelab api-web
+- [CLERK.md](docs/CLERK.md)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy notes
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Cloudflare account + Workers (OpenNext memakai Workers, bukan Pages legacy `next-on-pages`).
+2. Set secrets/vars (Clerk, `API_URL`, `REVALIDATE_SECRET`).
+3. CI: `.github/workflows/deploy.yml` membutuhkan `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, dan Clerk secrets.
+4. Opsional: R2 bucket untuk incremental cache (`wrangler.toml`).

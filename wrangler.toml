@@ -1,0 +1,28 @@
+# Cloudflare Workers + OpenNext (@opennextjs/cloudflare)
+# Docs: https://opennext.js.org/cloudflare
+
+name = "teknovo-web"
+main = ".open-next/worker.js"
+compatibility_date = "2026-07-17"
+compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
+
+[assets]
+directory = ".open-next/assets"
+binding = "ASSETS"
+
+# Self-reference for ISR / cache revalidation (match `name` above)
+[[services]]
+binding = "WORKER_SELF_REFERENCE"
+service = "teknovo-web"
+
+# Optional: incremental cache via R2 — uncomment after creating the bucket
+# [[r2_buckets]]
+# binding = "NEXT_INC_CACHE_R2_BUCKET"
+# bucket_name = "teknovo-web-cache"
+
+# Optional: Cloudflare Images binding
+# [images]
+# binding = "IMAGES"
+
+[vars]
+NEXT_PUBLIC_APP_URL = "https://www.smkteknovo.sch.id"
