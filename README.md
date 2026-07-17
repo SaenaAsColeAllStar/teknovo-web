@@ -55,3 +55,5 @@ Di **Workers → Settings → Build**:
 Alternatif resmi OpenNext: build `npx opennextjs-cloudflare build`, deploy `npx opennextjs-cloudflare deploy`.
 
 Setelah ubah setting, trigger ulang deploy.
+
+**Auth boundary:** pakai `src/middleware.ts` (Edge), bukan `proxy.ts`. OpenNext Cloudflare belum mendukung Node.js middleware / `proxy.ts` (error: *Node.js middleware is not currently supported*).

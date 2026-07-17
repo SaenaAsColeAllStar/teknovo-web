@@ -23,10 +23,11 @@ NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 
 Jangan commit `.env.local`. Placeholder `GANTI_*` di `.env.example` sengaja aman.
 
-## 3. Paths & proxy
+## 3. Paths & middleware
 
 - `ClerkProvider` di `src/app/layout.tsx`
-- `clerkMiddleware` + `auth.protect()` untuk `/dashboard(.*)` di `src/proxy.ts`
+- `clerkMiddleware` + `auth.protect()` untuk `/dashboard(.*)` di `src/middleware.ts`
+  (OpenNext Cloudflare belum mendukung Next.js 16 `proxy.ts` / Node.js middleware — tetap Edge `middleware.ts`.)
 - UI: `/sign-in`, `/sign-up` (Clerk `<SignIn />` / `<SignUp />`)
 - Sidebar CMS: `<UserButton />`
 
