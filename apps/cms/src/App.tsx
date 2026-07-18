@@ -40,6 +40,8 @@ export function App() {
       publishableKey={pk}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
+      signInFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/"
       afterSignOutUrl="/sign-in"
     >
       <BrowserRouter>

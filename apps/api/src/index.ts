@@ -12,6 +12,12 @@ import {
 } from "./routes/misc";
 import { usersRoutes } from "./routes/users";
 import type { AppEnv } from "./lib/http";
+import {
+  hookLimit,
+  mediaLimit,
+  publicReadLimit,
+  writeLimit,
+} from "./middleware/rate-limit";
 
 const app = new Hono<AppEnv>();
 
@@ -33,6 +39,23 @@ app.use("*", async (c, next) => {
     allowHeaders: ["Authorization", "Content-Type"],
     maxAge: 86400,
   })(c, next);
+});
+
+// Rate limits (CF-Connecting-IP). OPTIONS skipped by method checks below.
+app.use("/api/*", async (c, next) => {
+  if (c.req.method === "OPTIONS") return next();
+  const path = new URL(c.req.url).pathname;
+
+  if (path.startsWith("/api/v1/hooks") || path.startsWith("/api/webhook")) {
+    return hookLimit(c, next);
+  }
+  if (path.startsWith("/api/cms/media")) {
+    return mediaLimit(c, next);
+  }
+  if (c.req.method === "GET" || c.req.method === "HEAD") {
+    return publicReadLimit(c, next);
+  }
+  return writeLimit(c, next);
 });
 
 app.get("/api/health", (c) =>

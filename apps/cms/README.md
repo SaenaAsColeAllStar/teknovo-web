@@ -47,6 +47,8 @@ uses.
 | `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_…` / `pk_test_…` |
 | `VITE_API_URL` | `https://cf.smkteknovo.sch.id/api` |
 | `VITE_R2_PUBLIC_URL` | `https://r2.ctos.web.id` |
+| `VITE_TURNSTILE_SITEKEY` | Turnstile sitekey (public) |
+| `VITE_TURNSTILE_SITEVERIFY_URL` | `https://turnstile-siteverify-teknovo-web.fajarnugrahayusman-06.workers.dev` |
 
 `VITE_API_URL` must include the `/api` prefix — the Cloudflare Worker mounts routes at
 `/api/v1/...` (see `apps/api/src/index.ts`), matching the Next.js `api-client`'s
@@ -77,12 +79,46 @@ Tambahkan domain `cms.smkteknovo.sch.id` di Clerk Dashboard. Auth hanya di CMS
 
 | Path | Halaman |
 |------|---------|
-| `/sign-in` | Login dua kolom (custom `useSignIn` + OAuth) |
+| `/sign-in` | Login dua kolom (custom `useSignInSignal` + OAuth) |
 | `/sign-up` | Daftar (Clerk `<SignUp />`) |
 | `/forgot-password` | Reset kata sandi (full-bleed dua kolom) |
 | `/sso-callback` | Callback OAuth untuk `signIn.sso()` |
 
 Setelah masuk, redirect ke `/` (dashboard CMS).
+
+### Google OAuth (wajib untuk tombol Google)
+
+Custom sign-in memakai Future API lewat `useSignInSignal()` (`@clerk/clerk-react/experimental`)
+dan `signIn.sso({ strategy: "oauth_google", … })`. Jika tombol Google masih gagal setelah deploy
+kode ini, sisa masalah hampir selalu **konfigurasi Clerk + Google Cloud**, bukan UI:
+
+1. **Clerk Dashboard → Configure → SSO connections → Google**
+   - Enable Google.
+   - Prefer *custom credentials* (bukan Clerk shared/development client) untuk production.
+   - Paste **Client ID** + **Client secret** dari Google Cloud (Web application).
+2. **Google Cloud Console → APIs & Services → Credentials → OAuth 2.0 Client (Web)**
+   - Authorized JavaScript origins: `https://cms.smkteknovo.sch.id`, `https://clerk.smkteknovo.sch.id`
+   - Authorized redirect URIs (Clerk Frontend API):
+     - `https://clerk.smkteknovo.sch.id/v1/oauth_callback`
+     - (jika masih pakai `.clerk.accounts.dev` di staging) `https://<instance>.clerk.accounts.dev/v1/oauth_callback`
+3. **Clerk Dashboard → Domains**
+   - Application domain / satellite: `cms.smkteknovo.sch.id`
+   - Allowed redirect URLs include:
+     - `https://cms.smkteknovo.sch.id`
+     - `https://cms.smkteknovo.sch.id/sso-callback`
+     - `https://cms.smkteknovo.sch.id/`
+4. Error klasik `401 invalid_client` / “OAuth client was not found” = Client ID salah, secret
+   mismatch, atau redirect URI di GCP tidak tepat sama dengan `…/v1/oauth_callback` di atas.
+
+App-side paths yang harus ada (sudah di SPA): `/sign-in`, `/sso-callback`, redirect sukses `/`.
+
+### Turnstile (password sign-in)
+
+Password login di `SignInForm` menampilkan widget Turnstile dan memverifikasi token ke
+Worker siteverify **sebelum** `signIn.password(...)`. Google OAuth **tidak** melewati
+Turnstile di sisi form — tombol Google memanggil `signIn.sso()` langsung; bot protection
+untuk OAuth tetap di Clerk/Google. Secret Turnstile hanya ada di Worker
+`turnstile-siteverify-teknovo-web` (`TURNSTILE_SECRET_KEY`), bukan di Pages env.
 
 ### Roles
 

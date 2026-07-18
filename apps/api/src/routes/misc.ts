@@ -22,6 +22,7 @@ import {
   d1UpsertPengaturan,
 } from "../lib/d1/pengaturan-repo";
 import { triggerWebRebuild } from "../lib/rebuild-web";
+import { safeEqualSecret } from "../lib/secrets";
 import {
   errJson,
   handleApiError,
@@ -202,22 +203,35 @@ export const hooksRoutes = new Hono<AppEnv>();
 
 hooksRoutes.post("/rebuild-web", async (c) => {
   try {
-    const secret = c.env.REBUILD_WEB_SECRET;
+    const secret = c.env.REBUILD_WEB_SECRET?.trim();
+    if (!secret || secret.startsWith("GANTI_") || secret.length < 16) {
+      return errJson(
+        c,
+        "UNCONFIGURED",
+        "REBUILD_WEB_SECRET belum di-set (min. 16 karakter).",
+        503,
+      );
+    }
+
     const auth = c.req.header("Authorization");
     const body = (await c.req.json().catch(() => ({}))) as {
       secret?: string;
       reason?: string;
     };
+    // Prefer Authorization: Bearer; body.secret accepted for legacy callers.
     const provided =
-      body.secret ||
-      (auth?.startsWith("Bearer ") ? auth.slice(7) : undefined);
-    if (!secret || provided !== secret) {
+      (auth?.startsWith("Bearer ") ? auth.slice(7).trim() : "") ||
+      (typeof body.secret === "string" ? body.secret.trim() : "");
+
+    if (!provided || !safeEqualSecret(provided, secret)) {
       return errJson(c, "UNAUTHORIZED", "Secret tidak valid.", 401);
     }
-    const result = await triggerWebRebuild(
-      c.env,
-      body.reason ?? "manual",
-    );
+
+    const reason =
+      typeof body.reason === "string" && body.reason.trim()
+        ? body.reason.trim().slice(0, 200)
+        : "manual";
+    const result = await triggerWebRebuild(c.env, reason);
     return okJson(c, result);
   } catch (err) {
     return handleApiError(c, err);

@@ -20,6 +20,7 @@ import {
   okListJson,
   type AppEnv,
 } from "../lib/http";
+import { sanitizeArtikelHtml } from "../lib/sanitize-html";
 
 export const beritaRoutes = new Hono<AppEnv>();
 
@@ -69,6 +70,7 @@ beritaRoutes.post("/", async (c) => {
 
     const created = await d1CreateBerita(c.env.DB, {
       ...parsed.data,
+      konten: sanitizeArtikelHtml(parsed.data.konten),
       coverUrl: parsed.data.coverUrl || undefined,
       kategoriId: parsed.data.kategoriId || undefined,
       metaTitle: parsed.data.metaTitle || undefined,
@@ -147,6 +149,7 @@ beritaRoutes.patch("/:key", async (c) => {
 
     const updated = await d1UpdateBerita(c.env.DB, existing.id, {
       ...parsed.data,
+      konten: sanitizeArtikelHtml(parsed.data.konten),
       coverUrl: parsed.data.coverUrl || undefined,
       kategoriId: parsed.data.kategoriId || undefined,
       metaTitle: parsed.data.metaTitle || undefined,

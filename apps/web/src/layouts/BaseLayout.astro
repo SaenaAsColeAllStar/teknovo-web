@@ -26,6 +26,13 @@ const r2Origin = (
     import.meta.env.PUBLIC_R2_URL) ||
   "https://r2.ctos.web.id"
 ).replace(/\/$/, "");
+const apiOrigin = (
+  (typeof import.meta.env.PUBLIC_API_URL === "string" &&
+    import.meta.env.PUBLIC_API_URL) ||
+  "https://cf.smkteknovo.sch.id"
+)
+  .replace(/\/$/, "")
+  .replace(/\/api$/, "");
 ---
 
 <!doctype html>
@@ -49,7 +56,9 @@ const r2Origin = (
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href={r2Origin} crossorigin />
+    <link rel="preconnect" href={apiOrigin} crossorigin />
     <link rel="dns-prefetch" href={r2Origin} />
+    <link rel="dns-prefetch" href={apiOrigin} />
     {
       preloadImages.map((href) => (
         <link rel="preload" as="image" href={href} fetchpriority="high" />
@@ -71,7 +80,10 @@ const r2Origin = (
     <link rel="alternate" type="application/rss+xml" title="Berita SMK TEKNOVO" href="/rss.xml" />
   </head>
   <body class="bg-surface font-sans text-body min-h-full">
-    <PublicChrome client:load>
+    <PublicChrome
+      client:load
+      hideNavbar={Astro.url.pathname === "/" || Astro.url.pathname === ""}
+    >
       <slot />
     </PublicChrome>
   </body>

@@ -2,9 +2,11 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactElement } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { TurnstileField } from "@/components/turnstile/TurnstileField";
 import { Button } from "@/components/ui/button";
 import {
   KONTAK_FORM_FIELDS,
@@ -13,6 +15,7 @@ import {
   KONTAK_FORM_SUBMIT_LABEL,
 } from "@/lib/kontak-landing-content";
 import { PUBLIK_CONTACT_EMAIL } from "@/lib/kontak-publik";
+import { verifyTurnstileToken } from "@/lib/turnstile-public";
 import { cn } from "@/lib/utils";
 
 const schema = z.object({
@@ -47,10 +50,27 @@ export function LandingContactForm(): ReactElement {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitSuccessful },
+    formState: { errors, isSubmitSuccessful, isSubmitting },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileError, setTurnstileError] = useState<string | null>(null);
+  const [resetSignal, setResetSignal] = useState(0);
 
-  function onSubmit(data: FormValues): void {
+  async function onSubmit(data: FormValues): Promise<void> {
+    setTurnstileError(null);
+    if (!turnstileToken) {
+      setTurnstileError("Selesaikan verifikasi keamanan sebelum mengirim.");
+      return;
+    }
+
+    const verified = await verifyTurnstileToken(turnstileToken);
+    if (!verified.success) {
+      setTurnstileError("Verifikasi keamanan gagal. Coba lagi.");
+      setTurnstileToken(null);
+      setResetSignal((n) => n + 1);
+      return;
+    }
+
     const subject = encodeURIComponent(data.subject);
     const phoneLine = data.phone?.trim() ? `Telepon: ${data.phone.trim()}\n` : "";
     const body = encodeURIComponent(
@@ -59,6 +79,8 @@ export function LandingContactForm(): ReactElement {
     const mailtoUrl = `mailto:${PUBLIK_CONTACT_EMAIL}?subject=${subject}&body=${body}`;
     window.open(mailtoUrl, "_self");
     reset();
+    setTurnstileToken(null);
+    setResetSignal((n) => n + 1);
   }
 
   return (
@@ -161,8 +183,23 @@ export function LandingContactForm(): ReactElement {
           ) : null}
         </div>
 
-        <Button type="submit" className="mt-1 w-full">
-          {KONTAK_FORM_SUBMIT_LABEL}
+        <div>
+          <p className="mb-1.5 text-sm font-medium text-heading">
+            Verifikasi keamanan <RequiredMark />
+          </p>
+          <TurnstileField
+            onTokenChange={setTurnstileToken}
+            resetSignal={resetSignal}
+          />
+          {turnstileError ? (
+            <p className="mt-1 text-xs text-red-600" role="alert">
+              {turnstileError}
+            </p>
+          ) : null}
+        </div>
+
+        <Button type="submit" className="mt-1 w-full" disabled={isSubmitting}>
+          {isSubmitting ? "Memverifikasi…" : KONTAK_FORM_SUBMIT_LABEL}
         </Button>
 
         {isSubmitSuccessful ? (

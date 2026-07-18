@@ -5,6 +5,7 @@ import {
   getBeritaSiswaDetailPath,
   type BeritaArticleSeoInput,
 } from "@/lib/berita-seo";
+import { sanitizeArtikelHtml } from "@/lib/sanitize-artikel-html";
 import {
   getArtikelSiswaPublikBySlug,
   getRelatedArtikelSiswa,
@@ -65,7 +66,7 @@ const description =
     authorLabel={authorLabel}
     judul={artikel.judul}
     ringkasan={artikel.ringkasan}
-    kontenHtml={artikel.konten}
+    kontenHtml={sanitizeArtikelHtml(artikel.konten)}
     cover={{ src: artikel.coverSrc, alt: coverAlt }}
     related={related}
   />

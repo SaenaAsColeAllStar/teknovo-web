@@ -1,59 +1,62 @@
-import sanitizeHtml from "sanitize-html";
+import DOMPurify from "isomorphic-dompurify";
 
-const OPSI: sanitizeHtml.IOptions = {
-  allowedTags: [
-    "p",
-    "br",
-    "strong",
-    "b",
-    "em",
-    "i",
-    "u",
-    "s",
-    "strike",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "ul",
-    "ol",
-    "li",
-    "a",
-    "img",
-    "blockquote",
-    "code",
-    "pre",
-    "hr",
-    "div",
-    "span",
-  ],
-  allowedAttributes: {
-    a: ["href", "title", "target", "rel"],
-    img: ["src", "alt", "title", "width", "height", "loading"],
-    "*": ["class"],
-  },
-  allowedSchemes: ["http", "https", "mailto", "tel"],
-  allowedSchemesByTag: {
-    img: ["http", "https"],
-    a: ["http", "https", "mailto", "tel"],
-  },
-  allowProtocolRelative: false,
-  transformTags: {
-    a: (tagName, attribs) => ({
-      tagName,
-      attribs: {
-        ...attribs,
-        rel: "noopener noreferrer",
-        target: "_blank",
-      },
-    }),
-  },
-};
+const ALLOWED_TAGS = [
+  "p",
+  "br",
+  "strong",
+  "b",
+  "em",
+  "i",
+  "u",
+  "s",
+  "strike",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "ul",
+  "ol",
+  "li",
+  "a",
+  "img",
+  "blockquote",
+  "code",
+  "pre",
+  "hr",
+  "div",
+  "span",
+];
+
+const ALLOWED_ATTR = [
+  "href",
+  "title",
+  "target",
+  "rel",
+  "src",
+  "alt",
+  "width",
+  "height",
+  "loading",
+  "class",
+];
 
 /**
  * HTML aman untuk disimpan & ditampilkan (konten artikel / berita).
- * Hanya tag/attribute yang diizinkan; skrip dan event dihilangkan.
+ * DOMPurify allowlist — skrip, event handler, dan skema berbahaya dihilangkan.
  */
 export function sanitizeArtikelHtml(html: string): string {
-  return sanitizeHtml(html.trim(), OPSI);
+  const cleaned = DOMPurify.sanitize(html.trim(), {
+    ALLOWED_TAGS,
+    ALLOWED_ATTR,
+    ALLOW_DATA_ATTR: false,
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
+  });
+
+  // Force safe link targets (defense in depth after allowlist).
+  return cleaned.replace(/<a\b([^>]*)>/gi, (_full, attrs: string) => {
+    let next = attrs
+      .replace(/\srel\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "")
+      .replace(/\starget\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
+    return `<a${next} rel="noopener noreferrer" target="_blank">`;
+  });
 }

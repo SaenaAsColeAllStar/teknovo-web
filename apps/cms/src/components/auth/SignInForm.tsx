@@ -1,4 +1,5 @@
-import { useAuth, useClerk, useSignIn } from "@clerk/clerk-react";
+import { useAuth, useClerk } from "@clerk/clerk-react";
+import { useSignInSignal } from "@clerk/clerk-react/experimental";
 import {
   type FormEvent,
   type ReactElement,
@@ -8,19 +9,23 @@ import {
   useState,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import {
   type OAuthStrategy,
   resolveOAuthProviders,
 } from "./oauth-providers";
+import { TurnstileField } from "@/components/turnstile/TurnstileField";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { verifyTurnstileToken } from "@/lib/turnstile-public";
 import { cn } from "@/lib/utils";
 
 const REMEMBER_KEY = "teknovo-cms-remember-me";
 const AFTER_SIGN_IN = "/";
+const SSO_CALLBACK = "/sso-callback";
 
 type FormMode = "sign-in" | "verify-trust";
 
@@ -32,56 +37,51 @@ type ClerkEnv = {
   };
 };
 
-/** Clerk Future `useSignIn` return (runtime) — types lag behind clerk-react 5.x. */
-type SignInFutureHook = {
-  signIn: {
-    status: string | null;
-    supportedSecondFactors: Array<{ strategy: string }>;
-    password: (params: {
-      emailAddress: string;
-      password: string;
-    }) => Promise<{ error: { message?: string } | null }>;
-    sso: (params: {
-      strategy: string;
-      redirectUrl: string;
-      redirectCallbackUrl: string;
-    }) => Promise<{ error: { message?: string } | null }>;
-    finalize: (params: {
-      navigate: (args: {
-        session?: { currentTask?: unknown } | null;
-        decorateUrl: (url: string) => string;
-      }) => void;
-    }) => Promise<void>;
-    mfa: {
-      sendEmailCode: () => Promise<unknown>;
-      verifyEmailCode: (params: {
-        code: string;
-      }) => Promise<{ error: { message?: string } | null }>;
-    };
-    reset: () => Promise<unknown> | void;
-  };
-  errors: {
-    fields?: {
-      identifier: { message?: string } | null;
-      password: { message?: string } | null;
-      code: { message?: string } | null;
-    } | null;
-    global?: Array<{ message?: string }> | null;
-  } | null;
-  fetchStatus: "idle" | "fetching" | string;
-};
-
 type SignInFieldKey = "identifier" | "password" | "code";
 
+function absoluteAppUrl(path: string): string {
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  return new URL(path, window.location.origin).href;
+}
+
+function clerkErrorMessage(error: unknown, fallback: string): string {
+  if (!error || typeof error !== "object") return fallback;
+  const record = error as {
+    message?: string;
+    errors?: Array<{ longMessage?: string; message?: string }>;
+  };
+  const nested = record.errors?.[0];
+  return (
+    nested?.longMessage ||
+    nested?.message ||
+    record.message ||
+    fallback
+  );
+}
+
 function fieldMessage(
-  fields: SignInFutureHook["errors"] extends { fields?: infer F } ? F : never,
+  fields:
+    | {
+        identifier: { message?: string } | null;
+        password: { message?: string } | null;
+        code: { message?: string } | null;
+      }
+    | null
+    | undefined,
   key: SignInFieldKey,
 ): string | undefined {
   return fields?.[key]?.message ?? undefined;
 }
 
 function firstFieldMessage(
-  fields: SignInFutureHook["errors"] extends { fields?: infer F } ? F : never,
+  fields:
+    | {
+        identifier: { message?: string } | null;
+        password: { message?: string } | null;
+        code: { message?: string } | null;
+      }
+    | null
+    | undefined,
   ...keys: SignInFieldKey[]
 ): string | undefined {
   if (!fields) return undefined;
@@ -96,7 +96,9 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
   const navigate = useNavigate();
   const clerk = useClerk();
   const { isSignedIn } = useAuth();
-  const { signIn, errors, fetchStatus } = useSignIn() as unknown as SignInFutureHook;
+  // clerk-react v5: Future custom-flow APIs (`sso`, `password`, `finalize`) live on
+  // useSignInSignal — not on legacy useSignIn() (that only has authenticateWithRedirect).
+  const { signIn, errors, fetchStatus } = useSignInSignal();
 
   const [mode, setMode] = useState<FormMode>("sign-in");
   const [email, setEmail] = useState("");
@@ -105,8 +107,11 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
   const [rememberMe, setRememberMe] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
   const [oauthStrategies, setOauthStrategies] = useState<OAuthStrategy[]>([]);
+  const [oauthBusy, setOauthBusy] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileReset, setTurnstileReset] = useState(0);
 
-  const busy = fetchStatus === "fetching";
+  const busy = fetchStatus === "fetching" || oauthBusy;
   const providers = useMemo(() => resolveOAuthProviders(oauthStrategies), [oauthStrategies]);
 
   useEffect(() => {
@@ -147,74 +152,127 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
     event.preventDefault();
     setLocalError(null);
 
+    if (!turnstileToken) {
+      setLocalError("Selesaikan verifikasi keamanan sebelum masuk.");
+      return;
+    }
+
+    const verified = await verifyTurnstileToken(turnstileToken);
+    if (!verified.success) {
+      setLocalError("Verifikasi keamanan gagal. Coba lagi.");
+      setTurnstileToken(null);
+      setTurnstileReset((n) => n + 1);
+      return;
+    }
+
     try {
       window.localStorage.setItem(REMEMBER_KEY, rememberMe ? "1" : "0");
     } catch {
       /* ignore */
     }
 
-    const { error } = await signIn.password({
-      emailAddress: email.trim(),
-      password,
-    });
+    try {
+      const { error } = await signIn.password({
+        emailAddress: email.trim(),
+        password,
+      });
 
-    if (error) {
-      setLocalError(error.message || "Gagal masuk. Periksa email dan kata sandi.");
-      return;
-    }
-
-    if (signIn.status === "complete") {
-      await finalizeSignIn();
-      return;
-    }
-
-    if (signIn.status === "needs_client_trust") {
-      const emailFactor = signIn.supportedSecondFactors.find(
-        (factor) => factor.strategy === "email_code",
-      );
-      if (emailFactor) {
-        await signIn.mfa.sendEmailCode();
-        setMode("verify-trust");
-        setCode("");
+      if (error) {
+        setLocalError(error.message || "Gagal masuk. Periksa email dan kata sandi.");
+        setTurnstileToken(null);
+        setTurnstileReset((n) => n + 1);
         return;
       }
-    }
 
-    if (signIn.status === "needs_second_factor") {
-      setLocalError("Akun ini memerlukan verifikasi tambahan. Hubungi admin sekolah.");
-      return;
-    }
+      if (signIn.status === "complete") {
+        await finalizeSignIn();
+        return;
+      }
 
-    setLocalError("Proses masuk belum selesai. Coba lagi atau gunakan lupa kata sandi.");
+      if (signIn.status === "needs_client_trust") {
+        const emailFactor = signIn.supportedSecondFactors.find(
+          (factor) => factor.strategy === "email_code",
+        );
+        if (emailFactor) {
+          await signIn.mfa.sendEmailCode();
+          setMode("verify-trust");
+          setCode("");
+          return;
+        }
+      }
+
+      if (signIn.status === "needs_second_factor") {
+        setLocalError("Akun ini memerlukan verifikasi tambahan. Hubungi admin sekolah.");
+        return;
+      }
+
+      setLocalError("Proses masuk belum selesai. Coba lagi atau gunakan lupa kata sandi.");
+    } catch (err) {
+      const message = clerkErrorMessage(err, "Gagal masuk. Periksa email dan kata sandi.");
+      setLocalError(message);
+      toast.error(message);
+      setTurnstileToken(null);
+      setTurnstileReset((n) => n + 1);
+    }
   }
 
   async function handleTrustVerify(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setLocalError(null);
 
-    const { error } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
-    if (error) {
-      setLocalError(error.message || "Kode verifikasi tidak valid.");
-      return;
-    }
+    try {
+      const { error } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
+      if (error) {
+        setLocalError(error.message || "Kode verifikasi tidak valid.");
+        return;
+      }
 
-    if (signIn.status === "complete") {
-      await finalizeSignIn();
-      return;
-    }
+      if (signIn.status === "complete") {
+        await finalizeSignIn();
+        return;
+      }
 
-    setLocalError("Verifikasi belum selesai. Minta kode baru atau coba lagi.");
+      setLocalError("Verifikasi belum selesai. Minta kode baru atau coba lagi.");
+    } catch (err) {
+      const message = clerkErrorMessage(err, "Kode verifikasi tidak valid.");
+      setLocalError(message);
+      toast.error(message);
+    }
   }
 
   async function handleOAuth(strategy: OAuthStrategy): Promise<void> {
     setLocalError(null);
-    const { error } = await signIn.sso({
-      strategy,
-      redirectUrl: AFTER_SIGN_IN,
-      redirectCallbackUrl: "/sso-callback",
-    });
-    if (error) {
-      setLocalError(error.message || "Gagal memulai masuk dengan penyedia.");
+    setOauthBusy(true);
+
+    try {
+      if (!clerk.loaded) {
+        throw new Error("Clerk belum siap. Muat ulang halaman dan coba lagi.");
+      }
+
+      const { error } = await signIn.sso({
+        strategy,
+        redirectUrl: absoluteAppUrl(AFTER_SIGN_IN),
+        redirectCallbackUrl: absoluteAppUrl(SSO_CALLBACK),
+      });
+
+      if (error) {
+        const message =
+          error.message ||
+          "Gagal memulai masuk dengan Google. Periksa konfigurasi OAuth di Clerk.";
+        setLocalError(message);
+        toast.error(message);
+      }
+      // Successful SSO navigates away; no further UI update needed.
+    } catch (err) {
+      const message = clerkErrorMessage(
+        err,
+        "Gagal memulai masuk dengan Google. Periksa konfigurasi OAuth di Clerk Dashboard / Google Cloud.",
+      );
+      setLocalError(message);
+      toast.error(message);
+      console.error("[cms] OAuth sign-in failed:", err);
+    } finally {
+      setOauthBusy(false);
     }
   }
 
@@ -298,7 +356,9 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
                   }}
                 >
                   {provider.icon}
-                  <span className="truncate">{provider.label}</span>
+                  <span className="truncate">
+                    {oauthBusy ? "Mengalihkan…" : provider.label}
+                  </span>
                 </Button>
               ))}
             </div>
@@ -356,10 +416,23 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
           </Link>
         </div>
 
+        <div className="space-y-1.5">
+          <Label className="text-xs">
+            Verifikasi keamanan
+            <span className="ml-0.5 text-[color:var(--color-danger)]" aria-hidden>
+              *
+            </span>
+          </Label>
+          <TurnstileField
+            onTokenChange={setTurnstileToken}
+            resetSignal={turnstileReset}
+          />
+        </div>
+
         {displayError ? <ErrorText>{displayError}</ErrorText> : null}
 
         <Button type="submit" className="w-full" size="lg" disabled={busy || !clerk.loaded}>
-          {busy ? "Memproses…" : "Masuk"}
+          {busy && !oauthBusy ? "Memproses…" : "Masuk"}
         </Button>
 
         <p className="text-center text-sm text-[color:var(--color-body)]">

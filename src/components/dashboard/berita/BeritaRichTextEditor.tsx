@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { sanitizeArtikelHtml } from "@/lib/sanitize-artikel-html";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -46,7 +47,8 @@ export function BeritaRichTextEditor({
     },
     onUpdate: ({ editor: ed }) => {
       const html = ed.getHTML();
-      onChange(html === "<p></p>" ? "" : html);
+      const raw = html === "<p></p>" ? "" : html;
+      onChange(raw ? sanitizeArtikelHtml(raw) : "");
     },
   });
 

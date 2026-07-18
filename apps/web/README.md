@@ -25,6 +25,8 @@ Atau Root `apps/web` + `pnpm install && pnpm build` + output `dist` (butuh works
 | `PUBLIC_API_URL` | `https://cf.smkteknovo.sch.id` |
 | `PUBLIC_SITE_URL` | `https://smkteknovo.sch.id` |
 | `PUBLIC_R2_URL` | `https://r2.ctos.web.id` |
+| `PUBLIC_TURNSTILE_SITEKEY` | Turnstile sitekey (public) |
+| `PUBLIC_TURNSTILE_SITEVERIFY_URL` | `https://turnstile-siteverify-teknovo-web.fajarnugrahayusman-06.workers.dev` |
 
 Astro fetch berita **saat build**. Publish CMS → API `rebuild-web` → GitHub Action rebuild Pages.
 

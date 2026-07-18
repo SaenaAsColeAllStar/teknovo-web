@@ -1,4 +1,5 @@
-import { useAuth, useSignIn } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/clerk-react";
+import { useSignInSignal } from "@clerk/clerk-react/experimental";
 import { Mail } from "lucide-react";
 import {
   type FormEvent,
@@ -8,6 +9,7 @@ import {
   useState,
 } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -22,44 +24,17 @@ const TERMS_HREF = "https://smkteknovo.sch.id/kontak" as const;
 
 type Step = "request" | "code" | "password";
 
-type SignInFutureHook = {
-  signIn: {
-    status: string | null;
-    create: (params: {
-      identifier: string;
-    }) => Promise<{ error: { message?: string } | null }>;
-    resetPasswordEmailCode: {
-      sendCode: () => Promise<{ error: { message?: string } | null }>;
-      verifyCode: (params: {
-        code: string;
-      }) => Promise<{ error: { message?: string } | null }>;
-      submitPassword: (params: {
-        password: string;
-        signOutOfOtherSessions?: boolean;
-      }) => Promise<{ error: { message?: string } | null }>;
-    };
-    finalize: (params: {
-      navigate: (args: {
-        session?: { currentTask?: unknown } | null;
-        decorateUrl: (url: string) => string;
-      }) => void;
-    }) => Promise<void>;
-  };
-  errors: {
-    fields?: {
-      identifier: { message?: string } | null;
-      password: { message?: string } | null;
-      code: { message?: string } | null;
-    } | null;
-    global?: Array<{ message?: string }> | null;
-  };
-  fetchStatus: "idle" | "fetching" | string;
-};
-
 type ResetFieldKey = "identifier" | "password" | "code";
 
 function firstFieldMessage(
-  fields: SignInFutureHook["errors"]["fields"],
+  fields:
+    | {
+        identifier: { message?: string } | null;
+        password: { message?: string } | null;
+        code: { message?: string } | null;
+      }
+    | null
+    | undefined,
   ...keys: ResetFieldKey[]
 ): string | undefined {
   if (!fields) return undefined;
@@ -70,14 +45,31 @@ function firstFieldMessage(
   return undefined;
 }
 
-function globalError(errors: SignInFutureHook["errors"] | null | undefined): string | undefined {
+function globalError(
+  errors:
+    | {
+        global?: Array<{ message?: string }> | null;
+      }
+    | null
+    | undefined,
+): string | undefined {
   return errors?.global?.[0]?.message;
+}
+
+function clerkErrorMessage(error: unknown, fallback: string): string {
+  if (!error || typeof error !== "object") return fallback;
+  const record = error as {
+    message?: string;
+    errors?: Array<{ longMessage?: string; message?: string }>;
+  };
+  const nested = record.errors?.[0];
+  return nested?.longMessage || nested?.message || record.message || fallback;
 }
 
 export function ForgotPasswordForm({ className }: { className?: string }): ReactElement {
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
-  const { signIn, errors, fetchStatus } = useSignIn() as unknown as SignInFutureHook;
+  const { signIn, errors, fetchStatus } = useSignInSignal();
 
   const [step, setStep] = useState<Step>("request");
   const [email, setEmail] = useState("");
@@ -123,65 +115,83 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
       return;
     }
 
-    const { error: createError } = await signIn.create({ identifier });
-    if (createError) {
-      setLocalError(createError.message || "Email tidak ditemukan atau tidak dapat diproses.");
-      return;
-    }
+    try {
+      const { error: createError } = await signIn.create({ identifier });
+      if (createError) {
+        setLocalError(createError.message || "Email tidak ditemukan atau tidak dapat diproses.");
+        return;
+      }
 
-    const { error } = await signIn.resetPasswordEmailCode.sendCode();
-    if (error) {
-      setLocalError(error.message || "Gagal mengirim kode reset ke email.");
-      return;
-    }
+      const { error } = await signIn.resetPasswordEmailCode.sendCode();
+      if (error) {
+        setLocalError(error.message || "Gagal mengirim kode reset ke email.");
+        return;
+      }
 
-    setStep("code");
-    setCode("");
+      setStep("code");
+      setCode("");
+    } catch (err) {
+      const message = clerkErrorMessage(err, "Gagal mengirim kode reset ke email.");
+      setLocalError(message);
+      toast.error(message);
+    }
   }
 
   async function handleVerifyCode(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setLocalError(null);
 
-    const { error } = await signIn.resetPasswordEmailCode.verifyCode({ code: code.trim() });
-    if (error) {
-      setLocalError(error.message || "Kode tidak valid atau sudah kedaluwarsa.");
-      return;
-    }
+    try {
+      const { error } = await signIn.resetPasswordEmailCode.verifyCode({ code: code.trim() });
+      if (error) {
+        setLocalError(error.message || "Kode tidak valid atau sudah kedaluwarsa.");
+        return;
+      }
 
-    setStep("password");
-    setPassword("");
+      setStep("password");
+      setPassword("");
+    } catch (err) {
+      const message = clerkErrorMessage(err, "Kode tidak valid atau sudah kedaluwarsa.");
+      setLocalError(message);
+      toast.error(message);
+    }
   }
 
   async function handleNewPassword(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setLocalError(null);
 
-    const { error } = await signIn.resetPasswordEmailCode.submitPassword({
-      password,
-      signOutOfOtherSessions: true,
-    });
-    if (error) {
-      setLocalError(error.message || "Gagal menyimpan kata sandi baru.");
-      return;
-    }
+    try {
+      const { error } = await signIn.resetPasswordEmailCode.submitPassword({
+        password,
+        signOutOfOtherSessions: true,
+      });
+      if (error) {
+        setLocalError(error.message || "Gagal menyimpan kata sandi baru.");
+        return;
+      }
 
-    if (signIn.status === "complete") {
-      await finalizeReset();
-      return;
-    }
+      if (signIn.status === "complete") {
+        await finalizeReset();
+        return;
+      }
 
-    if (signIn.status === "needs_second_factor") {
-      setLocalError("Akun ini memerlukan verifikasi tambahan. Hubungi admin sekolah.");
-      return;
-    }
+      if (signIn.status === "needs_second_factor") {
+        setLocalError("Akun ini memerlukan verifikasi tambahan. Hubungi admin sekolah.");
+        return;
+      }
 
-    setLocalError("Reset kata sandi belum selesai. Coba lagi.");
+      setLocalError("Reset kata sandi belum selesai. Coba lagi.");
+    } catch (err) {
+      const message = clerkErrorMessage(err, "Gagal menyimpan kata sandi baru.");
+      setLocalError(message);
+      toast.error(message);
+    }
   }
 
   const displayError =
     localError ||
-    firstFieldMessage(errors.fields, "identifier", "password", "code") ||
+    firstFieldMessage(errors?.fields, "identifier", "password", "code") ||
     globalError(errors);
 
   const title =
@@ -214,7 +224,7 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
               id="forgot-email"
               label="Email"
               required
-              error={firstFieldMessage(errors.fields, "identifier")}
+              error={firstFieldMessage(errors?.fields, "identifier")}
             >
               <div className="relative">
                 <Mail
@@ -277,7 +287,7 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
 
         {step === "code" ? (
           <form className="space-y-5" onSubmit={handleVerifyCode}>
-            <Field id="forgot-code" label="Kode reset" required error={firstFieldMessage(errors.fields, "code")}>
+            <Field id="forgot-code" label="Kode reset" required error={firstFieldMessage(errors?.fields, "code")}>
               <Input
                 id="forgot-code"
                 inputMode="numeric"
@@ -328,7 +338,7 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
               id="new-password"
               label="Kata sandi baru"
               required
-              error={firstFieldMessage(errors.fields, "password")}
+              error={firstFieldMessage(errors?.fields, "password")}
             >
               <Input
                 id="new-password"
