@@ -1,5 +1,6 @@
 # dependencies
 /node_modules
+**/node_modules
 /.pnp
 .pnp.*
 
@@ -16,6 +17,10 @@
 apps/*/dist
 apps/web/dist
 apps/cms/dist
+
+# astro / vite
+apps/web/.astro
+**/.vite
 
 # misc
 .DS_Store
