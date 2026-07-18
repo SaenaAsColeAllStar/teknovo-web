@@ -1,0 +1,12 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { KesiswaanSection } from "@/components/features/landing/KesiswaanSection";
+import {
+  KESISWAAN_HUB_PAGE_TITLE,
+  KESISWAAN_METADATA_DESCRIPTION,
+} from "@/lib/kesiswaan-landing-content";
+---
+
+<BaseLayout title={KESISWAAN_HUB_PAGE_TITLE} description={KESISWAAN_METADATA_DESCRIPTION}>
+  <KesiswaanSection client:load />
+</BaseLayout>

@@ -1,13 +1,13 @@
 ---
-import BaseLayout from "../layouts/BaseLayout.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
 import { LocalSeoJsonLd } from "@/components/features/landing/local-seo/LocalSeoJsonLd";
 import { LocalSeoPageShell } from "@/components/features/landing/local-seo/LocalSeoPageShell";
 import { getLocalSeoPageConfig } from "@/lib/local-seo-keywords";
 
-const seo = getLocalSeoPageConfig("ppdb-smk-pamanukan");
+const seo = getLocalSeoPageConfig("smk-terbaik-pamanukan");
 ---
 
 <BaseLayout title={seo.title} description={seo.description}>
-  <LocalSeoJsonLd client:load pageId="ppdb-smk-pamanukan" />
-  <LocalSeoPageShell client:load pageId="ppdb-smk-pamanukan" />
+  <LocalSeoJsonLd client:load pageId="smk-terbaik-pamanukan" />
+  <LocalSeoPageShell client:load pageId="smk-terbaik-pamanukan" />
 </BaseLayout>

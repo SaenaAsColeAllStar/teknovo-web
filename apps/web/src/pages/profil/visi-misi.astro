@@ -1,0 +1,9 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { VisiMisiContent } from "@/components/features/landing/profile/VisiMisiContent";
+import { VISI_MISI_PAGE_LEDE, VISI_MISI_PAGE_TITLE } from "@/lib/visi-misi-content";
+---
+
+<BaseLayout title={VISI_MISI_PAGE_TITLE} description={VISI_MISI_PAGE_LEDE}>
+  <VisiMisiContent client:load />
+</BaseLayout>

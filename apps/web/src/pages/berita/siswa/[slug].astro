@@ -2,39 +2,41 @@
 import BaseLayout from "../../../layouts/BaseLayout.astro";
 import { BeritaArticleDetailShell } from "@/components/features/landing/berita/BeritaArticleDetailShell";
 import {
-  getBeritaKegiatanDetailPath,
+  getBeritaSiswaDetailPath,
   type BeritaArticleSeoInput,
 } from "@/lib/berita-seo";
 import {
-  getBeritaKegiatanPublikBySlug,
-  getRelatedBeritaKegiatan,
-  listBeritaKegiatanSitemapEntries,
-} from "@/services/berita-kegiatan-publik";
+  getArtikelSiswaPublikBySlug,
+  getRelatedArtikelSiswa,
+  listPublishedArtikelSiswaSitemapEntries,
+} from "@/services/artikel-berita-publik";
+import { getRelatedBeritaKegiatan } from "@/services/berita-kegiatan-publik";
 
 export async function getStaticPaths() {
-  const entries = await listBeritaKegiatanSitemapEntries();
+  const entries = await listPublishedArtikelSiswaSitemapEntries();
   return entries.map((entry) => ({
     params: { slug: entry.slug },
   }));
 }
 
 const slug = Astro.params.slug!;
-const artikel = await getBeritaKegiatanPublikBySlug(slug);
+const artikel = await getArtikelSiswaPublikBySlug(slug);
 if (!artikel) {
-  return Astro.redirect("/berita/kegiatan-sekolah");
+  return Astro.redirect("/berita/berita-terbaru");
 }
 
-const related = await getRelatedBeritaKegiatan(slug, 3);
-const authorLabel =
-  artikel.penulisNama?.trim() && artikel.penulisNama.trim().length > 0
-    ? artikel.penulisNama.trim()
-    : "Humas sekolah";
-const coverAlt = artikel.coverAlt?.trim() || `Ilustrasi berita: ${artikel.judul}`;
+const [relatedSiswa, relatedKegiatan] = await Promise.all([
+  getRelatedArtikelSiswa(slug, 2),
+  getRelatedBeritaKegiatan("__none__", 1),
+]);
+const related = [...relatedSiswa, ...relatedKegiatan].slice(0, 3);
+const authorLabel = `${artikel.penulisNama} · ${artikel.penulisKelas}`;
+const coverAlt = artikel.coverAlt?.trim() || `Ilustrasi artikel: ${artikel.judul}`;
 const seo: BeritaArticleSeoInput = {
-  kind: "kegiatan",
+  kind: "siswa",
   judul: artikel.judul,
   ringkasan: artikel.ringkasan,
-  path: getBeritaKegiatanDetailPath(slug),
+  path: getBeritaSiswaDetailPath(slug),
   publishedAt: artikel.publishedAt,
   authorName: authorLabel,
   imageUrl: artikel.coverSrc,
@@ -45,7 +47,7 @@ const seo: BeritaArticleSeoInput = {
 };
 const title = artikel.metaTitle || artikel.judul;
 const description =
-  artikel.metaDescription || artikel.ringkasan || "Berita SMK TEKNOVO";
+  artikel.metaDescription || artikel.ringkasan || "Artikel siswa SMK TEKNOVO";
 ---
 
 <BaseLayout
@@ -56,9 +58,9 @@ const description =
   <BeritaArticleDetailShell
     client:load
     seo={seo}
-    backHref="/berita/kegiatan-sekolah"
-    backLabel="Berita kegiatan sekolah"
-    sectionPath="/berita/kegiatan-sekolah"
+    backHref="/berita/berita-terbaru"
+    backLabel="Berita terbaru"
+    sectionPath="/berita/berita-terbaru"
     publishedAt={artikel.publishedAt}
     authorLabel={authorLabel}
     judul={artikel.judul}

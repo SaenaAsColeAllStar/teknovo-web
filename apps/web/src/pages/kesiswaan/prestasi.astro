@@ -1,0 +1,15 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { KesiswaanPrestasiPage } from "@/components/features/landing/kesiswaan/KesiswaanPrestasiPage";
+import {
+  KESISWAAN_PRESTASI_PAGE_LEDE,
+  KESISWAAN_PRESTASI_PAGE_TITLE,
+} from "@/lib/kesiswaan-landing-content";
+---
+
+<BaseLayout
+  title={KESISWAAN_PRESTASI_PAGE_TITLE}
+  description={KESISWAAN_PRESTASI_PAGE_LEDE}
+>
+  <KesiswaanPrestasiPage client:load />
+</BaseLayout>

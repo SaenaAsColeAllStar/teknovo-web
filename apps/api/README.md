@@ -1,7 +1,7 @@
 # @teknovo/api — Hono Worker
 
 **Domain:** `cf.smkteknovo.sch.id`  
-**Project name:** `teknovo-api` (Workers, bukan Pages)
+**Project name:** `teknovo-cms-api` (Workers, bukan Pages)
 
 ## Cloudflare dashboard (Workers Builds) / Wrangler
 

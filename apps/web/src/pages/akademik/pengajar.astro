@@ -1,10 +1,14 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { AkademikHashRedirect } from "@/components/features/landing/AkademikHashRedirect";
+import { AkademikPengajarPageContent } from "@/components/features/landing/AkademikPengajarPageContent";
+import {
+  AKADEMIK_PENGAJAR_PAGE_LEDE,
+  AKADEMIK_PENGAJAR_PAGE_TITLE,
+} from "@/lib/akademik-landing-content";
 ---
 
-<BaseLayout title="Pengajar — SMK TEKNOVO">
-  <div class="mx-auto max-w-3xl px-4 py-12">
-    <h1 class="text-3xl font-bold">Pengajar</h1>
-    <p class="mt-4 text-[var(--muted)]">Tim pengajar SMK TEKNOVO.</p>
-  </div>
+<BaseLayout title={AKADEMIK_PENGAJAR_PAGE_TITLE} description={AKADEMIK_PENGAJAR_PAGE_LEDE}>
+  <AkademikHashRedirect client:load />
+  <AkademikPengajarPageContent client:load />
 </BaseLayout>

@@ -10,12 +10,25 @@
     "deploy": "pnpm build && wrangler pages deploy dist --project-name=teknovo-web"
   },
   "dependencies": {
+    "@astrojs/react": "^4.3.0",
+    "@radix-ui/react-navigation-menu": "^1.2.14",
+    "@radix-ui/react-slot": "^1.3.0",
     "@teknovo/shared": "workspace:*",
-    "astro": "^5.12.0"
+    "astro": "^5.12.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.4.0",
+    "framer-motion": "^12.38.0",
+    "lucide-react": "^1.25.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "tailwind-merge": "^3.6.0"
   },
   "devDependencies": {
-    "@astrojs/cloudflare": "^12.6.0",
+    "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "^4.112.0"

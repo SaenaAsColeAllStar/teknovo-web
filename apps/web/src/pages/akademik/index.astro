@@ -1,22 +1,11 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { AkademikHashRedirect } from "@/components/features/landing/AkademikHashRedirect";
+import { AkademikPageContent } from "@/components/features/landing/AkademikPageContent";
+import { AKADEMIK_PAGE_LEDE, AKADEMIK_PAGE_TITLE } from "@/lib/akademik-landing-content";
 ---
 
-<BaseLayout title="Akademik — SMK TEKNOVO">
-  <div class="mx-auto max-w-3xl px-4 py-12">
-    <h1 class="text-3xl font-bold">Akademik</h1>
-    <p class="mt-4 text-[var(--muted)]">
-      Program kejuruan, kurikulum, dan pengajar SMK TEKNOVO. Port penuh dari
-      landing Next dapat dilanjutkan bertahap ke Astro.
-    </p>
-    <ul class="mt-6 space-y-2 text-sm">
-      <li><a class="text-[var(--brand)]" href="/akademik/jurusan">Jurusan</a></li>
-      <li>
-        <a class="text-[var(--brand)]" href="/akademik/kurikulum">Kurikulum</a>
-      </li>
-      <li>
-        <a class="text-[var(--brand)]" href="/akademik/pengajar">Pengajar</a>
-      </li>
-    </ul>
-  </div>
+<BaseLayout title={AKADEMIK_PAGE_TITLE} description={AKADEMIK_PAGE_LEDE}>
+  <AkademikHashRedirect client:load />
+  <AkademikPageContent client:load />
 </BaseLayout>

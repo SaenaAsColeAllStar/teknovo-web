@@ -1,0 +1,8 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { TeknovoNotFoundPage } from "@/components/errors/TeknovoNotFoundPage";
+---
+
+<BaseLayout title="Halaman tidak ditemukan">
+  <TeknovoNotFoundPage client:load app="landing" escapePublicChrome />
+</BaseLayout>

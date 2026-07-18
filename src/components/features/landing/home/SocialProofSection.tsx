@@ -11,11 +11,29 @@ import {
   HOME_SOCIAL_PROOF_SLIDES,
   HOME_SOCIAL_PROOF_TITLE,
 } from "@/lib/home-landing-content";
-import { getLandingPublicStats } from "@/services/landing-stats";
+import {
+  getLandingPublicStats,
+  type LandingPublicStatItem,
+} from "@/services/landing-stats";
 
-export async function SocialProofSection(): Promise<ReactElement> {
-  const stats = await getLandingPublicStats();
+type Props = {
+  /** Preloaded stats (Astro SSG). If omitted, fetch fallback stats. */
+  stats?: LandingPublicStatItem[];
+};
 
+export async function SocialProofSection({
+  stats: statsProp,
+}: Props = {}): Promise<ReactElement> {
+  const stats = statsProp ?? (await getLandingPublicStats());
+  return <SocialProofSectionView stats={stats} />;
+}
+
+/** Sync variant for Astro / client islands (stats required). */
+export function SocialProofSectionView({
+  stats,
+}: {
+  stats: LandingPublicStatItem[];
+}): ReactElement {
   return (
     <MotionInView
       as="section"

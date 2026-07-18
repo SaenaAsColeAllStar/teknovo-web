@@ -1,5 +1,5 @@
-# teknovo-api — Free-tier Hono Worker (cf.smkteknovo.sch.id)
-name = "teknovo-api"
+# teknovo-cms-api — Free-tier Hono Worker (cf.smkteknovo.sch.id)
+name = "teknovo-cms-api"
 main = "src/index.ts"
 compatibility_date = "2026-07-17"
 compatibility_flags = ["nodejs_compat"]

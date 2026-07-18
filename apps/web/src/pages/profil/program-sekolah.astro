@@ -1,0 +1,12 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { ProgramSekolahContent } from "@/components/features/landing/profile/ProgramSekolahContent";
+import {
+  PROGRAM_SEKOLAH_PAGE_LEDE,
+  PROGRAM_SEKOLAH_PAGE_TITLE,
+} from "@/lib/program-sekolah-content";
+---
+
+<BaseLayout title={PROGRAM_SEKOLAH_PAGE_TITLE} description={PROGRAM_SEKOLAH_PAGE_LEDE}>
+  <ProgramSekolahContent client:load />
+</BaseLayout>

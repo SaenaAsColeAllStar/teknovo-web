@@ -35,7 +35,7 @@ app.use("*", async (c, next) => {
 });
 
 app.get("/api/health", (c) =>
-  c.json({ ok: true, service: "teknovo-api", ts: new Date().toISOString() }),
+  c.json({ ok: true, service: "teknovo-cms-api", ts: new Date().toISOString() }),
 );
 
 app.route("/api/v1/berita", beritaRoutes);

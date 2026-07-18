@@ -1,0 +1,9 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { KesiswaanEkstrakurikulerPage } from "@/components/features/landing/kesiswaan/KesiswaanEkstrakurikulerPage";
+import { EKSTRA_PAGE_LEDE, EKSTRA_PAGE_TITLE } from "@/lib/ekstrakurikuler-landing-content";
+---
+
+<BaseLayout title={EKSTRA_PAGE_TITLE} description={EKSTRA_PAGE_LEDE[0]}>
+  <KesiswaanEkstrakurikulerPage client:load />
+</BaseLayout>

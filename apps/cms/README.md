@@ -1,7 +1,7 @@
 # @teknovo/cms — Vite + TipTap + Clerk
 
 **Domain:** `cms.smkteknovo.sch.id`  
-**Pages project:** `teknovo-cms`
+**Pages project:** `    `
 
 ## Cloudflare Pages settings
 

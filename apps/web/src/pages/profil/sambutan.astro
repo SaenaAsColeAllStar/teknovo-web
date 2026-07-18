@@ -1,14 +1,9 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SambutanKepalaSection } from "@/components/features/landing/profile/SambutanKepalaSection";
+import { SAMBUTAN_PAGE_LEDE, SAMBUTAN_PAGE_TITLE } from "@/lib/sambutan-landing-content";
 ---
 
-<BaseLayout title="Sambutan — SMK TEKNOVO">
-  <div class="mx-auto max-w-3xl px-4 py-12">
-    <h1 class="text-3xl font-bold">Sambutan</h1>
-    <p class="mt-4 text-[var(--muted)] leading-relaxed">
-      Selamat datang di SMK TEKNOVO — sekolah teknologi dan vokasional di
-      Pamanukan, Subang. Halaman profil ini digenerate secara static; konten
-      sambutan kepala sekolah dapat dikelola lewat CMS / pengaturan.
-    </p>
-  </div>
+<BaseLayout title={SAMBUTAN_PAGE_TITLE} description={SAMBUTAN_PAGE_LEDE}>
+  <SambutanKepalaSection client:load variant="page" />
 </BaseLayout>

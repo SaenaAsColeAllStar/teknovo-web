@@ -1,16 +1,17 @@
 ---
+import { PublicChrome } from "../components/PublicChrome";
 import "../styles/global.css";
 
 type Props = {
-  title: string;
+  title?: string;
   description?: string;
   canonical?: string;
   ogImage?: string;
 };
 
 const {
-  title,
-  description = "SMK Teknologi dan Vokasional Miftahul Huda Rancasari",
+  title = "SMK TEKNOVO",
+  description = "Portal resmi SMK TEKNOVO — Teknologi & Vokasional di Pamanukan Subang.",
   canonical,
   ogImage,
 } = Astro.props;
@@ -20,7 +21,7 @@ const url = canonical || new URL(Astro.url.pathname, site).href;
 ---
 
 <!doctype html>
-<html lang="id">
+<html lang="id" data-scroll-behavior="smooth" class="h-full scroll-smooth antialiased">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -32,38 +33,26 @@ const url = canonical || new URL(Astro.url.pathname, site).href;
     <meta property="og:url" content={url} />
     {ogImage ? <meta property="og:image" content={ogImage} /> : null}
     <meta name="theme-color" content="#1313BA" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style is:global>
+      :root {
+        --font-poppins: "Poppins", ui-sans-serif, system-ui, sans-serif;
+        --font-sans: var(--font-poppins);
+      }
+      body {
+        font-family: var(--font-sans);
+      }
+    </style>
+    <link rel="alternate" type="application/rss+xml" title="Berita SMK TEKNOVO" href="/rss.xml" />
   </head>
-  <body>
-    <header class="border-b border-[var(--border)]">
-      <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
-        <a href="/" class="text-lg font-bold tracking-wide text-[var(--brand)]">
-          SMK TEKNOVO
-        </a>
-        <nav class="flex flex-wrap gap-4 text-sm text-[var(--muted)]">
-          <a href="/profil/sambutan">Profil</a>
-          <a href="/berita">Berita</a>
-          <a href="/akademik">Akademik</a>
-          <a href="/kontak">Kontak</a>
-          <a
-            href="https://cms.smkteknovo.sch.id"
-            class="font-medium text-[var(--brand)]"
-            >CMS</a
-          >
-        </nav>
-      </div>
-    </header>
-    <main>
+  <body class="bg-surface font-sans text-body min-h-full">
+    <PublicChrome client:load>
       <slot />
-    </main>
-    <footer class="mt-16 border-t border-[var(--border)] bg-[var(--soft)]">
-      <div class="mx-auto max-w-5xl px-4 py-8 text-sm text-[var(--muted)]">
-        <p class="font-semibold text-[var(--heading)]">SMK TEKNOVO</p>
-        <p class="mt-1">Teknologi & Vokasional — Pamanukan, Subang</p>
-        <p class="mt-4 text-xs">
-          Site: smkteknovo.sch.id · API: cf.smkteknovo.sch.id · CMS:
-          cms.smkteknovo.sch.id
-        </p>
-      </div>
-    </footer>
+    </PublicChrome>
   </body>
 </html>

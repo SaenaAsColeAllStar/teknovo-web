@@ -1,0 +1,9 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SejarahContent } from "@/components/features/landing/profile/SejarahContent";
+import { SEJARAH_PAGE_LEDE, SEJARAH_PAGE_TITLE } from "@/lib/sejarah-content";
+---
+
+<BaseLayout title={SEJARAH_PAGE_TITLE} description={SEJARAH_PAGE_LEDE}>
+  <SejarahContent client:load />
+</BaseLayout>

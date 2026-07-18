@@ -8,7 +8,7 @@ Production di **Cloudflare Free** memakai tiga deploy terpisah. OpenNext monolit
 |------|-----|--------|--------|
 | `smkteknovo.sch.id` | `apps/web` | Astro SSG | Cloudflare Pages `teknovo-web` |
 | `www.smkteknovo.sch.id` | — | Redirect 301 → apex | Cloudflare Redirect Rule |
-| `cf.smkteknovo.sch.id` | `apps/api` | Hono Worker | Worker `teknovo-api` |
+| `cf.smkteknovo.sch.id` | `apps/api` | Hono Worker | Worker `teknovo-cms-api` |
 | `cms.smkteknovo.sch.id` | `apps/cms` | Vite + React + TipTap + Clerk | Pages `teknovo-cms` |
 
 ## Root directory & Build output (Cloudflare dashboard)
@@ -21,7 +21,7 @@ Isi form **Build configuration** di Pages / Workers Builds seperti ini.
 |---------|----------------|---------------|------------------------|
 | **teknovo-web** (Pages) | `apps/web` | `pnpm install && pnpm build` | `dist` |
 | **teknovo-cms** (Pages) | `apps/cms` | `pnpm install && pnpm build` | `dist` |
-| **teknovo-api** (Workers) | `apps/api` | _(kosong)_ / install di root monorepo | **—** (bukan Pages; entry `src/index.ts`) |
+| **teknovo-cms-api** (Workers) | `apps/api` | _(kosong)_ / install di root monorepo | **—** (bukan Pages; entry `src/index.ts`) |
 
 ### Alternatif: Root directory = `/` (repo root)
 
@@ -29,7 +29,7 @@ Isi form **Build configuration** di Pages / Workers Builds seperti ini.
 |---------|----------------|---------------|------------------------|
 | **teknovo-web** | `/` | `pnpm install && pnpm --filter @teknovo/web build` | `apps/web/dist` |
 | **teknovo-cms** | `/` | `pnpm install && pnpm --filter @teknovo/cms build` | `apps/cms/dist` |
-| **teknovo-api** | `/` atau `apps/api` | Deploy: `cd apps/api && npx wrangler deploy` | — |
+| **teknovo-cms-api** | `/` atau `apps/api` | Deploy: `cd apps/api && npx wrangler deploy` | — |
 
 **Catatan monorepo:** Pages perlu `pnpm install` yang melihat `pnpm-workspace.yaml`. Jika build gagal karena workspace, set Root ke `/` dan pakai kolom **Build output** `apps/web/dist` / `apps/cms/dist`.
 
@@ -39,7 +39,7 @@ Isi form **Build configuration** di Pages / Workers Builds seperti ini.
 |---------|----------|
 | **teknovo-web** | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id` |
 | **teknovo-cms** | `VITE_API_URL=https://cf.smkteknovo.sch.id`, `VITE_CLERK_PUBLISHABLE_KEY=pk_…` |
-| **teknovo-api** | Secrets via `wrangler secret put` (bukan Pages env): `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `GITHUB_REBUILD_TOKEN` |
+| **teknovo-cms-api** | Secrets via `wrangler secret put` (bukan Pages env): `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `GITHUB_REBUILD_TOKEN` |
 
 Panduan lengkap per app: [`apps/web/README.md`](apps/web/README.md) · [`apps/cms/README.md`](apps/cms/README.md) · [`apps/api/README.md`](apps/api/README.md)
 
@@ -103,7 +103,7 @@ Workflows:
 ## DNS / Clerk cutover checklist
 
 1. Buat Pages projects: `teknovo-web`, `teknovo-cms`; attach custom domains apex + `cms.`.
-2. Deploy Worker `teknovo-api`; custom domain `cf.smkteknovo.sch.id`.
+2. Deploy Worker `teknovo-cms-api`; custom domain `cf.smkteknovo.sch.id`.
 3. **Redirect Rule:** `www.smkteknovo.sch.id/*` → `https://smkteknovo.sch.id/$1` (301).
 4. Clerk: add domain `cms.smkteknovo.sch.id`; webhook → `https://cf.smkteknovo.sch.id/api/webhook/clerk`.
 5. Lepas custom domain OpenNext lama dari Worker `teknovo-web` (root wrangler) setelah apex Pages live.

@@ -19,7 +19,7 @@ export async function triggerWebRebuild(
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${token}`,
       "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "teknovo-api",
+      "User-Agent": "teknovo-cms-api",
     },
     body: JSON.stringify({
       event_type: "rebuild-web",

@@ -3,8 +3,18 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
+      "@/lib/r2": ["./src/shims/r2.ts"],
+      "@/lib/public-app-url": ["./src/shims/public-app-url.ts"],
+      "@/lib/auth-sign-in-path": ["./src/shims/auth-sign-in-path.ts"],
+      "next/link": ["./src/shims/next-link.tsx"],
+      "next/image": ["./src/shims/next-image.tsx"],
+      "next/navigation": ["./src/shims/next-navigation.ts"],
+      "@/*": ["../../src/*"],
       "@teknovo/shared": ["../../packages/shared/src/index.ts"]
-    }
-  }
+    },
+    "jsx": "react-jsx",
+    "types": ["astro/client"]
+  },
+  "include": ["src/**/*", ".astro/types.d.ts"],
+  "exclude": ["dist"]
 }
