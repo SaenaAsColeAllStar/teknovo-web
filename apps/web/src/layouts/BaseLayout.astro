@@ -1,0 +1,69 @@
+---
+import "../styles/global.css";
+
+type Props = {
+  title: string;
+  description?: string;
+  canonical?: string;
+  ogImage?: string;
+};
+
+const {
+  title,
+  description = "SMK Teknologi dan Vokasional Miftahul Huda Rancasari",
+  canonical,
+  ogImage,
+} = Astro.props;
+
+const site = Astro.site?.href?.replace(/\/$/, "") || "https://smkteknovo.sch.id";
+const url = canonical || new URL(Astro.url.pathname, site).href;
+---
+
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={url} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={url} />
+    {ogImage ? <meta property="og:image" content={ogImage} /> : null}
+    <meta name="theme-color" content="#1313BA" />
+  </head>
+  <body>
+    <header class="border-b border-[var(--border)]">
+      <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
+        <a href="/" class="text-lg font-bold tracking-wide text-[var(--brand)]">
+          SMK TEKNOVO
+        </a>
+        <nav class="flex flex-wrap gap-4 text-sm text-[var(--muted)]">
+          <a href="/profil/sambutan">Profil</a>
+          <a href="/berita">Berita</a>
+          <a href="/akademik">Akademik</a>
+          <a href="/kontak">Kontak</a>
+          <a
+            href="https://cms.smkteknovo.sch.id"
+            class="font-medium text-[var(--brand)]"
+            >CMS</a
+          >
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="mt-16 border-t border-[var(--border)] bg-[var(--soft)]">
+      <div class="mx-auto max-w-5xl px-4 py-8 text-sm text-[var(--muted)]">
+        <p class="font-semibold text-[var(--heading)]">SMK TEKNOVO</p>
+        <p class="mt-1">Teknologi & Vokasional — Pamanukan, Subang</p>
+        <p class="mt-4 text-xs">
+          Site: smkteknovo.sch.id · API: cf.smkteknovo.sch.id · CMS:
+          cms.smkteknovo.sch.id
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

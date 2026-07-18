@@ -6,11 +6,9 @@
 #   Deploy command: npx wrangler deploy
 # Wrong: `pnpm run build` (plain next build) → "Could not find compiled Open Next config"
 #
-# Plan: OpenNext Next.js apps need Workers Paid (gzip upload ≤ 10 MiB).
-#   Free plan = 3 MiB gzip → deploy fails with code 10027 even when build succeeds.
-#   Free also caps CPU at 10 ms/request — unsuitable for Next SSR + Clerk even if size fitted.
-#   Without Paid: do NOT use this Worker deploy path — see DEPLOY.md (Node VPS / Vercel).
-#   Upgrade: https://dash.cloudflare.com/?to=/:account/workers/plans
+# LEGACY OpenNext Worker — do NOT deploy on Free.
+# Production Free = Split: apps/api (cf.), apps/cms (cms.), apps/web (apex). See DEPLOY.md.
+# OpenNext needs Workers Paid (gzip ≤ 10 MiB). Free = 3 MiB → 10027 + 10 ms CPU.
 #
 # Config source of truth: this file overrides dashboard settings on `wrangler deploy`
 # (routes, bindings, observability). Keep production domains and binding names here.

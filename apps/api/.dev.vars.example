@@ -1,0 +1,6 @@
+# Local wrangler secrets — copy to apps/api/.dev.vars (gitignored)
+CLERK_SECRET_KEY=GANTI_sk_test_...
+CLERK_WEBHOOK_SECRET=GANTI_whsec_...
+GITHUB_REBUILD_TOKEN=
+REBUILD_WEB_SECRET=
+GITHUB_REPO=SaenaAsColeAllStar/teknovo-web

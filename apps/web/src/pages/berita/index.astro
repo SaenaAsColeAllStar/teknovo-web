@@ -1,0 +1,40 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { fetchApiList } from "../../lib/api";
+import type { BeritaListItem } from "@teknovo/shared";
+
+const { items } = await fetchApiList<BeritaListItem>(
+  "/api/v1/berita?status=PUBLISHED&limit=50",
+);
+---
+
+<BaseLayout
+  title="Berita — SMK TEKNOVO"
+  description="Berita kegiatan dan informasi sekolah SMK TEKNOVO."
+>
+  <div class="mx-auto max-w-5xl px-4 py-12">
+    <h1 class="text-3xl font-bold">Berita</h1>
+    <p class="mt-2 text-[var(--muted)]">
+      Konten digenerate saat build dari cf.smkteknovo.sch.id
+    </p>
+    <ul class="mt-8 divide-y divide-[var(--border)] border border-[var(--border)]">
+      {
+        items.map((item) => (
+          <li>
+            <a
+              href={`/berita/kegiatan/${item.slug}`}
+              class="block px-4 py-4 hover:bg-[var(--soft)]"
+            >
+              <p class="font-semibold">{item.judul}</p>
+              <p class="mt-1 text-sm text-[var(--muted)]">
+                {item.publishedAt
+                  ? new Date(item.publishedAt).toLocaleDateString("id-ID")
+                  : ""}
+              </p>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>

@@ -1,0 +1,23 @@
+{
+  "name": "@teknovo/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev --port 4321",
+    "build": "astro build",
+    "preview": "astro preview",
+    "deploy": "pnpm build && wrangler pages deploy dist --project-name=teknovo-web"
+  },
+  "dependencies": {
+    "@teknovo/shared": "workspace:*",
+    "astro": "^5.12.0"
+  },
+  "devDependencies": {
+    "@astrojs/cloudflare": "^12.6.0",
+    "@tailwindcss/vite": "^4",
+    "tailwindcss": "^4",
+    "typescript": "^5",
+    "wrangler": "^4.112.0"
+  }
+}

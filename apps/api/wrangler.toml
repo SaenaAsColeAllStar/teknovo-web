@@ -1,0 +1,31 @@
+# teknovo-api — Free-tier Hono Worker (cf.smkteknovo.sch.id)
+name = "teknovo-api"
+main = "src/index.ts"
+compatibility_date = "2026-07-17"
+compatibility_flags = ["nodejs_compat"]
+
+[[routes]]
+pattern = "cf.smkteknovo.sch.id"
+custom_domain = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "teknovo-article"
+database_id = "3defaaff-95fd-44f2-a85f-c40a1ce85c6e"
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "CMS_BUCKET"
+bucket_name = "teknovo"
+
+[observability]
+enabled = true
+
+[vars]
+R2_PUBLIC_URL = "https://r2.ctos.web.id"
+CMS_ORIGIN = "https://cms.smkteknovo.sch.id"
+WEB_ORIGIN = "https://smkteknovo.sch.id"
+# Set secrets via: wrangler secret put CLERK_SECRET_KEY
+#                  wrangler secret put CLERK_WEBHOOK_SECRET
+#                  wrangler secret put GITHUB_REBUILD_TOKEN
+#                  wrangler secret put REBUILD_WEB_SECRET

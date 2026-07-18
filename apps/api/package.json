@@ -1,0 +1,24 @@
+{
+  "name": "@teknovo/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "d1:migrate:local": "wrangler d1 migrations apply teknovo-article --local",
+    "d1:migrate:remote": "wrangler d1 migrations apply teknovo-article --remote"
+  },
+  "dependencies": {
+    "@clerk/backend": "^2.29.0",
+    "@teknovo/shared": "workspace:*",
+    "hono": "^4.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260717.1",
+    "typescript": "^5",
+    "wrangler": "^4.112.0"
+  }
+}

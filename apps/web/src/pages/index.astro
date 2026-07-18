@@ -1,0 +1,79 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { fetchApiList, fetchApiOne } from "../lib/api";
+import type { BeritaListItem, PengaturanSitusPublikData } from "@teknovo/shared";
+
+const pengaturan = await fetchApiOne<PengaturanSitusPublikData>(
+  "/api/v1/pengaturan",
+);
+const { items: berita } = await fetchApiList<BeritaListItem>(
+  "/api/v1/berita?status=PUBLISHED&limit=6",
+);
+
+const title = pengaturan?.siteTitle || "SMK TEKNOVO";
+const description =
+  pengaturan?.siteDescription ||
+  "SMK Teknologi dan Vokasional Miftahul Huda Rancasari";
+---
+
+<BaseLayout title={title} description={description}>
+  <section class="relative overflow-hidden border-b border-[var(--border)] bg-[linear-gradient(135deg,#f5f5fc_0%,#ffffff_45%,#e8e8f8_100%)]">
+    <div class="mx-auto max-w-5xl px-4 py-20 md:py-28">
+      <p class="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--brand)]">
+        SMK TEKNOVO
+      </p>
+      <h1 class="mt-3 max-w-3xl text-4xl font-bold leading-tight md:text-5xl">
+        Teknologi dan Vokasional
+      </h1>
+      <p class="mt-4 max-w-2xl text-lg text-[var(--muted)]">
+        {description}
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a
+          href="/ppdb-smk-pamanukan"
+          class="border border-[var(--brand)] bg-[var(--brand)] px-5 py-3 text-sm font-medium text-white"
+        >
+          Info PPDB
+        </a>
+        <a
+          href="/berita"
+          class="border border-[var(--border)] bg-white px-5 py-3 text-sm font-medium"
+        >
+          Berita sekolah
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-5xl px-4 py-14">
+    <div class="mb-6 flex items-end justify-between gap-4">
+      <h2 class="text-2xl font-bold">Berita terbaru</h2>
+      <a href="/berita" class="text-sm text-[var(--brand)]">Lihat semua</a>
+    </div>
+    {
+      berita.length ? (
+        <ul class="grid gap-4 md:grid-cols-3">
+          {berita.map((item) => (
+            <li class="border border-[var(--border)] bg-white">
+              <a href={`/berita/kegiatan/${item.slug}`} class="block p-4">
+                <p class="text-xs uppercase tracking-wide text-[var(--muted)]">
+                  {item.kategori?.nama || "Berita"}
+                </p>
+                <h3 class="mt-2 font-semibold leading-snug">{item.judul}</h3>
+                {item.ringkasan ? (
+                  <p class="mt-2 line-clamp-3 text-sm text-[var(--muted)]">
+                    {item.ringkasan}
+                  </p>
+                ) : null}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p class="border border-[var(--border)] bg-[var(--soft)] p-6 text-sm text-[var(--muted)]">
+          Belum ada berita published, atau API belum terhubung saat build.
+        </p>
+      )
+    }
+  </section>
+</BaseLayout>

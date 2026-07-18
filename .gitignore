@@ -13,6 +13,9 @@
 
 # production
 /build
+apps/*/dist
+apps/web/dist
+apps/cms/dist
 
 # misc
 .DS_Store

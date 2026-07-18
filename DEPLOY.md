@@ -1,158 +1,125 @@
-# Deploy — teknovo-web
+# Deploy — Split Free (apex + cf. + cms.)
 
-## Verdict (no Workers Paid)
+Production di **Cloudflare Free** memakai tiga deploy terpisah. OpenNext monolit **tidak** dipakai di Free (lihat bagian legacy di bawah).
 
-**Do not deploy this app as a full OpenNext Cloudflare Worker on the Free plan.** It will keep failing with **code 10027** (Worker gzip > 3 MiB). Even if size were fixed, Free **10 ms CPU / request** is too low for Next.js SSR + Clerk + CMS APIs.
+## Hosts
 
-**Primary path without Workers Paid:** run **Node `next start`** on a **VPS / Docker / homelab**, keep **R2** for public media (S3 API), and replace **D1 Worker bindings** with **D1 HTTP API** or a normal SQL database.
+| Host | App | Stack | Deploy |
+|------|-----|--------|--------|
+| `smkteknovo.sch.id` | `apps/web` | Astro SSG | Cloudflare Pages `teknovo-web` |
+| `www.smkteknovo.sch.id` | — | Redirect 301 → apex | Cloudflare Redirect Rule |
+| `cf.smkteknovo.sch.id` | `apps/api` | Hono Worker | Worker `teknovo-api` |
+| `cms.smkteknovo.sch.id` | `apps/cms` | Vite + React + TipTap + Clerk | Pages `teknovo-cms` |
 
-Workers Paid (~$5/mo, 10 MiB gzip) remains the only practical way to stay on Cloudflare Workers with OpenNext. This doc assumes you will **not** take that path.
+## Root directory & Build output (Cloudflare dashboard)
 
----
+Isi form **Build configuration** di Pages / Workers Builds seperti ini.
 
-## Why OpenNext + Workers Free is impossible here
+### Ringkas (Root = folder app)
 
-| Constraint | Workers Free | This app |
-|------------|--------------|----------|
-| Worker size (gzip) | **3 MiB** | OpenNext handler typically **~10–16 MiB raw**; gzip routinely **> 3 MiB** → **10027** |
-| CPU / request | **10 ms** | Next SSR + Clerk + TipTap/dashboard APIs need far more |
-| Bindings | D1 / R2 native | Only available inside Workers/Pages Functions |
+| Project | Root directory | Build command | Build output directory |
+|---------|----------------|---------------|------------------------|
+| **teknovo-web** (Pages) | `apps/web` | `pnpm install && pnpm build` | `dist` |
+| **teknovo-cms** (Pages) | `apps/cms` | `pnpm install && pnpm build` | `dist` |
+| **teknovo-api** (Workers) | `apps/api` | _(kosong)_ / install di root monorepo | **—** (bukan Pages; entry `src/index.ts`) |
 
-Evidence in-repo:
+### Alternatif: Root directory = `/` (repo root)
 
-- Build: `pnpm run build:cf` → `.open-next/` (incl. large `server-functions` handler)
-- Runtime: `getCloudflareContext()` in `src/lib/d1.ts` and `src/lib/r2.ts`
-- Surface: ~65 App Router pages/routes, Clerk middleware, `/dashboard` CMS, `/api/v1/*` on D1
+| Project | Root directory | Build command | Build output directory |
+|---------|----------------|---------------|------------------------|
+| **teknovo-web** | `/` | `pnpm install && pnpm --filter @teknovo/web build` | `apps/web/dist` |
+| **teknovo-cms** | `/` | `pnpm install && pnpm --filter @teknovo/cms build` | `apps/cms/dist` |
+| **teknovo-api** | `/` atau `apps/api` | Deploy: `cd apps/api && npx wrangler deploy` | — |
 
-**Aggressive shrink under 3 MiB gzip:** not remotely feasible for this codebase. Minify is already on; `optimizePackageImports` is best-effort. OpenNext’s own minimal example is often ~2 MiB gzip — this app adds Clerk, TipTap, recharts, framer-motion, sanitize-html, and a full marketing site. Do not spend time chasing Free size limits.
+**Catatan monorepo:** Pages perlu `pnpm install` yang melihat `pnpm-workspace.yaml`. Jika build gagal karena workspace, set Root ke `/` dan pakai kolom **Build output** `apps/web/dist` / `apps/cms/dist`.
 
-**Static export / `output: 'export'`:** blocked by Clerk, dashboard SSR, Route Handlers, D1/R2, middleware.
+### Env vars di dashboard
 
-**Cloudflare Pages + `@cloudflare/next-on-pages`:** deprecated path, Edge-only, **same Worker size limits**. Not a Free escape hatch.
+| Project | Variabel |
+|---------|----------|
+| **teknovo-web** | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id` |
+| **teknovo-cms** | `VITE_API_URL=https://cf.smkteknovo.sch.id`, `VITE_CLERK_PUBLISHABLE_KEY=pk_…` |
+| **teknovo-api** | Secrets via `wrangler secret put` (bukan Pages env): `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `GITHUB_REBUILD_TOKEN` |
 
----
+Panduan lengkap per app: [`apps/web/README.md`](apps/web/README.md) · [`apps/cms/README.md`](apps/cms/README.md) · [`apps/api/README.md`](apps/api/README.md)
 
-## Options for THIS codebase
+```mermaid
+flowchart LR
+  Browser --> Apex["Astro static"]
+  Browser --> CMS["Vite SPA TipTap"]
+  WWW["www"] -->|"301"| Apex
+  Apex -->|"build-time fetch"| API["Hono Worker"]
+  CMS -->|"runtime JWT"| API
+  API --> D1[(D1)]
+  API --> R2[(R2)]
+  API -->|"repository_dispatch"| Rebuild["rebuild-web.yml"]
+```
 
-### 1. Stay on Cloudflare Free (not full OpenNext) — weak fit
-
-| Approach | Pros | Cons |
-|----------|------|------|
-| Static marketing on Pages/R2 | Cheap, fast CDN | No Clerk CMS, no D1 APIs on same app |
-| Split: static site + CMS elsewhere | Keeps marketing on CF Free | Two deploys, auth/CORS, rewrite data layer |
-| Tiny Worker (redirect/proxy only) | Fits 3 MiB | Cannot run this Next app |
-
-Only useful as a **partial** split (see option 5), not as “same app on Free Workers.”
-
-### 2. Vercel Hobby (or similar Next host) — good
-
-| Pros | Cons |
-|------|------|
-| Native Next.js 16 | No `env.DB` / `env.CMS_BUCKET` |
-| Clerk works well | Need R2 **S3 API** + D1 **HTTP** or other DB |
-| Free Hobby tier | Limits (bandwidth, cold starts, commercial ToS) |
-
-Concrete binding replacements:
-
-- **R2:** use `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_ACCOUNT_ID` (already sketched in `.env.example`) via S3-compatible client; keep `R2_PUBLIC_URL` for reads.
-- **D1:** [D1 HTTP API](https://developers.cloudflare.com/api/resources/d1/) with account API token, **or** migrate to Postgres/SQLite/Turso and change `src/lib/d1/*` repos.
-
-### 3. Self-host / VPS / Docker — **recommended**
-
-| Pros | Cons |
-|------|------|
-| Matches existing homelab notes in `docs/ARSITEKTUR.md` / `docs/API.md` | You operate the host |
-| Full Node CPU/memory; no 10027 | Need HTTPS (Caddy/nginx) + process manager |
-| Same R2 public CDN can stay on Cloudflare | Same D1/R2 binding rewrite as Vercel |
-| One process: `pnpm build && pnpm start` | DNS cutover from Workers custom domains |
-
-This is the cheapest **complete** path if you already have a VPS/homelab, and the least surprising long-term target given the monorepo split.
-
-### 4. Shrink under 3 MiB gzip — **no**
-
-Not a viable plan for this app. See table above.
-
-### 5. Marketing on CF Free + `/dashboard` elsewhere — optional later
-
-| Pros | Cons |
-|------|------|
-| Public pages stay on CF edge/static | Large refactor (two apps or rewrite proxy) |
-| Heavy CMS leaves Free Workers | Duplicate env, Clerk domains, revalidation |
-
-Only worth it after a working Node/Vercel CMS host exists.
-
----
-
-## Primary recommendation: Node self-host (VPS / Docker / homelab)
-
-Keep Cloudflare for **DNS + R2 public assets**. Move the **Next.js app** off Workers.
-
-### What breaks today (must change)
-
-| Today (Workers) | Without Workers bindings |
-|-----------------|---------------------------|
-| `env.DB` via `getDb()` | D1 HTTP API **or** Postgres/SQLite + new client |
-| `env.CMS_BUCKET` via `getCmsBucket()` | R2 S3 API (`PutObject` / `DeleteObject` / `List`) |
-| `getCloudflareContext()` | Remove OpenNext-only context from Node path |
-| `wrangler.toml` custom domains | Point `smkteknovo.sch.id` / `www` A/CNAME to VPS (or tunnel) |
-| `pnpm build:cf` + `wrangler deploy` | `pnpm build` + `pnpm start` (or Docker) |
-| GitHub `deploy.yml` (Wrangler) | Replace with SSH/Docker/Coolify/etc. |
-
-Reads via `R2_PUBLIC_URL` / `publicAssetUrl()` can stay as-is (HTTP CDN).
-
-### Numbered next steps
-
-1. **Provision a host** — small VPS (1–2 GB RAM) or existing homelab Docker; install Node 22 + pnpm (or use a Node 22 image).
-2. **Build & run Node** — `pnpm install`, copy `.env.example` → `.env.local`, set Clerk + `NEXT_PUBLIC_APP_URL` to the public URL, then:
-   ```bash
-   pnpm build
-   pnpm start
-   ```
-3. **Put HTTPS in front** — Caddy/nginx/Traefik reverse-proxy to port 3000; obtain certs for `www.smkteknovo.sch.id` (and apex).
-4. **R2 without bindings** — create R2 API tokens; set `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`. Implement S3 upload/list/delete in place of `getCmsBucket()` (today only Workers binding works).
-5. **Database without bindings** — pick one:
-   - **A (least data move):** call [Cloudflare D1 HTTP API](https://developers.cloudflare.com/api/resources/d1/) from Node with an API token; keep `teknovo-article`.
-   - **B (cleaner ops):** migrate schema from `migrations/` to Postgres/SQLite on the VPS; rewrite `src/lib/d1/*` repos.
-6. **Clerk** — add the production domain in Clerk Dashboard; keep webhook URL pointing at `https://www…/api/webhook/clerk`.
-7. **DNS cutover** — remove reliance on Workers custom domains in `wrangler.toml` for production traffic; point the zone to the VPS (or Cloudflare Tunnel to homelab). Leave R2 custom domain (`r2.ctos.web.id`) unchanged.
-8. **Stop CF Workers Builds / OpenNext CI** for this app — or leave it disabled until/unless you upgrade to Workers Paid.
-9. **Optional:** set `API_URL` to a separate homelab `api-web` later (`docs/API.md`); not required if `/api/v1/*` stays in this Next process.
-
-### Minimal env delta (Node host)
+## Local dev
 
 ```bash
-NEXT_PUBLIC_APP_URL=https://www.smkteknovo.sch.id
-# Clerk — same keys as today
-R2_PUBLIC_URL=https://r2.ctos.web.id
-R2_BUCKET_NAME=teknovo
-R2_ACCOUNT_ID=…
-R2_ACCESS_KEY_ID=…          # required once binding is removed
-R2_SECRET_ACCESS_KEY=…
-# D1 HTTP or new DATABASE_URL — after code adapter exists
-REVALIDATE_SECRET=…
+pnpm install
+pnpm --filter @teknovo/api dev          # http://127.0.0.1:8787
+pnpm --filter @teknovo/cms dev          # http://localhost:5173
+pnpm --filter @teknovo/web dev          # http://localhost:4321
 ```
 
-Until steps 4–5 are coded, `pnpm start` will serve marketing/Clerk UI, but **CMS media upload and D1-backed `/api/v1/*` will error** (`getCloudflareContext` / missing bindings).
+CMS `.env` (lihat `apps/cms/.env.example`):
 
----
-
-## If you later accept Workers Paid
-
-1. Upgrade: [Workers plans](https://dash.cloudflare.com/?to=/:account/workers/plans)
-2. Workers Builds: Build `pnpm run build:cf`, Deploy `npx wrangler deploy`
-3. Keep `wrangler.toml` bindings `DB` + `CMS_BUCKET` and custom domains
-
-That path needs **no** D1/R2 adapter rewrite.
-
----
-
-## Quick decision tree
-
-```
-Must avoid Workers Paid?
-├─ Yes → Node self-host (primary) or Vercel Hobby
-│         └─ Rewrite D1 + R2 bindings (HTTP/S3 or new DB)
-└─ No  → Workers Paid + OpenNext (current wrangler.toml)
+```bash
+VITE_CLERK_PUBLISHABLE_KEY=pk_...
+VITE_API_URL=http://127.0.0.1:8787
 ```
 
-Do **not** expect Cloudflare Free Workers to host this OpenNext app.
+Web build:
+
+```bash
+PUBLIC_API_URL=https://cf.smkteknovo.sch.id pnpm --filter @teknovo/web build
+```
+
+## Secrets (API Worker)
+
+```bash
+cd apps/api
+npx wrangler secret put CLERK_SECRET_KEY
+npx wrangler secret put CLERK_WEBHOOK_SECRET
+npx wrangler secret put GITHUB_REBUILD_TOKEN   # PAT: repo scope, for rebuild-web
+npx wrangler secret put REBUILD_WEB_SECRET     # optional manual hook
+```
+
+Optional var `GITHUB_REPO` (default `SaenaAsColeAllStar/teknovo-web`) via wrangler.toml `[vars]` or dashboard.
+
+## GitHub Actions secrets
+
+- `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
+- `VITE_CLERK_PUBLISHABLE_KEY` (CMS build)
+
+Workflows:
+
+- `.github/workflows/deploy-api.yml` — push ke `apps/api`
+- `.github/workflows/deploy-cms.yml` — push ke `apps/cms`
+- `.github/workflows/rebuild-web.yml` — `repository_dispatch` type `rebuild-web` (dari API saat publish)
+
+## DNS / Clerk cutover checklist
+
+1. Buat Pages projects: `teknovo-web`, `teknovo-cms`; attach custom domains apex + `cms.`.
+2. Deploy Worker `teknovo-api`; custom domain `cf.smkteknovo.sch.id`.
+3. **Redirect Rule:** `www.smkteknovo.sch.id/*` → `https://smkteknovo.sch.id/$1` (301).
+4. Clerk: add domain `cms.smkteknovo.sch.id`; webhook → `https://cf.smkteknovo.sch.id/api/webhook/clerk`.
+5. Lepas custom domain OpenNext lama dari Worker `teknovo-web` (root wrangler) setelah apex Pages live.
+6. Matikan Workers Builds OpenNext.
+
+## Monorepo layout
+
+```
+apps/api/          # Hono + D1/R2
+apps/cms/          # Vite SPA + TipTap
+apps/web/          # Astro SSG
+packages/shared/   # types, roles, zod schemas
+```
+
+Legacy Next monolit di root (`src/`, `wrangler.toml` OpenNext) tetap ada untuk referensi / migrasi UI; **jangan** deploy OpenNext ke Free.
+
+## Legacy: OpenNext + Workers Paid
+
+Jika suatu saat upgrade Workers Paid (~$5/mo), root `pnpm build:cf` + `npx wrangler deploy` masih relevan. Free = 3 MiB gzip + 10 ms CPU → OpenNext gagal (code 10027).

@@ -1,0 +1,72 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { fetchApiList, fetchApiOne } from "../../../lib/api";
+import type { Berita, BeritaListItem } from "@teknovo/shared";
+
+export async function getStaticPaths() {
+  const { items } = await fetchApiList<BeritaListItem>(
+    "/api/v1/berita?status=PUBLISHED&limit=100",
+  );
+  return items.map((item) => ({
+    params: { slug: item.slug },
+  }));
+}
+
+const { slug } = Astro.params;
+const berita = slug
+  ? await fetchApiOne<Berita>(`/api/v1/berita/${slug}`)
+  : null;
+
+if (!berita) {
+  return Astro.redirect("/berita");
+}
+
+const title = berita.metaTitle || berita.judul;
+const description =
+  berita.metaDescription || berita.ringkasan || "Berita SMK TEKNOVO";
+---
+
+<BaseLayout
+  title={`${title} — SMK TEKNOVO`}
+  description={description}
+  ogImage={berita.ogImageUrl || berita.coverUrl || undefined}
+  canonical={berita.canonicalUrl || undefined}
+>
+  <article class="mx-auto max-w-3xl px-4 py-12">
+    <p class="text-sm text-[var(--muted)]">
+      <a href="/berita" class="text-[var(--brand)]">Berita</a>
+      {
+        berita.kategori ? (
+          <>
+            {" "}
+            · {berita.kategori.nama}
+          </>
+        ) : null
+      }
+    </p>
+    <h1 class="mt-3 text-3xl font-bold leading-tight md:text-4xl">
+      {berita.judul}
+    </h1>
+    {
+      berita.publishedAt ? (
+        <p class="mt-3 text-sm text-[var(--muted)]">
+          {new Date(berita.publishedAt).toLocaleDateString("id-ID", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+          })}
+        </p>
+      ) : null
+    }
+    {
+      berita.coverUrl ? (
+        <img
+          src={berita.coverUrl}
+          alt=""
+          class="mt-8 w-full border border-[var(--border)]"
+        />
+      ) : null
+    }
+    <div class="prose mt-8" set:html={berita.konten} />
+  </article>
+</BaseLayout>

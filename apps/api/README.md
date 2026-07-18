@@ -1,0 +1,44 @@
+# @teknovo/api — Hono Worker
+
+**Domain:** `cf.smkteknovo.sch.id`  
+**Project name:** `teknovo-api` (Workers, bukan Pages)
+
+## Cloudflare dashboard (Workers Builds) / Wrangler
+
+| Setting | Nilai |
+|---------|--------|
+| **Root directory** | `apps/api` |
+| **Build output directory** | _(tidak dipakai)_ — Worker di-bundle dari `src/index.ts` |
+| **Build command** | _(kosong atau `pnpm install` di monorepo root)_ |
+| **Deploy command** | `npx wrangler deploy` |
+| **Wrangler config** | `apps/api/wrangler.toml` |
+
+Worker **tidak** punya folder `dist` seperti Pages. Entry: `main = "src/index.ts"`.
+
+## Local
+
+```bash
+# dari repo root
+pnpm install
+cp apps/api/.dev.vars.example apps/api/.dev.vars   # isi CLERK_SECRET_KEY
+pnpm --filter @teknovo/api d1:migrate:local
+pnpm --filter @teknovo/api dev   # http://127.0.0.1:8787
+```
+
+Health: `GET http://127.0.0.1:8787/api/health`
+
+## Deploy
+
+```bash
+cd apps/api
+npx wrangler secret put CLERK_SECRET_KEY
+npx wrangler secret put CLERK_WEBHOOK_SECRET
+npx wrangler secret put GITHUB_REBUILD_TOKEN
+pnpm deploy
+```
+
+## Bindings (sudah di wrangler.toml)
+
+- `DB` → D1 `teknovo-article`
+- `CMS_BUCKET` → R2 `teknovo`
+- vars: `R2_PUBLIC_URL`, `CMS_ORIGIN`, `WEB_ORIGIN`
