@@ -25,6 +25,8 @@ export const SITE_NAV = [
 export const DASHBOARD_NAV = [
   { href: "/dashboard", label: "Ringkasan", icon: "LayoutDashboard" },
   { href: "/dashboard/berita", label: "Berita", icon: "Newspaper" },
+  { href: "/dashboard/artikel", label: "Artikel siswa", icon: "PenLine" },
+  { href: "/dashboard/moderasi", label: "Moderasi", icon: "ShieldCheck" },
   { href: "/dashboard/kategori", label: "Kategori", icon: "Tags" },
   { href: "/dashboard/media", label: "Media", icon: "Image" },
   { href: "/dashboard/pengaturan", label: "Pengaturan", icon: "Settings" },

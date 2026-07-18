@@ -5,6 +5,7 @@ import {
   CmsAuthError,
   requireCmsSession,
   requireCmsWriter,
+  requireCmsMediaUploader,
 } from "@/lib/cms-auth";
 import {
   CMS_MEDIA_ALLOWED_TYPES,
@@ -51,7 +52,7 @@ export async function GET(request: Request) {
 /** Upload a file to R2 via Workers binding (multipart form field `file`). */
 export async function POST(request: Request) {
   try {
-    await requireCmsWriter();
+    await requireCmsMediaUploader();
 
     let form: FormData;
     try {

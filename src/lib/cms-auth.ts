@@ -5,6 +5,12 @@ import {
   parseCmsRole,
   type CmsRole,
   cmsRoleCanWriteContent,
+  cmsRoleCanWriteArtikel,
+  cmsRoleCanWriteKategori,
+  cmsRoleCanUploadMedia,
+  cmsRoleCanModerate,
+  cmsRoleCanViewModerasi,
+  cmsRoleCanAccessBeritaSekolah,
   cmsRoleCanManageSettings,
 } from "@/lib/clerk";
 
@@ -22,6 +28,12 @@ export type CmsSession = {
   userId: string;
   role: CmsRole;
   canWrite: boolean;
+  canWriteArtikel: boolean;
+  canWriteKategori: boolean;
+  canUploadMedia: boolean;
+  canModerate: boolean;
+  canViewModerasi: boolean;
+  canAccessBeritaSekolah: boolean;
   canManageSettings: boolean;
 };
 
@@ -37,6 +49,12 @@ export async function getCmsSession(): Promise<CmsSession | null> {
     userId: session.userId,
     role,
     canWrite: cmsRoleCanWriteContent(role),
+    canWriteArtikel: cmsRoleCanWriteArtikel(role),
+    canWriteKategori: cmsRoleCanWriteKategori(role),
+    canUploadMedia: cmsRoleCanUploadMedia(role),
+    canModerate: cmsRoleCanModerate(role),
+    canViewModerasi: cmsRoleCanViewModerasi(role),
+    canAccessBeritaSekolah: cmsRoleCanAccessBeritaSekolah(role),
     canManageSettings: cmsRoleCanManageSettings(role),
   };
 }
@@ -49,12 +67,48 @@ export async function requireCmsSession(): Promise<CmsSession> {
   return cms;
 }
 
-/** editor | admin — berita, kategori, media writes. */
+/** editor | admin — berita sekolah, kategori staff, media delete. */
 export async function requireCmsWriter(): Promise<CmsSession> {
   const cms = await requireCmsSession();
   if (!cms.canWrite) {
     throw new CmsAuthError(
+      "Peran Anda tidak dapat menulis konten berita sekolah. Minta admin menaikkan peran.",
+      403,
+    );
+  }
+  return cms;
+}
+
+/** admin | editor | siswa — artikel ekstrakurikuler writes. */
+export async function requireCmsArtikelWriter(): Promise<CmsSession> {
+  const cms = await requireCmsSession();
+  if (!cms.canWriteArtikel) {
+    throw new CmsAuthError(
       "Peran viewer hanya dapat membaca. Minta admin menaikkan peran Anda.",
+      403,
+    );
+  }
+  return cms;
+}
+
+/** admin | editor | siswa — media upload. */
+export async function requireCmsMediaUploader(): Promise<CmsSession> {
+  const cms = await requireCmsSession();
+  if (!cms.canUploadMedia) {
+    throw new CmsAuthError(
+      "Peran viewer tidak dapat mengunggah media.",
+      403,
+    );
+  }
+  return cms;
+}
+
+/** admin only — approve/tolak artikel siswa. */
+export async function requireCmsModerator(): Promise<CmsSession> {
+  const cms = await requireCmsSession();
+  if (!cms.canModerate) {
+    throw new CmsAuthError(
+      "Hanya admin yang dapat menyetujui atau menolak artikel siswa.",
       403,
     );
   }

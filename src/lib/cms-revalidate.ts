@@ -26,6 +26,25 @@ export async function revalidateBeritaCache(slug?: string): Promise<void> {
   }
 }
 
+/** After approve/publish artikel siswa. */
+export async function revalidateArtikelSiswaCache(slug?: string): Promise<void> {
+  const session = await auth();
+  if (!session.userId) {
+    throw new Error("Unauthorized");
+  }
+
+  revalidateTag("artikel-siswa", "max");
+  revalidateTag("berita", "max");
+  revalidatePath("/berita");
+  revalidatePath("/berita/berita-terbaru");
+  revalidatePath("/");
+
+  if (slug) {
+    revalidateTag(`artikel-siswa:${slug}`, "max");
+    revalidatePath(`/berita/siswa/${slug}`);
+  }
+}
+
 export async function revalidateKategoriCache(): Promise<void> {
   const session = await auth();
   if (!session.userId) {
@@ -34,6 +53,7 @@ export async function revalidateKategoriCache(): Promise<void> {
 
   revalidateTag("kategori", "max");
   revalidateTag("berita", "max");
+  revalidateTag("artikel-siswa", "max");
   revalidatePath("/berita");
   revalidatePath("/dashboard/kategori");
 }

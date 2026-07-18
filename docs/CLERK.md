@@ -41,20 +41,52 @@ Jangan commit `.env.local`. Placeholder `GANTI_*` di `.env.example` sengaja aman
 
 ## 5. Roles
 
-Simpan role di `user.publicMetadata.role`: `admin` | `editor` | `viewer`.
+Simpan role di `user.publicMetadata.role`: `admin` | `editor` | `viewer` | `siswa`.
 
 Helpers:
 
 - `parseCmsRole()` — `src/lib/clerk.ts`
-- `getCmsSession()` / `requireCmsWriter()` — `src/lib/cms-auth.ts` (server + API)
+- `getCmsSession()` / `requireCmsWriter()` / `requireCmsArtikelWriter()` / `requireCmsModerator()` — `src/lib/cms-auth.ts`
 
 | Role | Capabilities |
 |------|----------------|
-| `viewer` (default jika metadata kosong) | Baca daftar/form CMS |
-| `editor` | CRUD berita, kategori, upload/hapus media R2 |
-| `admin` | Semua editor + `/dashboard/pengaturan` |
+| `viewer` (default jika metadata kosong) | Baca daftar/form CMS (bukan siswa) |
+| `siswa` | Artikel milik sendiri (DRAFT→REVIEW), tambah kategori, upload media; **bukan** berita sekolah / moderasi / pengaturan |
+| `editor` | CRUD berita sekolah + artikel, kategori, media; lihat antrian moderasi (tanpa approve) |
+| `admin` | Semua editor + approve/tolak moderasi + `/dashboard/pengaturan` |
+
+Mapping matrix enterprise: Super Admin → `admin`, Admin staff → `editor`, Siswa → `siswa`.
 
 Tanpa role di Clerk, user dianggap `viewer` (aman-by-default).
+
+### Set role di Clerk Dashboard
+
+1. Users → pilih user → **Metadata** → **Public**
+2. JSON:
+
+```json
+{ "role": "siswa" }
+```
+
+Nilai valid: `admin` | `editor` | `viewer` | `siswa`. Simpan; user login ulang / refresh sesi agar `parseCmsRole` membaca metadata baru.
+
+### Workflow artikel siswa (P2)
+
+**Siswa** (`publicMetadata.role = "siswa"`):
+
+1. Masuk `/dashboard` → nav hanya Ringkasan, Artikel siswa, Kategori, Media (tanpa Berita / Moderasi / Pengaturan).
+2. `/dashboard/artikel/baru` — tulis dengan TipTap, simpan **Draft** (`DRAFT`) atau **Kirim ke moderasi** (`REVIEW`).
+3. List memakai `GET /v1/artikel-siswa?mine=1` (CRUD milik sendiri saja). Tidak bisa force `PUBLISHED`.
+
+**Admin** (`role = "admin"`):
+
+1. `/dashboard/moderasi` — antrian `status=REVIEW`.
+2. **Setujui** → `POST /v1/artikel-siswa/:id/approve` → `PUBLISHED` + revalidate tag `artikel-siswa`.
+3. **Tolak** → `POST .../reject` (opsional `reason`) → `ARCHIVED`.
+
+**Editor** dapat melihat antrian moderasi tetapi tidak approve/tolak.
+
+Publik (`/`, `/berita/berita-terbaru`, `/berita/siswa/:slug`) hanya menampilkan artikel `PUBLISHED` via `getPublishedArtikelSiswaCards` / `fetchArtikelSiswaListOrNull({ status: "PUBLISHED" })`. Jika API down, daftar kosong (aman).
 
 ## 6. Cloudflare / production
 

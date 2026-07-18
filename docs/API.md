@@ -11,7 +11,7 @@ Base URL: `API_URL` / `NEXT_PUBLIC_API_URL` (tanpa trailing slash).
 | `REVALIDATE_SECRET` | Ya (callback) | Shared secret untuk `POST /api/revalidate` dari api-web |
 | Clerk keys | Ya (CMS) | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` |
 
-Tanpa `API_URL` / `NEXT_PUBLIC_API_URL`, dashboard menampilkan error state yang jelas; halaman publik berita kegiatan memakai konten fallback lokal.
+Tanpa `API_URL` / `NEXT_PUBLIC_API_URL`, dashboard menampilkan error state yang jelas; halaman publik berita kegiatan memakai konten fallback lokal; artikel siswa publik kosong aman.
 
 Semua respons sukses berbentuk:
 
@@ -65,6 +65,38 @@ Body `POST/PATCH` (Zod mirror di `src/lib/api-client.ts`):
 }
 ```
 
+### Artikel siswa (ekskul channel)
+
+Workflow: `DRAFT` → `REVIEW` → `PUBLISHED` | `ARCHIVED` (tolak).
+
+| Method | Path | Auth | Keterangan |
+|--------|------|------|------------|
+| `GET` | `/v1/artikel-siswa` | Publik / Bearer | Query: `page`, `limit`, `status`, `mine=1` (Bearer: milik sendiri) |
+| `GET` | `/v1/artikel-siswa/:slug` | Publik | Detail published saja |
+| `GET` | `/v1/artikel-siswa/id/:id` | Bearer | CMS detail (siswa: milik sendiri) |
+| `POST` | `/v1/artikel-siswa` | Bearer | Buat (siswa/editor/admin) |
+| `PATCH` | `/v1/artikel-siswa/:id` | Bearer | Update (siswa: milik sendiri; tidak boleh force `PUBLISHED`) |
+| `DELETE` | `/v1/artikel-siswa/:id` | Bearer | Hapus (siswa: milik sendiri) |
+| `POST` | `/v1/artikel-siswa/:id/approve` | Bearer admin | `REVIEW` → `PUBLISHED` |
+| `POST` | `/v1/artikel-siswa/:id/reject` | Bearer admin | `REVIEW` → `ARCHIVED`; body `{ "reason"?: string }` |
+
+Body `POST/PATCH`:
+
+```json
+{
+  "judul": "string",
+  "slug": "kebab-case",
+  "ringkasan": "string?",
+  "konten": "html string",
+  "kategoriId": "uuid?",
+  "status": "DRAFT|REVIEW|PUBLISHED|ARCHIVED",
+  "coverUrl": "https://...?",
+  "penulisKelas": "string?"
+}
+```
+
+Publik listing hanya `status=PUBLISHED`. Setelah approve, api-web sebaiknya memanggil `POST /api/revalidate` dengan `tag: "artikel-siswa"` dan `path: "/berita/berita-terbaru"` (atau tag+path berita).
+
 ### Kategori
 
 | Method | Path | Auth |
@@ -91,33 +123,36 @@ Upload/list/delete langsung ke binding Workers `CMS_BUCKET` (prefix `cms/uploads
 | Method | Path | Auth | Keterangan |
 |--------|------|------|------------|
 | `GET` | `/api/cms/media` | Clerk session | List objek |
-| `POST` | `/api/cms/media` | Clerk + editor\|admin | multipart `file` |
+| `POST` | `/api/cms/media` | Clerk + admin\|editor\|siswa | multipart `file` |
 | `DELETE` | `/api/cms/media` | Clerk + editor\|admin | JSON `{ "key": "cms/uploads/..." }` |
 
 URL publik: `R2_PUBLIC_URL` + key (`publicAssetUrl` / `r2ObjectUrl`). Hanya key di bawah `cms/uploads/` yang boleh dihapus (aset landing `media/` / `brand/` aman).
 
 ### Auth bridge
 
-CMS mengirim `Authorization: Bearer <Clerk JWT>` (atau session token yang di-verify di api-web). Mapping role: `publicMetadata.role` ∈ `admin|editor|viewer`.
+CMS mengirim `Authorization: Bearer <Clerk JWT>` (atau session token yang di-verify di api-web). Mapping role: `publicMetadata.role` ∈ `admin|editor|viewer|siswa`.
 
 Enforcement di teknovo-web (`src/lib/cms-auth.ts` + layout/API):
 
-| Role | Baca dashboard | Tulis berita/kategori/media | Pengaturan (P3) |
-|------|----------------|-----------------------------|-----------------|
-| `viewer` | Ya | Tidak | Tidak |
-| `editor` | Ya | Ya | Tidak |
-| `admin` | Ya | Ya | Ya |
+| Role | Baca dashboard | Berita sekolah | Artikel siswa | Kategori tambah | Media upload | Moderasi approve | Pengaturan |
+|------|----------------|----------------|---------------|-----------------|--------------|------------------|------------|
+| `viewer` | Ya | Baca | Baca | Tidak | Tidak | Tidak | Tidak |
+| `siswa` | Ya (terbatas) | Tidak | CRUD milik sendiri | Ya | Ya | Tidak | Tidak |
+| `editor` | Ya | CRUD | CRUD | Ya | Ya | Lihat antrian | Tidak |
+| `admin` | Ya | CRUD | CRUD | Ya | Ya | Approve/Tolak | Ya |
 
 ### Revalidate callback
 
-Setelah publish, api-web memanggil:
+Setelah publish / approve, api-web memanggil:
 
 ```http
 POST https://<teknovo-web>/api/revalidate
 Content-Type: application/json
 
-{ "secret": "<REVALIDATE_SECRET>", "tag": "berita", "path": "/berita" }
+{ "secret": "<REVALIDATE_SECRET>", "tag": "artikel-siswa", "path": "/berita/berita-terbaru" }
 ```
+
+Untuk berita sekolah tetap `tag: "berita"`, `path: "/berita"`.
 
 ## Scaffold homelab (referensi saja)
 
@@ -127,6 +162,7 @@ Struktur masa depan (tidak di-ship di repo ini):
 services/api-web/
   src/
     routes/v1/berita.ts
+    routes/v1/artikel-siswa.ts
     routes/v1/kategori.ts
     middleware/auth.ts
   prisma/

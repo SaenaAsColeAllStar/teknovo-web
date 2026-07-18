@@ -58,7 +58,7 @@ export function MediaLibrary({
   onPick,
   compact,
 }: Props) {
-  const { canWrite } = useCmsRole();
+  const { canWrite, canUploadMedia } = useCmsRole();
   const inputRef = useRef<HTMLInputElement>(null);
   const [items, setItems] = useState<CmsMediaObject[]>(initialItems);
   const [error, setError] = useState<string | null>(initialError);
@@ -94,7 +94,7 @@ export function MediaLibrary({
   }, [fetchOnMount, load]);
 
   async function uploadFiles(files: FileList | File[]) {
-    if (!canWrite) {
+    if (!canUploadMedia) {
       toast.error("Peran viewer tidak dapat mengunggah media.");
       return;
     }
@@ -156,13 +156,13 @@ export function MediaLibrary({
   function onDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
     setDragOver(false);
-    if (!canWrite || uploading) return;
+    if (!canUploadMedia || uploading) return;
     void uploadFiles(event.dataTransfer.files);
   }
 
   return (
     <div className="space-y-4">
-      {canWrite ? (
+      {canUploadMedia ? (
         <div
           onDragEnter={(e) => {
             e.preventDefault();

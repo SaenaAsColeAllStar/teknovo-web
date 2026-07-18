@@ -6,31 +6,39 @@ import {
   Image as ImageIcon,
   LayoutDashboard,
   Newspaper,
+  PenLine,
   Settings,
+  ShieldCheck,
   Tags,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
+import { useCmsRole } from "@/components/dashboard/CmsRoleProvider";
 import { cn } from "@/lib/utils";
 import { BRAND_SHORT, DASHBOARD_NAV } from "@/lib/constants";
 
 const ICONS = {
   LayoutDashboard,
   Newspaper,
+  PenLine,
+  ShieldCheck,
   Tags,
   Image: ImageIcon,
   Settings,
 } as const;
 
-type Props = {
-  canManageSettings?: boolean;
-};
-
-export function DashboardSidebar({ canManageSettings = false }: Props) {
+export function DashboardSidebar() {
   const pathname = usePathname();
+  const {
+    canManageSettings,
+    canAccessBeritaSekolah,
+    canViewModerasi,
+  } = useCmsRole();
 
   const nav = DASHBOARD_NAV.filter((item) => {
     if (item.href === "/dashboard/pengaturan") return canManageSettings;
+    if (item.href === "/dashboard/berita") return canAccessBeritaSekolah;
+    if (item.href === "/dashboard/moderasi") return canViewModerasi;
     return true;
   });
 

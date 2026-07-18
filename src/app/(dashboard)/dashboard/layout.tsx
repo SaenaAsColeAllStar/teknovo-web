@@ -14,16 +14,28 @@ export default async function DashboardLayout({
   const session = await getCmsSession();
   const role = session?.role ?? "viewer";
   const canWrite = session?.canWrite ?? false;
+  const canWriteArtikel = session?.canWriteArtikel ?? false;
+  const canWriteKategori = session?.canWriteKategori ?? false;
+  const canUploadMedia = session?.canUploadMedia ?? false;
+  const canModerate = session?.canModerate ?? false;
+  const canViewModerasi = session?.canViewModerasi ?? false;
+  const canAccessBeritaSekolah = session?.canAccessBeritaSekolah ?? true;
   const canManageSettings = session?.canManageSettings ?? false;
 
   return (
     <CmsRoleProvider
       role={role}
       canWrite={canWrite}
+      canWriteArtikel={canWriteArtikel}
+      canWriteKategori={canWriteKategori}
+      canUploadMedia={canUploadMedia}
+      canModerate={canModerate}
+      canViewModerasi={canViewModerasi}
+      canAccessBeritaSekolah={canAccessBeritaSekolah}
       canManageSettings={canManageSettings}
     >
       <div className="flex min-h-screen bg-[color:var(--color-neutral-soft)]">
-        <DashboardSidebar canManageSettings={canManageSettings} />
+        <DashboardSidebar />
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="flex h-14 items-center justify-between gap-4 border-b border-[color:var(--color-border)] bg-white px-6">
             <p className="text-sm font-medium text-[color:var(--color-heading)]">

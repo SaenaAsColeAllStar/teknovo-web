@@ -38,7 +38,7 @@ type Props = {
 export function KategoriManager({ initial, listError }: Props) {
   const router = useRouter();
   const { getToken } = useAuth();
-  const { canWrite } = useCmsRole();
+  const { canWrite, canWriteKategori } = useCmsRole();
   const apiReady = isApiConfigured();
   const [items, setItems] = useState(initial);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -75,8 +75,8 @@ export function KategoriManager({ initial, listError }: Props) {
   }
 
   async function onSubmit(values: KategoriFormValues) {
-    if (!canWrite) {
-      toast.error("Peran viewer tidak dapat mengubah kategori.");
+    if (editingId ? !canWrite : !canWriteKategori) {
+      toast.error("Peran Anda tidak dapat mengubah kategori.");
       return;
     }
     if (!apiReady) {
@@ -170,16 +170,16 @@ export function KategoriManager({ initial, listError }: Props) {
         </Card>
       ) : null}
 
-      {canWrite ? (
+      {canWriteKategori ? (
         <form
           className="space-y-4 border border-[color:var(--color-border)] bg-white p-4"
           onSubmit={form.handleSubmit(onSubmit)}
         >
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-sm font-semibold text-[color:var(--color-heading)]">
-              {editingId ? "Edit kategori" : "Kategori baru"}
+              {editingId && canWrite ? "Edit kategori" : "Kategori baru"}
             </h2>
-            {editingId ? (
+            {editingId && canWrite ? (
               <Button
                 type="button"
                 size="sm"

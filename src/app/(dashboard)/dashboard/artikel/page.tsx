@@ -2,7 +2,6 @@ import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { redirect } from "next/navigation";
 
 import { BeritaListRefresh } from "@/components/dashboard/berita/BeritaListRefresh";
 import { Button } from "@/components/ui/button";
@@ -14,28 +13,30 @@ import {
 } from "@/components/ui/card";
 import {
   ApiClientError,
-  fetchBeritaListCms,
+  fetchArtikelSiswaListCms,
   isApiConfigured,
 } from "@/lib/api-client";
 import { getCmsSession } from "@/lib/cms-auth";
-import type { BeritaListItem, BeritaStatus } from "@/types/berita";
+import type {
+  ArtikelSiswaListItem,
+  ArtikelSiswaStatus,
+} from "@/types/artikel-siswa";
 
 export const dynamic = "force-dynamic";
 
-const STATUS_LABEL: Record<BeritaStatus, string> = {
+const STATUS_LABEL: Record<ArtikelSiswaStatus, string> = {
   DRAFT: "Draft",
+  REVIEW: "Review",
   PUBLISHED: "Published",
   ARCHIVED: "Archived",
 };
 
-export default async function DashboardBeritaPage() {
+export default async function DashboardArtikelPage() {
   const cms = await getCmsSession();
-  if (!cms?.canAccessBeritaSekolah) {
-    redirect("/dashboard/artikel");
-  }
-  const canWrite = cms?.canWrite ?? false;
+  const canWriteArtikel = cms?.canWriteArtikel ?? false;
+  const isSiswa = cms?.role === "siswa";
 
-  let items: BeritaListItem[] = [];
+  let items: ArtikelSiswaListItem[] = [];
   let total = 0;
   let error: string | null = null;
 
@@ -49,14 +50,18 @@ export default async function DashboardBeritaPage() {
       if (!token) {
         throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
       }
-      const res = await fetchBeritaListCms(token, { page: 1, limit: 50 });
+      const res = await fetchArtikelSiswaListCms(token, {
+        page: 1,
+        limit: 50,
+        mine: isSiswa,
+      });
       items = res.data;
       total = res.meta.total;
     } catch (err) {
       error =
         err instanceof ApiClientError
           ? err.message
-          : "Gagal memuat daftar berita.";
+          : "Gagal memuat daftar artikel siswa.";
     }
   }
 
@@ -65,17 +70,19 @@ export default async function DashboardBeritaPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-[color:var(--color-heading)]">
-            Berita
+            {isSiswa ? "Artikel saya" : "Artikel siswa"}
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            CRUD terhadap <code>GET/POST/PATCH/DELETE /v1/berita</code> (api-web).
+            {isSiswa
+              ? "Tulis dan kirim artikel ekstrakurikuler untuk dimoderasi admin."
+              : "Channel artikel siswa (ekskul). Publik hanya menampilkan status PUBLISHED."}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <BeritaListRefresh />
-          {canWrite ? (
+          {canWriteArtikel ? (
             <Button asChild size="sm">
-              <Link href="/dashboard/berita/baru">Berita baru</Link>
+              <Link href="/dashboard/artikel/baru">Artikel baru</Link>
             </Button>
           ) : null}
         </div>
@@ -84,7 +91,7 @@ export default async function DashboardBeritaPage() {
       {error ? (
         <Card>
           <CardHeader>
-            <CardTitle>Tidak dapat memuat berita</CardTitle>
+            <CardTitle>Tidak dapat memuat artikel</CardTitle>
             <CardDescription>{error}</CardDescription>
           </CardHeader>
         </Card>
@@ -93,10 +100,13 @@ export default async function DashboardBeritaPage() {
       {!error && items.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Belum ada berita</CardTitle>
+            <CardTitle>
+              {isSiswa ? "Belum ada artikel Anda" : "Belum ada artikel siswa"}
+            </CardTitle>
             <CardDescription>
-              Buat artikel pertama, atau pastikan api-web mengembalikan data dari{" "}
-              <code>GET /v1/berita</code>.
+              {isSiswa
+                ? "Buat draft lalu kirim ke moderasi (status REVIEW)."
+                : "Pastikan api-web melayani GET /v1/artikel-siswa."}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -109,7 +119,9 @@ export default async function DashboardBeritaPage() {
               <tr>
                 <th className="px-4 py-3 font-medium">Judul</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Kategori</th>
+                {!isSiswa ? (
+                  <th className="px-4 py-3 font-medium">Penulis</th>
+                ) : null}
                 <th className="px-4 py-3 font-medium">Terbit</th>
                 <th className="px-4 py-3 font-medium"> </th>
               </tr>
@@ -131,9 +143,12 @@ export default async function DashboardBeritaPage() {
                   <td className="px-4 py-3 text-[color:var(--color-body)]">
                     {STATUS_LABEL[row.status]}
                   </td>
-                  <td className="px-4 py-3 text-[color:var(--color-body)]">
-                    {row.kategori?.nama ?? "—"}
-                  </td>
+                  {!isSiswa ? (
+                    <td className="px-4 py-3 text-[color:var(--color-body)]">
+                      {row.penulis?.nama ?? "—"}
+                      {row.penulis?.kelas ? ` · ${row.penulis.kelas}` : ""}
+                    </td>
+                  ) : null}
                   <td className="px-4 py-3 text-[color:var(--color-body)]">
                     {row.publishedAt
                       ? format(new Date(row.publishedAt), "d MMM yyyy", {
@@ -143,8 +158,8 @@ export default async function DashboardBeritaPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Button asChild size="sm" variant="secondary">
-                      <Link href={`/dashboard/berita/${row.id}/edit`}>
-                        {canWrite ? "Edit" : "Lihat"}
+                      <Link href={`/dashboard/artikel/${row.id}/edit`}>
+                        {canWriteArtikel ? "Edit" : "Lihat"}
                       </Link>
                     </Button>
                   </td>
@@ -153,7 +168,7 @@ export default async function DashboardBeritaPage() {
             </tbody>
           </table>
           <p className="border-t border-[color:var(--color-border)] px-4 py-2 text-xs text-[color:var(--color-body-subtle)]">
-            {items.length} dari {total} berita
+            {items.length} dari {total} artikel
           </p>
         </div>
       ) : null}

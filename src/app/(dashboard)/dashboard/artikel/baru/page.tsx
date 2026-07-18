@@ -1,20 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { BeritaForm } from "@/components/dashboard/berita/BeritaForm";
+import { ArtikelSiswaForm } from "@/components/dashboard/artikel/ArtikelSiswaForm";
 import { Button } from "@/components/ui/button";
 import { fetchKategoriList } from "@/lib/api-client";
 import { getCmsSession } from "@/lib/cms-auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function BeritaBaruPage() {
+export default async function ArtikelSiswaBaruPage() {
   const cms = await getCmsSession();
-  if (!cms?.canAccessBeritaSekolah) {
+  if (!cms?.canWriteArtikel) {
     redirect("/dashboard/artikel");
-  }
-  if (!cms.canWrite) {
-    redirect("/dashboard/berita");
   }
 
   const kategori = await fetchKategoriList();
@@ -24,17 +21,18 @@ export default async function BeritaBaruPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold text-[color:var(--color-heading)]">
-            Berita baru
+            Artikel siswa baru
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            Form Zod + TipTap Starter Kit → <code>POST /v1/berita</code>.
+            TipTap → <code>POST /v1/artikel-siswa</code>. Siswa mengirim status{" "}
+            <code>REVIEW</code> untuk moderasi.
           </p>
         </div>
         <Button asChild size="sm" variant="secondary">
-          <Link href="/dashboard/berita">Kembali</Link>
+          <Link href="/dashboard/artikel">Kembali</Link>
         </Button>
       </div>
-      <BeritaForm mode="create" kategori={kategori} />
+      <ArtikelSiswaForm mode="create" kategori={kategori} />
     </div>
   );
 }

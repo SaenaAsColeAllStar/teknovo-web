@@ -1,6 +1,11 @@
 import { z } from "zod";
 
 import type { ApiListResponse, ApiOk } from "@/types/api";
+import type {
+  ArtikelSiswa,
+  ArtikelSiswaListItem,
+  ArtikelSiswaStatus,
+} from "@/types/artikel-siswa";
 import type { Berita, BeritaListItem, BeritaStatus } from "@/types/berita";
 import type { Kategori } from "@/types/kategori";
 
@@ -348,3 +353,211 @@ export function slugifyJudul(judul: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 200);
 }
+
+/* ─── Artikel siswa (ekskul channel) ─────────────────────────────── */
+
+export type ArtikelSiswaListParams = {
+  page?: number;
+  limit?: number;
+  status?: ArtikelSiswaStatus;
+  /** CMS: filter to current user's articles (siswa "milik sendiri"). */
+  mine?: boolean;
+};
+
+/** Public published artikel siswa — empty when API offline. */
+export async function fetchArtikelSiswaList(
+  params?: ArtikelSiswaListParams,
+): Promise<ArtikelSiswaListItem[]> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  qs.set("status", params?.status ?? "PUBLISHED");
+  const q = qs.toString();
+
+  try {
+    const data = await request<ApiListResponse<ArtikelSiswaListItem>>(
+      `/v1/artikel-siswa${q ? `?${q}` : ""}`,
+      { next: { revalidate: 60, tags: ["artikel-siswa"] } },
+    );
+    return data.data;
+  } catch {
+    return [];
+  }
+}
+
+/** Returns `null` when API unreachable so callers can fall back. */
+export async function fetchArtikelSiswaListOrNull(
+  params?: ArtikelSiswaListParams,
+): Promise<ArtikelSiswaListItem[] | null> {
+  if (!API_URL) return null;
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  qs.set("status", params?.status ?? "PUBLISHED");
+  const q = qs.toString();
+
+  try {
+    const data = await request<ApiListResponse<ArtikelSiswaListItem>>(
+      `/v1/artikel-siswa?${q}`,
+      { next: { revalidate: 60, tags: ["artikel-siswa"] } },
+    );
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchArtikelSiswaBySlug(
+  slug: string,
+): Promise<ArtikelSiswa | null> {
+  try {
+    const data = await request<ApiOk<ArtikelSiswa>>(
+      `/v1/artikel-siswa/${slug}`,
+      { next: { revalidate: 60, tags: [`artikel-siswa:${slug}`] } },
+    );
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+/** `undefined` = API offline; `null` = 404. */
+export async function fetchArtikelSiswaBySlugOrNull(
+  slug: string,
+): Promise<ArtikelSiswa | null | undefined> {
+  if (!API_URL) return undefined;
+  try {
+    const data = await request<ApiOk<ArtikelSiswa>>(
+      `/v1/artikel-siswa/${slug}`,
+      { next: { revalidate: 60, tags: [`artikel-siswa:${slug}`] } },
+    );
+    return data.data;
+  } catch (err) {
+    if (err instanceof ApiClientError && err.status === 404) return null;
+    return undefined;
+  }
+}
+
+/** CMS list (Bearer). Use `mine: true` for siswa own articles. */
+export async function fetchArtikelSiswaListCms(
+  token: string,
+  params?: ArtikelSiswaListParams,
+): Promise<ApiListResponse<ArtikelSiswaListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  if (params?.mine) qs.set("mine", "1");
+  const q = qs.toString();
+  return request<ApiListResponse<ArtikelSiswaListItem>>(
+    `/v1/artikel-siswa${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchArtikelSiswaById(
+  id: string,
+  token: string,
+): Promise<ArtikelSiswa> {
+  const data = await request<ApiOk<ArtikelSiswa>>(
+    `/v1/artikel-siswa/id/${id}`,
+    { token, cache: "no-store" },
+  );
+  return data.data;
+}
+
+export async function createArtikelSiswa(
+  values: ArtikelSiswaFormValues,
+  token: string,
+): Promise<ArtikelSiswa> {
+  const body = normalizeArtikelSiswaPayload(values);
+  const data = await request<ApiOk<ArtikelSiswa>>("/v1/artikel-siswa", {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
+  return data.data;
+}
+
+export async function updateArtikelSiswa(
+  id: string,
+  values: ArtikelSiswaFormValues,
+  token: string,
+): Promise<ArtikelSiswa> {
+  const body = normalizeArtikelSiswaPayload(values);
+  const data = await request<ApiOk<ArtikelSiswa>>(`/v1/artikel-siswa/${id}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body),
+  });
+  return data.data;
+}
+
+export async function deleteArtikelSiswa(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/artikel-siswa/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function approveArtikelSiswa(
+  id: string,
+  token: string,
+): Promise<ArtikelSiswa> {
+  const data = await request<ApiOk<ArtikelSiswa>>(
+    `/v1/artikel-siswa/${id}/approve`,
+    { method: "POST", token },
+  );
+  return data.data;
+}
+
+export async function rejectArtikelSiswa(
+  id: string,
+  token: string,
+  reason?: string,
+): Promise<ArtikelSiswa> {
+  const data = await request<ApiOk<ArtikelSiswa>>(
+    `/v1/artikel-siswa/${id}/reject`,
+    {
+      method: "POST",
+      token,
+      body: JSON.stringify({
+        reason: reason?.trim() || undefined,
+      }),
+    },
+  );
+  return data.data;
+}
+
+function normalizeArtikelSiswaPayload(values: ArtikelSiswaFormValues) {
+  return {
+    judul: values.judul,
+    slug: values.slug,
+    ringkasan: values.ringkasan?.trim() || undefined,
+    konten: values.konten,
+    kategoriId: values.kategoriId?.trim() || undefined,
+    status: values.status,
+    coverUrl: values.coverUrl?.trim() || undefined,
+    penulisKelas: values.penulisKelas?.trim() || undefined,
+  };
+}
+
+export const artikelSiswaFormSchema = z.object({
+  judul: z.string().min(3).max(200),
+  slug: z
+    .string()
+    .min(3)
+    .max(200)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  ringkasan: z.string().max(500).optional(),
+  konten: z.string().min(1),
+  kategoriId: z.string().optional(),
+  status: z.enum(["DRAFT", "REVIEW", "PUBLISHED", "ARCHIVED"]),
+  coverUrl: z.string().url().optional().or(z.literal("")),
+  penulisKelas: z.string().max(50).optional(),
+});
+
+export type ArtikelSiswaFormValues = z.infer<typeof artikelSiswaFormSchema>;

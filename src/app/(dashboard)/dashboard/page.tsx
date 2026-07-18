@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
-import { FilePlus2, Image as ImageIcon, Newspaper, Tags } from "lucide-react";
+import {
+  FilePlus2,
+  Image as ImageIcon,
+  Newspaper,
+  PenLine,
+  ShieldCheck,
+  Tags,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +29,10 @@ export default async function DashboardHomePage() {
     "Editor";
   const role = cms?.role ?? "viewer";
   const canWrite = cms?.canWrite ?? false;
+  const canWriteArtikel = cms?.canWriteArtikel ?? false;
+  const canViewModerasi = cms?.canViewModerasi ?? false;
+  const canAccessBeritaSekolah = cms?.canAccessBeritaSekolah ?? true;
+  const isSiswa = role === "siswa";
 
   return (
     <div className="space-y-8">
@@ -30,46 +41,98 @@ export default async function DashboardHomePage() {
           Halo, {nama}
         </h1>
         <p className="mt-1 text-sm text-[color:var(--color-body)]">
-          Kelola berita, kategori, dan media portal SMK Teknovo. Peran Anda:{" "}
-          <strong>{CMS_ROLE_LABEL[role]}</strong>.
+          {isSiswa
+            ? "Kirim artikel ekstrakurikuler untuk dimoderasi redaksi sekolah."
+            : "Kelola berita, artikel siswa, kategori, dan media portal SMK Teknovo."}{" "}
+          Peran Anda: <strong>{CMS_ROLE_LABEL[role]}</strong>.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {canAccessBeritaSekolah ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Newspaper className="size-4" /> Berita
+              </CardTitle>
+              <CardDescription>Berita sekolah (staff)</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/dashboard/berita">Kelola</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
-              <Newspaper className="size-4" /> Berita
+              <PenLine className="size-4" /> Artikel siswa
             </CardTitle>
-            <CardDescription>Draft & publikasi</CardDescription>
+            <CardDescription>
+              {isSiswa ? "Milik sendiri · DRAFT → REVIEW" : "Channel ekskul"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Button asChild size="sm" variant="secondary">
-              <Link href="/dashboard/berita">Kelola</Link>
+              <Link href="/dashboard/artikel">Kelola</Link>
             </Button>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <FilePlus2 className="size-4" /> Tulis baru
             </CardTitle>
             <CardDescription>
-              {canWrite ? "Buat artikel berita" : "Hanya editor/admin"}
+              {canWriteArtikel
+                ? isSiswa
+                  ? "Buat artikel untuk moderasi"
+                  : canWrite
+                    ? "Berita atau artikel siswa"
+                    : "Artikel siswa"
+                : "Hanya baca"}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {canWrite ? (
+            {canWriteArtikel ? (
               <Button asChild size="sm">
-                <Link href="/dashboard/berita/baru">Buat berita</Link>
+                <Link
+                  href={
+                    isSiswa || !canWrite
+                      ? "/dashboard/artikel/baru"
+                      : "/dashboard/berita/baru"
+                  }
+                >
+                  {isSiswa || !canWrite ? "Buat artikel" : "Buat berita"}
+                </Link>
               </Button>
             ) : (
               <Button size="sm" disabled>
-                Buat berita
+                Buat konten
               </Button>
             )}
           </CardContent>
         </Card>
+
+        {canViewModerasi ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldCheck className="size-4" /> Moderasi
+              </CardTitle>
+              <CardDescription>Antrian REVIEW</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/dashboard/moderasi">Buka antrian</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -83,6 +146,7 @@ export default async function DashboardHomePage() {
             </Button>
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -123,8 +187,9 @@ export default async function DashboardHomePage() {
           </p>
           <p>
             Clerk roles: <code>publicMetadata.role</code> ∈{" "}
-            <code>admin|editor|viewer</code>. Upload media butuh OpenNext /
-            Workers binding <code>CMS_BUCKET</code>.
+            <code>admin|editor|viewer|siswa</code>. Artikel siswa:{" "}
+            <code>/v1/artikel-siswa</code> · moderasi approve hanya{" "}
+            <code>admin</code>.
           </p>
         </CardContent>
       </Card>
