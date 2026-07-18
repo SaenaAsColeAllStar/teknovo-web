@@ -42,7 +42,19 @@ Jangan commit `.env.local`. Placeholder `GANTI_*` di `.env.example` sengaja aman
 ## 5. Roles
 
 Simpan role di `user.publicMetadata.role`: `admin` | `editor` | `viewer`.
-Helper: `parseCmsRole()` di `src/lib/clerk.ts`.
+
+Helpers:
+
+- `parseCmsRole()` — `src/lib/clerk.ts`
+- `getCmsSession()` / `requireCmsWriter()` — `src/lib/cms-auth.ts` (server + API)
+
+| Role | Capabilities |
+|------|----------------|
+| `viewer` (default jika metadata kosong) | Baca daftar/form CMS |
+| `editor` | CRUD berita, kategori, upload/hapus media R2 |
+| `admin` | Semua editor + `/dashboard/pengaturan` |
+
+Tanpa role di Clerk, user dianggap `viewer` (aman-by-default).
 
 ## 6. Cloudflare / production
 

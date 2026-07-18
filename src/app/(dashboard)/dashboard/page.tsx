@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { currentUser } from "@clerk/nextjs/server";
-import { FilePlus2, Newspaper, Tags } from "lucide-react";
+import { FilePlus2, Image as ImageIcon, Newspaper, Tags } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -10,13 +10,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getCmsSession } from "@/lib/cms-auth";
+import { CMS_ROLE_LABEL } from "@/lib/clerk";
 
 export default async function DashboardHomePage() {
   const user = await currentUser();
+  const cms = await getCmsSession();
   const nama =
     user?.fullName ||
     user?.primaryEmailAddress?.emailAddress ||
     "Editor";
+  const role = cms?.role ?? "viewer";
+  const canWrite = cms?.canWrite ?? false;
 
   return (
     <div className="space-y-8">
@@ -25,11 +30,12 @@ export default async function DashboardHomePage() {
           Halo, {nama}
         </h1>
         <p className="mt-1 text-sm text-[color:var(--color-body)]">
-          Kelola berita, kategori, dan media portal SMK Teknovo.
+          Kelola berita, kategori, dan media portal SMK Teknovo. Peran Anda:{" "}
+          <strong>{CMS_ROLE_LABEL[role]}</strong>.
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
@@ -48,12 +54,20 @@ export default async function DashboardHomePage() {
             <CardTitle className="flex items-center gap-2 text-base">
               <FilePlus2 className="size-4" /> Tulis baru
             </CardTitle>
-            <CardDescription>Buat artikel berita</CardDescription>
+            <CardDescription>
+              {canWrite ? "Buat artikel berita" : "Hanya editor/admin"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button asChild size="sm">
-              <Link href="/dashboard/berita/baru">Buat berita</Link>
-            </Button>
+            {canWrite ? (
+              <Button asChild size="sm">
+                <Link href="/dashboard/berita/baru">Buat berita</Link>
+              </Button>
+            ) : (
+              <Button size="sm" disabled>
+                Buat berita
+              </Button>
+            )}
           </CardContent>
         </Card>
         <Card>
@@ -69,25 +83,48 @@ export default async function DashboardHomePage() {
             </Button>
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ImageIcon className="size-4" /> Media
+            </CardTitle>
+            <CardDescription>Upload R2 CMS</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild size="sm" variant="secondary">
+              <Link href="/dashboard/media">Kelola</Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Status integrasi</CardTitle>
           <CardDescription>
-            CMS ini memanggil API homelab (`API_URL`). Lihat docs/API.md.
+            CMS memanggil API homelab (`API_URL`) dan R2 (`CMS_BUCKET`). Lihat
+            docs/API.md.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-[color:var(--color-body)]">
           <p>
             API_URL:{" "}
             <code className="bg-[color:var(--color-neutral-soft)] px-1">
-              {process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "(belum diset)"}
+              {process.env.NEXT_PUBLIC_API_URL ||
+                process.env.API_URL ||
+                "(belum diset)"}
             </code>
           </p>
           <p>
-            Clerk: autentikasi aktif via middleware. Webhook stub di{" "}
-            <code>/api/webhook/clerk</code>.
+            R2_PUBLIC_URL:{" "}
+            <code className="bg-[color:var(--color-neutral-soft)] px-1">
+              {process.env.R2_PUBLIC_URL || "(default r2.ctos.web.id)"}
+            </code>
+          </p>
+          <p>
+            Clerk roles: <code>publicMetadata.role</code> ∈{" "}
+            <code>admin|editor|viewer</code>. Upload media butuh OpenNext /
+            Workers binding <code>CMS_BUCKET</code>.
           </p>
         </CardContent>
       </Card>

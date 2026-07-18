@@ -74,9 +74,39 @@ Body `POST/PATCH` (Zod mirror di `src/lib/api-client.ts`):
 | `PATCH` | `/v1/kategori/:id` | Bearer |
 | `DELETE` | `/v1/kategori/:id` | Bearer |
 
+Body `POST/PATCH` (Zod mirror di `src/lib/api-client.ts`):
+
+```json
+{
+  "nama": "string",
+  "slug": "kebab-case",
+  "deskripsi": "string?"
+}
+```
+
+### Media (teknovo-web → R2, bukan api-web)
+
+Upload/list/delete langsung ke binding Workers `CMS_BUCKET` (prefix `cms/uploads/`):
+
+| Method | Path | Auth | Keterangan |
+|--------|------|------|------------|
+| `GET` | `/api/cms/media` | Clerk session | List objek |
+| `POST` | `/api/cms/media` | Clerk + editor\|admin | multipart `file` |
+| `DELETE` | `/api/cms/media` | Clerk + editor\|admin | JSON `{ "key": "cms/uploads/..." }` |
+
+URL publik: `R2_PUBLIC_URL` + key (`publicAssetUrl` / `r2ObjectUrl`). Hanya key di bawah `cms/uploads/` yang boleh dihapus (aset landing `media/` / `brand/` aman).
+
 ### Auth bridge
 
 CMS mengirim `Authorization: Bearer <Clerk JWT>` (atau session token yang di-verify di api-web). Mapping role: `publicMetadata.role` ∈ `admin|editor|viewer`.
+
+Enforcement di teknovo-web (`src/lib/cms-auth.ts` + layout/API):
+
+| Role | Baca dashboard | Tulis berita/kategori/media | Pengaturan (P3) |
+|------|----------------|-----------------------------|-----------------|
+| `viewer` | Ya | Tidak | Tidak |
+| `editor` | Ya | Ya | Tidak |
+| `admin` | Ya | Ya | Ya |
 
 ### Revalidate callback
 

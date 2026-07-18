@@ -7,7 +7,9 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
+import { useCmsRole } from "@/components/dashboard/CmsRoleProvider";
 import { BeritaRichTextEditor } from "@/components/dashboard/berita/BeritaRichTextEditor";
+import { MediaLibrary } from "@/components/dashboard/media/MediaLibrary";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,9 +39,14 @@ const selectClassName =
 export function BeritaForm({ mode, initial, kategori }: Props) {
   const router = useRouter();
   const { getToken } = useAuth();
+  const { canWrite } = useCmsRole();
   const [busy, setBusy] = useState<"draft" | "publish" | "delete" | null>(null);
-  const [slugLocked, setSlugLocked] = useState(Boolean(initial?.slug) || mode === "edit");
+  const [slugLocked, setSlugLocked] = useState(
+    Boolean(initial?.slug) || mode === "edit",
+  );
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
   const apiReady = isApiConfigured();
+  const readOnly = !canWrite;
 
   const form = useForm<BeritaFormValues>({
     resolver: zodResolver(beritaFormSchema),
@@ -63,6 +70,10 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
   }
 
   async function save(values: BeritaFormValues, intent: "draft" | "publish") {
+    if (readOnly) {
+      toast.error("Peran viewer tidak dapat menyimpan berita.");
+      return;
+    }
     if (!apiReady) {
       toast.error("API belum dikonfigurasi", {
         description:
@@ -114,7 +125,7 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
   }
 
   async function onDelete() {
-    if (!initial || !apiReady) return;
+    if (!initial || !apiReady || readOnly) return;
     if (!window.confirm(`Hapus berita "${initial.judul}"?`)) return;
 
     setBusy("delete");
@@ -164,10 +175,10 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
         <Label htmlFor="judul">Judul</Label>
         <Input
           id="judul"
-          disabled={!!busy}
+          disabled={!!busy || readOnly}
           {...form.register("judul", {
             onChange: (event) => {
-              if (slugLocked) return;
+              if (slugLocked || readOnly) return;
               const next = slugifyJudul(event.target.value);
               if (next) form.setValue("slug", next, { shouldValidate: true });
             },
@@ -184,7 +195,7 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
         <Label htmlFor="slug">Slug</Label>
         <Input
           id="slug"
-          disabled={!!busy}
+          disabled={!!busy || readOnly}
           {...form.register("slug", {
             onChange: () => {
               setSlugLocked(true);
@@ -201,14 +212,31 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
 
       <div className="space-y-2">
         <Label htmlFor="ringkasan">Ringkasan</Label>
-        <Input id="ringkasan" disabled={!!busy} {...form.register("ringkasan")} />
+        <Input
+          id="ringkasan"
+          disabled={!!busy || readOnly}
+          {...form.register("ringkasan")}
+        />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="coverUrl">Cover URL</Label>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <Label htmlFor="coverUrl">Cover URL</Label>
+          {canWrite ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={!!busy}
+              onClick={() => setShowMediaPicker((v) => !v)}
+            >
+              {showMediaPicker ? "Tutup library" : "Pilih dari media"}
+            </Button>
+          ) : null}
+        </div>
         <Input
           id="coverUrl"
-          disabled={!!busy}
+          disabled={!!busy || readOnly}
           placeholder="https://..."
           {...form.register("coverUrl")}
         />
@@ -216,6 +244,24 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
           <p className="text-xs text-[color:var(--color-danger)]">
             {form.formState.errors.coverUrl.message}
           </p>
+        ) : null}
+        {showMediaPicker ? (
+          <div className="border border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)] p-3">
+            <p className="mb-3 text-xs text-[color:var(--color-body)]">
+              Klik thumbnail untuk mengisi cover URL.
+            </p>
+            <MediaLibrary
+              compact
+              fetchOnMount
+              onPick={(url) => {
+                form.setValue("coverUrl", url, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                });
+                setShowMediaPicker(false);
+              }}
+            />
+          </div>
         ) : null}
       </div>
 
@@ -225,7 +271,7 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
           <select
             id="kategoriId"
             className={selectClassName}
-            disabled={!!busy}
+            disabled={!!busy || readOnly}
             {...form.register("kategoriId")}
           >
             <option value="">— Tanpa kategori —</option>
@@ -241,7 +287,7 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
           <select
             id="status"
             className={selectClassName}
-            disabled={!!busy}
+            disabled={!!busy || readOnly}
             {...form.register("status")}
           >
             <option value="DRAFT">Draft</option>
@@ -260,7 +306,7 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
             <BeritaRichTextEditor
               value={field.value}
               onChange={field.onChange}
-              disabled={!!busy}
+              disabled={!!busy || readOnly}
             />
           )}
         />
@@ -271,31 +317,33 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
         ) : null}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--color-border)] pt-4">
-        <Button type="submit" size="sm" variant="secondary" disabled={!!busy}>
-          {busy === "draft" ? "Menyimpan…" : "Simpan draft"}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          disabled={!!busy}
-          onClick={form.handleSubmit((values) => save(values, "publish"))}
-        >
-          {busy === "publish" ? "Mempublikasi…" : "Publikasikan"}
-        </Button>
-        {mode === "edit" ? (
+      {canWrite ? (
+        <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--color-border)] pt-4">
+          <Button type="submit" size="sm" variant="secondary" disabled={!!busy}>
+            {busy === "draft" ? "Menyimpan…" : "Simpan draft"}
+          </Button>
           <Button
             type="button"
             size="sm"
-            variant="danger"
-            className="ml-auto"
             disabled={!!busy}
-            onClick={onDelete}
+            onClick={form.handleSubmit((values) => save(values, "publish"))}
           >
-            {busy === "delete" ? "Menghapus…" : "Hapus"}
+            {busy === "publish" ? "Mempublikasi…" : "Publikasikan"}
           </Button>
-        ) : null}
-      </div>
+          {mode === "edit" ? (
+            <Button
+              type="button"
+              size="sm"
+              variant="danger"
+              className="ml-auto"
+              disabled={!!busy}
+              onClick={onDelete}
+            >
+              {busy === "delete" ? "Menghapus…" : "Hapus"}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
     </form>
   );
 }

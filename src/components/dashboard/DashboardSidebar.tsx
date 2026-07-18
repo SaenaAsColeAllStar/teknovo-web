@@ -22,8 +22,17 @@ const ICONS = {
   Settings,
 } as const;
 
-export function DashboardSidebar() {
+type Props = {
+  canManageSettings?: boolean;
+};
+
+export function DashboardSidebar({ canManageSettings = false }: Props) {
   const pathname = usePathname();
+
+  const nav = DASHBOARD_NAV.filter((item) => {
+    if (item.href === "/dashboard/pengaturan") return canManageSettings;
+    return true;
+  });
 
   return (
     <aside className="flex w-56 shrink-0 flex-col border-r border-[color:var(--color-border)] bg-white">
@@ -33,7 +42,7 @@ export function DashboardSidebar() {
         </Link>
       </div>
       <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="CMS">
-        {DASHBOARD_NAV.map((item) => {
+        {nav.map((item) => {
           const Icon = ICONS[item.icon as keyof typeof ICONS] ?? LayoutDashboard;
           const active =
             item.href === "/dashboard"

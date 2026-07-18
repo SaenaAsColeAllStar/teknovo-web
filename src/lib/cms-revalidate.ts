@@ -25,3 +25,15 @@ export async function revalidateBeritaCache(slug?: string): Promise<void> {
     revalidatePath(`/berita/${slug}`);
   }
 }
+
+export async function revalidateKategoriCache(): Promise<void> {
+  const session = await auth();
+  if (!session.userId) {
+    throw new Error("Unauthorized");
+  }
+
+  revalidateTag("kategori", "max");
+  revalidateTag("berita", "max");
+  revalidatePath("/berita");
+  revalidatePath("/dashboard/kategori");
+}

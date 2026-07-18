@@ -1,12 +1,19 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { BeritaForm } from "@/components/dashboard/berita/BeritaForm";
 import { Button } from "@/components/ui/button";
 import { fetchKategoriList } from "@/lib/api-client";
+import { getCmsSession } from "@/lib/cms-auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function BeritaBaruPage() {
+  const cms = await getCmsSession();
+  if (!cms?.canWrite) {
+    redirect("/dashboard/berita");
+  }
+
   const kategori = await fetchKategoriList();
 
   return (

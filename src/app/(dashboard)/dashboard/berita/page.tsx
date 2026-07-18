@@ -16,6 +16,7 @@ import {
   fetchBeritaListCms,
   isApiConfigured,
 } from "@/lib/api-client";
+import { getCmsSession } from "@/lib/cms-auth";
 import type { BeritaListItem, BeritaStatus } from "@/types/berita";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +28,9 @@ const STATUS_LABEL: Record<BeritaStatus, string> = {
 };
 
 export default async function DashboardBeritaPage() {
+  const cms = await getCmsSession();
+  const canWrite = cms?.canWrite ?? false;
+
   let items: BeritaListItem[] = [];
   let total = 0;
   let error: string | null = null;
@@ -65,9 +69,11 @@ export default async function DashboardBeritaPage() {
         </div>
         <div className="flex items-center gap-2">
           <BeritaListRefresh />
-          <Button asChild size="sm">
-            <Link href="/dashboard/berita/baru">Berita baru</Link>
-          </Button>
+          {canWrite ? (
+            <Button asChild size="sm">
+              <Link href="/dashboard/berita/baru">Berita baru</Link>
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -133,7 +139,9 @@ export default async function DashboardBeritaPage() {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Button asChild size="sm" variant="secondary">
-                      <Link href={`/dashboard/berita/${row.id}/edit`}>Edit</Link>
+                      <Link href={`/dashboard/berita/${row.id}/edit`}>
+                        {canWrite ? "Edit" : "Lihat"}
+                      </Link>
                     </Button>
                   </td>
                 </tr>

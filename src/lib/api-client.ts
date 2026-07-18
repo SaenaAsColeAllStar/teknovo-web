@@ -185,6 +185,70 @@ export async function fetchKategoriList(): Promise<Kategori[]> {
   }
 }
 
+/** CMS: kategori list with Bearer (no stale cache). */
+export async function fetchKategoriListCms(
+  token: string,
+): Promise<ApiListResponse<Kategori>> {
+  return request<ApiListResponse<Kategori>>("/v1/kategori", {
+    token,
+    cache: "no-store",
+  });
+}
+
+export async function createKategori(
+  values: KategoriFormValues,
+  token: string,
+): Promise<Kategori> {
+  const body = normalizeKategoriPayload(values);
+  const data = await request<ApiOk<Kategori>>("/v1/kategori", {
+    method: "POST",
+    token,
+    body: JSON.stringify(body),
+  });
+  return data.data;
+}
+
+export async function updateKategori(
+  id: string,
+  values: KategoriFormValues,
+  token: string,
+): Promise<Kategori> {
+  const body = normalizeKategoriPayload(values);
+  const data = await request<ApiOk<Kategori>>(`/v1/kategori/${id}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(body),
+  });
+  return data.data;
+}
+
+export async function deleteKategori(id: string, token: string): Promise<void> {
+  await request<void>(`/v1/kategori/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+function normalizeKategoriPayload(values: KategoriFormValues) {
+  return {
+    nama: values.nama.trim(),
+    slug: values.slug.trim(),
+    deskripsi: values.deskripsi?.trim() || undefined,
+  };
+}
+
+export const kategoriFormSchema = z.object({
+  nama: z.string().min(2).max(100),
+  slug: z
+    .string()
+    .min(2)
+    .max(100)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  deskripsi: z.string().max(500).optional(),
+});
+
+export type KategoriFormValues = z.infer<typeof kategoriFormSchema>;
+
 /** CMS: list berita (all statuses unless filtered). Requires Clerk Bearer token. */
 export async function fetchBeritaListCms(
   token: string,
