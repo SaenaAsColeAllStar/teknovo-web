@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Three-tier marketing navbar — announcement + main (brand/actions) + bottom (nav/search).
+ * Three-tier marketing navbar — announcement + main (contact/brand/actions) + bottom (nav/search).
  * Self-contained chrome for the public site layout.
  * Dropdown/search primitives shared with the public site chrome.
  */
@@ -39,8 +39,8 @@ import {
 } from "@/lib/kontak-publik";
 import { isPublicSiteNavEntryActive } from "@/lib/public-site-nav-active";
 import {
+  PUBLIC_SITE_CMS_LOGIN_HREF,
   PUBLIC_SITE_MAIN_NAV,
-  PUBLIC_SITE_NAV_PPDB_CTA_LABEL,
   PUBLIC_SITE_PPDB_HREF,
 } from "@/lib/public-site-nav";
 import { cn } from "@/lib/utils";
@@ -62,6 +62,9 @@ const contactPhoneHref = getPublikWhatsAppUrl();
 const contactEmailHref = `mailto:${contactEmailDisplay}`;
 
 const tierContainerClassName = "public-site-container flex items-center";
+
+const contactLinkClassName =
+  "inline-flex items-center gap-2 text-sm font-medium text-body transition-colors hover:text-heading";
 
 const navItemClassName =
   "inline-flex items-center gap-1 text-sm font-medium text-heading transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30";
@@ -147,7 +150,7 @@ export function PublicMarketingNavbar({
         "[--public-nav-bottom:11rem]",
       )}
     >
-      {/* Announcement bar */}
+      {/* Tier 1 — Announcement bar */}
       <div className="border-b border-border-default bg-neutral-soft py-2.5">
         <div className={cn(tierContainerClassName, "justify-center")}>
           <PublicSiteLink
@@ -159,7 +162,7 @@ export function PublicMarketingNavbar({
         </div>
       </div>
 
-      {/* Main bar */}
+      {/* Tier 2 — Main bar: contact | brand | actions */}
       <div className="border-b border-border-default py-4">
         <div
           className={cn(
@@ -167,6 +170,23 @@ export function PublicMarketingNavbar({
             "relative grid grid-cols-[1fr_auto_1fr] items-center gap-3",
           )}
         >
+          {/* Contact — start (≥sm) */}
+          <div className="col-start-1 hidden min-w-0 items-center gap-4 sm:flex">
+            <a
+              href={contactPhoneHref}
+              className={contactLinkClassName}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <Phone className="size-[18px] shrink-0" aria-hidden />
+              <span className="truncate">{contactPhoneDisplay}</span>
+            </a>
+            <a href={contactEmailHref} className={contactLinkClassName}>
+              <Mail className="size-[18px] shrink-0" aria-hidden />
+              <span className="truncate">{contactEmailDisplay}</span>
+            </a>
+          </div>
+
           {/* Brand — center (logo + school name) */}
           <PublicSiteLink
             href="/"
@@ -201,9 +221,7 @@ export function PublicMarketingNavbar({
               variant="secondary"
               className="h-auto px-5 py-2.5 text-sm font-medium text-heading"
             >
-              <PublicSiteLink href={PUBLIC_SITE_PPDB_HREF}>
-                {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
-              </PublicSiteLink>
+              <a href={PUBLIC_SITE_CMS_LOGIN_HREF}>Login</a>
             </Button>
 
             <button
@@ -224,7 +242,7 @@ export function PublicMarketingNavbar({
         </div>
       </div>
 
-      {/* Bottom bar — primary nav (≥lg) + joined search (≥md) */}
+      {/* Tier 3 — Bottom bar: primary nav (≥lg) + joined search (≥md) */}
       <div className="overflow-visible border-b border-border-default py-3">
         <div
           className={cn(
@@ -355,12 +373,12 @@ export function PublicMarketingNavbar({
                 variant="secondary"
                 className="h-auto w-full px-5 py-2.5 text-sm font-medium text-heading"
               >
-                <PublicSiteLink
-                  href={PUBLIC_SITE_PPDB_HREF}
+                <a
+                  href={PUBLIC_SITE_CMS_LOGIN_HREF}
                   onClick={() => setMobileOpen(false)}
                 >
-                  {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
-                </PublicSiteLink>
+                  Login
+                </a>
               </Button>
             </div>
 

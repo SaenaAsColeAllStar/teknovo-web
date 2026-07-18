@@ -29,7 +29,22 @@ const ICONS = {
   Settings,
 } as const;
 
-export function DashboardSidebar() {
+export type DashboardSidebarProps = {
+  /** Hide the sidebar brand row (CMS application navbar already shows brand). */
+  hideBrand?: boolean;
+  /** Hide Clerk UserButton footer (CMS navbar owns avatar / logout). */
+  hideUserButton?: boolean;
+  /** Called after a nav link is activated (e.g. close mobile drawer). */
+  onNavigate?: () => void;
+  className?: string;
+};
+
+export function DashboardSidebar({
+  hideBrand = false,
+  hideUserButton = false,
+  onNavigate,
+  className,
+}: DashboardSidebarProps = {}) {
   const pathname = usePathname();
   const {
     canManageSettings,
@@ -46,13 +61,20 @@ export function DashboardSidebar() {
   });
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-[color:var(--color-border)] bg-white">
-      <div className="flex h-14 items-center border-b border-[color:var(--color-border)] px-4">
-        <Link href="/dashboard" className="font-semibold text-[color:var(--color-heading)]">
-          {BRAND_SHORT} CMS
-        </Link>
-      </div>
-      <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="CMS">
+    <aside
+      className={cn(
+        "flex h-full w-56 shrink-0 flex-col border-r border-[color:var(--color-border)] bg-white",
+        className,
+      )}
+    >
+      {hideBrand ? null : (
+        <div className="flex h-14 shrink-0 items-center border-b border-[color:var(--color-border)] px-4">
+          <Link href="/dashboard" className="font-semibold text-[color:var(--color-heading)]">
+            {BRAND_SHORT} CMS
+          </Link>
+        </div>
+      )}
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto p-3" aria-label="CMS">
         {nav.map((item) => {
           const Icon = ICONS[item.icon as keyof typeof ICONS] ?? LayoutDashboard;
           const active =
@@ -63,6 +85,7 @@ export function DashboardSidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors",
                 active
@@ -76,9 +99,11 @@ export function DashboardSidebar() {
           );
         })}
       </nav>
-      <div className="border-t border-[color:var(--color-border)] p-4">
-        <UserButton />
-      </div>
+      {hideUserButton ? null : (
+        <div className="shrink-0 border-t border-[color:var(--color-border)] p-4">
+          <UserButton />
+        </div>
+      )}
     </aside>
   );
 }

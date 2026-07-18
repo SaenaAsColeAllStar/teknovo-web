@@ -54,6 +54,11 @@
   --font-mono: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 }
 
+html {
+  /* Fallback until CmsApplicationNavbar measures itself */
+  --cms-nav-height: 8.5rem;
+}
+
 html,
 body,
 #root {

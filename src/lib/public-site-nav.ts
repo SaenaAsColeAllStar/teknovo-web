@@ -27,6 +27,13 @@ export type PublicSiteNavEntry = PublicSiteNavGroup | PublicSiteNavLink;
 /** Tautan ke portal autentikasi (app console, Clerk `/sign-in`). */
 export const PUBLIC_SITE_PORTAL_LOGIN_HREF = "/sign-in" as const;
 
+/** Origin CMS (Vite + TipTap + Clerk) — Pages `cms.smkteknovo.sch.id`. */
+export const PUBLIC_SITE_CMS_ORIGIN = "https://cms.smkteknovo.sch.id" as const;
+
+/** Sign-in CMS — tombol Login di navbar pemasaran. */
+export const PUBLIC_SITE_CMS_LOGIN_HREF =
+  `${PUBLIC_SITE_CMS_ORIGIN}/sign-in` as const;
+
 /** Tautan PPDB — CTA di top bar navbar (selaras footer & mobile dock). */
 export const PUBLIC_SITE_PPDB_HREF = "/ppdb/" as const;
 export const PUBLIC_SITE_PPDB_DAFTAR_HREF = "/ppdb/daftar" as const;

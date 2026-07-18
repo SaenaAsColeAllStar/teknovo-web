@@ -1,7 +1,7 @@
 /**
  * Navbar situs publik — re-export three-tier marketing chrome.
  * Dipakai `PublicSiteLayout` (landing & admissions).
- * Beranda memakai overlay di `HeroSection`; chrome ini disembunyikan di `/`.
+ * Beranda memakai `HomeCardNav` di hero; chrome tiga tingkat disembunyikan di `/`.
  */
 export {
   PublicMarketingNavbar as PublicNavbar,
