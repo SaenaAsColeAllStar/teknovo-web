@@ -2,12 +2,12 @@ import type { ReactElement } from "react";
 
 import { AuthBleedSplitLayout } from "../components/auth/AuthBleedSplitLayout";
 import { AuthSocialProofPanel } from "../components/auth/AuthSocialProofPanel";
-import { ForgotPasswordForm } from "../components/auth/ForgotPasswordForm";
+import { ResetPasswordForm } from "../components/auth/ResetPasswordForm";
 
-export function ForgotPasswordPage(): ReactElement {
+export function ResetPasswordPage(): ReactElement {
   return (
     <AuthBleedSplitLayout brandPanel={<AuthSocialProofPanel />}>
-      <ForgotPasswordForm />
+      <ResetPasswordForm />
     </AuthBleedSplitLayout>
   );
 }

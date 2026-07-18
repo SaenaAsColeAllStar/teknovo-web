@@ -81,7 +81,8 @@ Tambahkan domain `cms.smkteknovo.sch.id` di Clerk Dashboard. Auth hanya di CMS
 |------|---------|
 | `/sign-in` | Login dua kolom (custom `useSignInSignal` + OAuth) |
 | `/sign-up` | Redirect → `/sign-in?message=invite-only` (pendaftaran ditutup) |
-| `/forgot-password` | Reset kata sandi (full-bleed dua kolom) |
+| `/forgot-password` | Minta kode reset (full-bleed dua kolom) |
+| `/reset-password` | Buat kata sandi baru setelah verifikasi kode |
 | `/sso-callback` | Callback OAuth untuk `signIn.sso()` — **sign-in only** (bukan sign-up) |
 
 Setelah masuk, redirect ke `/` (dashboard CMS).

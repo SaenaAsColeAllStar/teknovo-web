@@ -23,13 +23,13 @@ import {
   type OAuthStrategy,
   resolveOAuthProviders,
 } from "./oauth-providers";
+import { SignInView } from "./SignInView";
 import { TurnstileField } from "@/components/turnstile/TurnstileField";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { verifyTurnstileToken } from "@/lib/turnstile-public";
-import { cn } from "@/lib/utils";
 
 const REMEMBER_KEY = "teknovo-cms-remember-me";
 const AFTER_SIGN_IN = "/";
@@ -501,11 +501,12 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
 
   if (mode === "verify-trust") {
     return (
-      <FormShell className={className} title="Verifikasi perangkat">
+      <SignInView
+        className={className}
+        heading="Verifikasi perangkat"
+        subtitle="Masukkan kode yang dikirim ke email Anda."
+      >
         <form className="space-y-5" onSubmit={handleTrustVerify}>
-          <p className="text-sm leading-relaxed text-[color:var(--color-body)]">
-            Masukkan kode yang dikirim ke email Anda.
-          </p>
           <Field id="trust-code" label="Kode verifikasi" required error={fieldMessage(errors?.fields, "code")}>
             <Input
               id="trust-code"
@@ -555,59 +556,28 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
             Kembali
           </Button>
         </form>
-      </FormShell>
+      </SignInView>
     );
   }
 
   return (
-    <FormShell className={className} title="Masuk ke CMS">
-      {inviteOnlyBanner ? (
-        <p
-          role="status"
-          className="mb-5 border border-[color:var(--color-brand)]/25 bg-[color:var(--color-brand)]/5 px-3 py-2 text-sm text-[color:var(--color-heading)]"
-        >
-          Akses hanya via undangan Super Admin
-        </p>
-      ) : null}
+    <SignInView
+      className={className}
+      heading="Masuk ke CMS"
+      inviteOnlyBanner={inviteOnlyBanner}
+      subtitle={
+        <>
+          Masuk dengan email undangan Anda. Belum punya akun?{" "}
+          <Link
+            to="/sign-up"
+            className="font-medium text-[color:var(--color-brand)] underline-offset-2 hover:underline"
+          >
+            Daftar
+          </Link>
+        </>
+      }
+    >
       <form className="space-y-5" onSubmit={handlePasswordSubmit}>
-        {providers.length > 0 ? (
-          <>
-            <div
-              className={cn(
-                "grid gap-2.5",
-                providers.length === 1 ? "grid-cols-1" : "grid-cols-2",
-              )}
-            >
-              {providers.map((provider) => (
-                <Button
-                  key={provider.strategy}
-                  type="button"
-                  variant="secondary"
-                  className="w-full justify-center gap-2 px-3"
-                  size="lg"
-                  disabled={busy || !clerk.loaded}
-                  onClick={() => {
-                    void handleOAuth(provider.strategy);
-                  }}
-                >
-                  {provider.icon}
-                  <span className="truncate">
-                    {oauthBusy ? "Mengalihkan…" : provider.label}
-                  </span>
-                </Button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-3" role="separator" aria-label="atau">
-              <span className="h-px flex-1 bg-[color:var(--color-border-default)]" />
-              <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--color-body-subtle)]">
-                atau
-              </span>
-              <span className="h-px flex-1 bg-[color:var(--color-border-default)]" />
-            </div>
-          </>
-        ) : null}
-
         <div className="grid gap-4 sm:grid-cols-2">
           <Field id="email" label="Email" required error={fieldMessage(errors?.fields, "identifier")}>
             <Input
@@ -632,6 +602,39 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
             />
           </Field>
         </div>
+
+        {providers.length > 0 ? (
+          <>
+            <div className="flex items-center gap-3" role="separator" aria-label="atau">
+              <span className="h-px flex-1 bg-[color:var(--color-border-default)]" />
+              <span className="text-xs font-medium uppercase tracking-wide text-[color:var(--color-body-subtle)]">
+                atau
+              </span>
+              <span className="h-px flex-1 bg-[color:var(--color-border-default)]" />
+            </div>
+
+            <div className="flex flex-col gap-2.5">
+              {providers.map((provider) => (
+                <Button
+                  key={provider.strategy}
+                  type="button"
+                  variant="secondary"
+                  className="w-full justify-center gap-2 px-3"
+                  size="lg"
+                  disabled={busy || !clerk.loaded}
+                  onClick={() => {
+                    void handleOAuth(provider.strategy);
+                  }}
+                >
+                  {provider.icon}
+                  <span className="truncate">
+                    {oauthBusy ? "Mengalihkan…" : provider.label}
+                  </span>
+                </Button>
+              ))}
+            </div>
+          </>
+        ) : null}
 
         <div className="flex items-center justify-between gap-3">
           <label className="flex cursor-pointer items-center gap-2 text-sm text-[color:var(--color-body)]">
@@ -669,31 +672,8 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
         <Button type="submit" className="w-full" size="lg" disabled={busy || !clerk.loaded}>
           {busy && !oauthBusy ? "Memproses…" : "Masuk"}
         </Button>
-
-        <p className="text-center text-sm text-[color:var(--color-body)]">
-          Akses hanya via undangan Super Admin.
-        </p>
       </form>
-    </FormShell>
-  );
-}
-
-function FormShell({
-  className,
-  title,
-  children,
-}: {
-  className?: string;
-  title: string;
-  children: ReactNode;
-}): ReactElement {
-  return (
-    <div className={cn("w-full max-w-md text-left", className)}>
-      <h1 className="text-2xl font-semibold tracking-tight text-[color:var(--color-heading)] sm:text-3xl">
-        {title}
-      </h1>
-      <div className="mt-6">{children}</div>
-    </div>
+    </SignInView>
   );
 }
 

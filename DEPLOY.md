@@ -39,7 +39,7 @@ Monorepo butuh `pnpm-workspace.yaml` di root — pakai filter build + output di 
 | Project | Variabel |
 |---------|----------|
 | **teknovo-web** | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id`, `PUBLIC_SITE_URL=https://smkteknovo.sch.id`, `PUBLIC_R2_URL=https://r2.ctos.web.id` |
-| **teknovo-cms** | `VITE_API_URL=https://cf.smkteknovo.sch.id`, `VITE_CLERK_PUBLISHABLE_KEY=pk_…` |
+| **teknovo-cms** | `VITE_API_URL=https://cf.smkteknovo.sch.id/api` (host-only also OK — Vite/`api-client` append `/api`), `VITE_CLERK_PUBLISHABLE_KEY=pk_…` |
 | **teknovo-cms-api** | Secrets via `wrangler secret put` (bukan Pages env): `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `GITHUB_REBUILD_TOKEN` |
 
 Astro juga punya default produksi di `astro.config.mjs` + `apps/web/.env.production` bila env unset.
@@ -71,7 +71,7 @@ CMS `.env` (lihat `apps/cms/.env.example`):
 
 ```bash
 VITE_CLERK_PUBLISHABLE_KEY=pk_...
-VITE_API_URL=http://127.0.0.1:8787
+VITE_API_URL=http://127.0.0.1:8787/api
 ```
 
 Web build (production URLs; defaults sama jika env kosong):

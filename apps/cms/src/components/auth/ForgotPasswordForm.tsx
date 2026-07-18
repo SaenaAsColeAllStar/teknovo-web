@@ -18,11 +18,9 @@ import { Label } from "@/components/ui/label";
 import { BRAND_SHORT } from "@/lib/branding";
 import { cn } from "@/lib/utils";
 
-const AFTER_RESET = "/";
-/** Public school site contact — terms placeholder until a dedicated privacy page exists. */
-const TERMS_HREF = "https://smkteknovo.sch.id/kontak" as const;
+import { AUTH_TERMS_HREF } from "./auth-terms";
 
-type Step = "request" | "code" | "password";
+type Step = "request" | "code";
 
 type ResetFieldKey = "identifier" | "password" | "code";
 
@@ -74,7 +72,6 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
   const [step, setStep] = useState<Step>("request");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
-  const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -82,18 +79,20 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
 
   useEffect(() => {
     if (isSignedIn) {
-      navigate(AFTER_RESET, { replace: true });
+      navigate("/", { replace: true });
     }
   }, [isSignedIn, navigate]);
 
-  async function finalizeReset(): Promise<void> {
-    await signIn.finalize({
-      navigate: ({ session }) => {
-        if (session?.currentTask) return;
-        navigate(AFTER_RESET);
-      },
-    });
-  }
+  // If Clerk already expects a new password (e.g. refresh mid-flow), continue on reset page.
+  useEffect(() => {
+    if (isSignedIn) return;
+    if (signIn.status === "needs_new_password") {
+      navigate("/reset-password", {
+        replace: true,
+        state: { email: email.trim() || undefined },
+      });
+    }
+  }, [email, isSignedIn, navigate, signIn.status]);
 
   async function handleRequest(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
@@ -143,42 +142,11 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
         return;
       }
 
-      setStep("password");
-      setPassword("");
+      navigate("/reset-password", {
+        state: { email: email.trim() },
+      });
     } catch (err) {
       const message = clerkErrorMessage(err, "Kode tidak valid atau sudah kedaluwarsa.");
-      setLocalError(message);
-      toast.error(message);
-    }
-  }
-
-  async function handleNewPassword(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    setLocalError(null);
-
-    try {
-      const { error } = await signIn.resetPasswordEmailCode.submitPassword({
-        password,
-        signOutOfOtherSessions: true,
-      });
-      if (error) {
-        setLocalError(error.message || "Gagal menyimpan kata sandi baru.");
-        return;
-      }
-
-      if (signIn.status === "complete") {
-        await finalizeReset();
-        return;
-      }
-
-      if (signIn.status === "needs_second_factor") {
-        setLocalError("Akun ini memerlukan verifikasi tambahan. Hubungi admin sekolah.");
-        return;
-      }
-
-      setLocalError("Reset kata sandi belum selesai. Coba lagi.");
-    } catch (err) {
-      const message = clerkErrorMessage(err, "Gagal menyimpan kata sandi baru.");
       setLocalError(message);
       toast.error(message);
     }
@@ -189,19 +157,12 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
     firstFieldMessage(errors?.fields, "identifier", "password", "code") ||
     globalError(errors);
 
-  const title =
-    step === "request"
-      ? "Lupa kata sandi?"
-      : step === "code"
-        ? "Periksa email Anda"
-        : "Buat kata sandi baru";
+  const title = step === "request" ? "Lupa kata sandi?" : "Periksa email Anda";
 
   const subtitle =
     step === "request"
       ? `Tenang — kami akan mengirim kode reset ke email akun CMS ${BRAND_SHORT} Anda. Masukkan alamat yang terdaftar, lalu ikuti petunjuk di kotak masuk.`
-      : step === "code"
-        ? `Kode reset telah dikirim ke ${email.trim() || "email Anda"}. Masukkan kode tersebut untuk melanjutkan.`
-        : "Pilih kata sandi baru yang kuat. Setelah disimpan, Anda akan masuk otomatis ke CMS.";
+      : `Kode reset telah dikirim ke ${email.trim() || "email Anda"}. Masukkan kode tersebut untuk melanjutkan.`;
 
   return (
     <div className={cn("w-full text-left", className)}>
@@ -251,7 +212,7 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
                 Saya memahami bahwa tautan/kode reset hanya untuk pemilik akun, dan saya setuju
                 mengikuti{" "}
                 <a
-                  href={TERMS_HREF}
+                  href={AUTH_TERMS_HREF}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="font-medium text-[color:var(--color-brand)] underline-offset-2 hover:underline"
@@ -265,7 +226,7 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
             {displayError ? <ErrorText>{displayError}</ErrorText> : null}
 
             <Button type="submit" className="w-full" size="lg" disabled={busy || !acceptedTerms}>
-              {busy ? "Mengirim…" : "Kirim tautan reset"}
+              {busy ? "Mengirim…" : "Reset kata sandi"}
             </Button>
 
             <p className="text-sm text-[color:var(--color-body)]">
@@ -323,33 +284,6 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
               }}
             >
               Ganti email
-            </Button>
-          </form>
-        ) : null}
-
-        {step === "password" ? (
-          <form className="space-y-5" onSubmit={handleNewPassword}>
-            <Field
-              id="new-password"
-              label="Kata sandi baru"
-              required
-              error={firstFieldMessage(errors?.fields, "password")}
-            >
-              <Input
-                id="new-password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                placeholder="Minimal sesuai kebijakan akun"
-              />
-            </Field>
-
-            {displayError ? <ErrorText>{displayError}</ErrorText> : null}
-
-            <Button type="submit" className="w-full" size="lg" disabled={busy}>
-              {busy ? "Menyimpan…" : "Simpan & masuk"}
             </Button>
           </form>
         ) : null}
