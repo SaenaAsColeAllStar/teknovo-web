@@ -15,31 +15,34 @@ Production di **Cloudflare Free** memakai tiga deploy terpisah. OpenNext monolit
 
 Isi form **Build configuration** di Pages / Workers Builds seperti ini.
 
-### Ringkas (Root = folder app)
+### Disarankan: Root directory = `/` (repo root)
+
+Monorepo butuh `pnpm-workspace.yaml` di root — pakai filter build + output di bawah `apps/*/dist`.
 
 | Project | Root directory | Build command | Build output directory |
 |---------|----------------|---------------|------------------------|
-| **teknovo-web** (Pages) | `apps/web` | `pnpm install && pnpm build` | `dist` |
-| **teknovo-cms** (Pages) | `apps/cms` | `pnpm install && pnpm build` | `dist` |
-| **teknovo-cms-api** (Workers) | `apps/api` | _(kosong)_ / install di root monorepo | **—** (bukan Pages; entry `src/index.ts`) |
+| **teknovo-web** (Pages) | `/` | `pnpm install && pnpm --filter @teknovo/web build` | `apps/web/dist` |
+| **teknovo-cms** (Pages) | `/` | `pnpm install && pnpm --filter @teknovo/cms build` | `apps/cms/dist` |
+| **teknovo-cms-api** (Workers) | `/` atau `apps/api` | Deploy: `cd apps/api && npx wrangler deploy` | — |
 
-### Alternatif: Root directory = `/` (repo root)
+### Alternatif: Root = folder app
 
 | Project | Root directory | Build command | Build output directory |
 |---------|----------------|---------------|------------------------|
-| **teknovo-web** | `/` | `pnpm install && pnpm --filter @teknovo/web build` | `apps/web/dist` |
-| **teknovo-cms** | `/` | `pnpm install && pnpm --filter @teknovo/cms build` | `apps/cms/dist` |
-| **teknovo-cms-api** | `/` atau `apps/api` | Deploy: `cd apps/api && npx wrangler deploy` | — |
+| **teknovo-web** | `apps/web` | `pnpm install && pnpm build` | `dist` |
+| **teknovo-cms** | `apps/cms` | `pnpm install && pnpm build` | `dist` |
 
-**Catatan monorepo:** Pages perlu `pnpm install` yang melihat `pnpm-workspace.yaml`. Jika build gagal karena workspace, set Root ke `/` dan pakai kolom **Build output** `apps/web/dist` / `apps/cms/dist`.
+**Catatan monorepo:** Jika Root `apps/web` gagal hoist workspace, tetap pakai Root `/` di atas.
 
 ### Env vars di dashboard
 
 | Project | Variabel |
 |---------|----------|
-| **teknovo-web** | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id` |
+| **teknovo-web** | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id`, `PUBLIC_SITE_URL=https://smkteknovo.sch.id`, `PUBLIC_R2_URL=https://r2.ctos.web.id` |
 | **teknovo-cms** | `VITE_API_URL=https://cf.smkteknovo.sch.id`, `VITE_CLERK_PUBLISHABLE_KEY=pk_…` |
 | **teknovo-cms-api** | Secrets via `wrangler secret put` (bukan Pages env): `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `GITHUB_REBUILD_TOKEN` |
+
+Astro juga punya default produksi di `astro.config.mjs` + `apps/web/.env.production` bila env unset.
 
 Panduan lengkap per app: [`apps/web/README.md`](apps/web/README.md) · [`apps/cms/README.md`](apps/cms/README.md) · [`apps/api/README.md`](apps/api/README.md)
 
@@ -71,10 +74,13 @@ VITE_CLERK_PUBLISHABLE_KEY=pk_...
 VITE_API_URL=http://127.0.0.1:8787
 ```
 
-Web build:
+Web build (production URLs; defaults sama jika env kosong):
 
 ```bash
-PUBLIC_API_URL=https://cf.smkteknovo.sch.id pnpm --filter @teknovo/web build
+PUBLIC_API_URL=https://cf.smkteknovo.sch.id \
+PUBLIC_SITE_URL=https://smkteknovo.sch.id \
+PUBLIC_R2_URL=https://r2.ctos.web.id \
+pnpm --filter @teknovo/web build
 ```
 
 ## Secrets (API Worker)

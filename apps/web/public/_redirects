@@ -1,1 +1,5 @@
+# Legacy path
 /kesiswaan/beranda /kesiswaan 301
+
+# www → apex (also set Cloudflare Redirect Rule as backup — see DEPLOY.md)
+https://www.smkteknovo.sch.id/* https://smkteknovo.sch.id/:splat 301

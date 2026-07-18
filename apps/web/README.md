@@ -38,5 +38,17 @@ pnpm --filter @teknovo/web dev
 ## Deploy (CLI)
 
 ```bash
-PUBLIC_API_URL=https://cf.smkteknovo.sch.id pnpm --filter @teknovo/web deploy
+# Env produksi ikut .env.production / defaults di astro.config.mjs
+pnpm --filter @teknovo/web deploy
 ```
+
+Atau override eksplisit:
+
+```bash
+PUBLIC_API_URL=https://cf.smkteknovo.sch.id \
+PUBLIC_SITE_URL=https://smkteknovo.sch.id \
+PUBLIC_R2_URL=https://r2.ctos.web.id \
+pnpm --filter @teknovo/web deploy
+```
+
+`wrangler.toml` di folder ini set `pages_build_output_dir = "dist"` untuk `wrangler pages deploy`.

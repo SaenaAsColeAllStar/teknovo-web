@@ -1,0 +1,4 @@
+# Cloudflare Pages — apex smkteknovo.sch.id (project: teknovo-web)
+name = "teknovo-web"
+compatibility_date = "2026-07-17"
+pages_build_output_dir = "dist"
