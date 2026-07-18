@@ -30,39 +30,35 @@ pnpm dev
 
 ## Docs
 
+- [DEPLOY.md](DEPLOY.md) — **Workers Paid vs free-tier / VPS path** (baca jika kena error 10027)
 - [ARSITEKTUR.md](docs/ARSITEKTUR.md)
 - [API.md](docs/API.md) — kontrak homelab api-web
 - [CLERK.md](docs/CLERK.md)
 
 ## Deploy notes
 
-1. Cloudflare account + **Workers Paid** (wajib untuk OpenNext — lihat di bawah).
-2. Set secrets/vars di Workers (Clerk, `R2_PUBLIC_URL`, `REVALIDATE_SECRET`, dll.).
-3. Binding R2: `CMS_BUCKET` → bucket `teknovo`; D1: `DB` → `teknovo-article` (lihat `wrangler.toml`).
-4. CI GitHub: `.github/workflows/deploy.yml` membutuhkan `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, dan Clerk secrets.
+**Tanpa Workers Paid:** OpenNext ke Cloudflare Free **tidak bisa** (code **10027** + limit CPU 10 ms). Ikuti **[DEPLOY.md](DEPLOY.md)** — rekomendasi: Node `pnpm build && pnpm start` di VPS/homelab, R2 via S3 API, D1 via HTTP API atau DB lain.
 
-### Workers Paid required (size limit)
+**Dengan Workers Paid** (path OpenNext saat ini):
 
-OpenNext Next.js apps almost always exceed the Free plan upload limit.
+1. Upgrade Workers Paid, lalu set secrets/vars (Clerk, `R2_PUBLIC_URL`, `REVALIDATE_SECRET`, dll.).
+2. Binding R2: `CMS_BUCKET` → bucket `teknovo`; D1: `DB` → `teknovo-article` (lihat `wrangler.toml`).
+3. CI GitHub: `.github/workflows/deploy.yml` membutuhkan `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, dan Clerk secrets.
 
-| Plan | Gzipped Worker size limit |
-|------|---------------------------|
-| Workers Free | **3 MiB** |
-| Workers Paid | **10 MiB** |
+### Workers Free vs Paid (size + CPU)
+
+| Plan | Gzipped Worker size | CPU / request |
+|------|---------------------|---------------|
+| Workers Free | **3 MiB** | **10 ms** |
+| Workers Paid | **10 MiB** | up to minutes |
 
 `build:cf` can succeed while deploy fails with:
 
 > Your Worker exceeded the size limit of 3 MiB. Please upgrade to a paid plan… **[code: 10027]**
 
-Raw `.open-next/server-functions/default/handler.mjs` is often ~10–16 MiB uncompressed; the platform enforces the **gzipped** limit (so Paid’s 10 MiB is usually enough even when raw is larger). Limits: [Workers platform limits](https://developers.cloudflare.com/workers/platform/limits/#worker-size).
+Raw `.open-next/server-functions/default/handler.mjs` is often ~10–16 MiB uncompressed; the platform enforces the **gzipped** limit. Limits: [Workers platform limits](https://developers.cloudflare.com/workers/platform/limits/#worker-size).
 
-**Action:** upgrade the account to Workers Paid:
-
-`https://dash.cloudflare.com/<ACCOUNT_ID>/workers/plans`
-
-(or Workers & Pages → Plans in the dashboard).
-
-Minify is already on by default in `opennextjs-cloudflare build`. Size tweaks alone will not reliably fit Free for this app.
+Minify / `optimizePackageImports` will **not** fit this app under Free 3 MiB. Without Paid, use the Node/Vercel path in `DEPLOY.md` — do not keep retrying `wrangler deploy` on Free.
 
 ### Custom domain + bindings (`wrangler.toml` wins)
 

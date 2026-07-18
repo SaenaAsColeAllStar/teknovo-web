@@ -41,7 +41,7 @@ Homelab (masa depan)
 
 Plain `pnpm run build` (`next build`) tidak cukup — OpenNext butuh `.open-next/` sebelum `wrangler deploy`. Detail: README → *Workers Builds*.
 
-**Workers Paid** wajib (Free = 3 MiB gzip; OpenNext handler biasanya ~10–16 MiB raw / masih di bawah 10 MiB gzip Paid). Upgrade: dashboard → Workers → Plans. Custom domain + binding names (`CMS_BUCKET`, `DB`) harus ada di `wrangler.toml` supaya deploy tidak menghapus route produksi.
+**Workers Paid** wajib untuk path OpenNext di Cloudflare (Free = 3 MiB gzip → error 10027; Free juga 10 ms CPU — tidak cocok untuk Next SSR). Tanpa Paid: deploy Node (`next start`) di VPS/homelab atau host Next lain — lihat root `DEPLOY.md`. Custom domain + binding names (`CMS_BUCKET`, `DB`) hanya relevan di Workers; harus ada di `wrangler.toml` supaya deploy tidak menghapus route produksi.
 
 ## Relasi ke monorepo `rtek`
 

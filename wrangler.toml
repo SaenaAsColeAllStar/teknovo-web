@@ -8,6 +8,8 @@
 #
 # Plan: OpenNext Next.js apps need Workers Paid (gzip upload ≤ 10 MiB).
 #   Free plan = 3 MiB gzip → deploy fails with code 10027 even when build succeeds.
+#   Free also caps CPU at 10 ms/request — unsuitable for Next SSR + Clerk even if size fitted.
+#   Without Paid: do NOT use this Worker deploy path — see DEPLOY.md (Node VPS / Vercel).
 #   Upgrade: https://dash.cloudflare.com/?to=/:account/workers/plans
 #
 # Config source of truth: this file overrides dashboard settings on `wrangler deploy`
