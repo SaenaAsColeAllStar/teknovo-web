@@ -90,11 +90,15 @@ export type PengaturanSitusPublikPatchInput = z.infer<
   typeof zPengaturanSitusPublikPatch
 >;
 
-/** Create CMS user via Clerk (admin only). */
+/**
+ * Create / invite CMS user via Clerk.
+ * Assignable roles are further restricted by actor in the API
+ * (`admin` → admin|editor|siswa|viewer; `editor` → siswa).
+ */
 export const cmsUserCreateSchema = z.object({
   email: z.string().trim().email().max(120),
   nama: z.union([z.string().trim().max(160), z.literal("")]).optional(),
-  role: z.enum(["admin", "editor", "siswa"]),
+  role: z.enum(["admin", "editor", "siswa", "viewer"]),
   /** If set (≥8), create account immediately. If omitted/empty, send Clerk invitation. */
   password: z
     .union([z.literal(""), z.string().min(8).max(128)])
@@ -105,6 +109,7 @@ export type CmsUserCreateInput = z.infer<typeof cmsUserCreateSchema>;
 
 export const cmsUserPatchSchema = z
   .object({
+    /** Super Admin may assign `admin`; editors are limited by API matrix. */
     role: z.enum(["admin", "editor", "viewer", "siswa"]).optional(),
     nama: z.string().trim().max(160).optional().or(z.literal("")),
   })

@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { toast } from "sonner";
 import {
   CMS_ROLE_LABEL,
+  cmsAssignableRoles,
   type CmsRole,
 } from "@teknovo/shared";
 
+import { useCmsRole } from "@/components/dashboard/CmsRoleProvider";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,17 +28,6 @@ import {
   updateCmsUser,
   type CmsUserListItem,
 } from "@/lib/api-client";
-
-const ROLE_OPTIONS: { value: "admin" | "editor" | "siswa"; label: string }[] = [
-  { value: "admin", label: "Super Admin" },
-  { value: "editor", label: "Admin" },
-  { value: "siswa", label: "Siswa" },
-];
-
-const ALL_ROLE_OPTIONS: { value: CmsRole; label: string }[] = [
-  ...ROLE_OPTIONS,
-  { value: "viewer", label: "Viewer" },
-];
 
 const selectClass =
   "flex h-10 w-full rounded-none border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 disabled:opacity-50";
@@ -59,6 +50,17 @@ type Props = {
 
 export function PenggunaManager({ currentUserId }: Props) {
   const { getToken } = useAuth();
+  const { role: actorRole } = useCmsRole();
+  const createOptions = useMemo(
+    () =>
+      cmsAssignableRoles(actorRole).map((value) => ({
+        value,
+        label: CMS_ROLE_LABEL[value],
+      })),
+    [actorRole],
+  );
+  const defaultCreateRole = (createOptions[0]?.value ?? "siswa") as CmsRole;
+
   const [users, setUsers] = useState<CmsUserListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -66,8 +68,12 @@ export function PenggunaManager({ currentUserId }: Props) {
 
   const [email, setEmail] = useState("");
   const [nama, setNama] = useState("");
-  const [role, setRole] = useState<"admin" | "editor" | "siswa">("editor");
+  const [role, setRole] = useState<CmsRole>(defaultCreateRole);
   const [password, setPassword] = useState("");
+
+  useEffect(() => {
+    setRole(defaultCreateRole);
+  }, [defaultCreateRole]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -94,9 +100,25 @@ export function PenggunaManager({ currentUserId }: Props) {
   function resetForm() {
     setEmail("");
     setNama("");
-    setRole("editor");
+    setRole(defaultCreateRole);
     setPassword("");
     setShowForm(false);
+  }
+
+  function roleOptionsForRow(user: CmsUserListItem): CmsRole[] {
+    const assignable = cmsAssignableRoles(actorRole);
+    // Keep current role visible even if actor cannot re-assign it (e.g. viewing admin).
+    if (!(assignable as readonly string[]).includes(user.role)) {
+      return [user.role, ...assignable];
+    }
+    return [...assignable];
+  }
+
+  function canEditUser(user: CmsUserListItem): boolean {
+    if (user.id === currentUserId) return false;
+    if (actorRole === "admin") return true;
+    if (actorRole === "editor") return user.role === "siswa";
+    return false;
   }
 
   async function onCreate(e: React.FormEvent) {
@@ -105,6 +127,14 @@ export function PenggunaManager({ currentUserId }: Props) {
     try {
       const token = await getToken();
       if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
+      if (
+        role !== "admin" &&
+        role !== "editor" &&
+        role !== "siswa" &&
+        role !== "viewer"
+      ) {
+        throw new ApiClientError("Peran tidak valid untuk undangan.", 400);
+      }
       const created = await createCmsUser(
         {
           email: email.trim(),
@@ -140,7 +170,11 @@ export function PenggunaManager({ currentUserId }: Props) {
     try {
       const token = await getToken();
       if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
-      const updated = await updateCmsUser(user.id, { role: nextRole }, token);
+      const updated = await updateCmsUser(
+        user.id,
+        { role: nextRole },
+        token,
+      );
       setUsers((prev) =>
         prev.map((u) => (u.id === updated.id ? updated : u)),
       );
@@ -189,6 +223,11 @@ export function PenggunaManager({ currentUserId }: Props) {
     }
   }
 
+  const actorLabel =
+    actorRole === "admin"
+      ? "Super Admin dapat mengundang Super Admin, Admin, Siswa, dan Viewer. Super Admin terakhir tidak dapat diturunkan/dihapus."
+      : "Admin hanya dapat mengundang akun Siswa.";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -197,17 +236,13 @@ export function PenggunaManager({ currentUserId }: Props) {
             Pengguna
           </h1>
           <p className="mt-1 text-sm text-[color:var(--color-body)]">
-            Kelola akun CMS via Clerk. Hanya{" "}
-            <span className="font-medium text-[color:var(--color-heading)]">
-              Super Admin
-            </span>{" "}
-            (<code className="text-xs">publicMetadata.role = admin</code>).
+            Kelola akun CMS via undangan Clerk (tanpa daftar publik). {actorLabel}
           </p>
         </div>
         <Button
           type="button"
           onClick={() => setShowForm((v) => !v)}
-          disabled={busy}
+          disabled={busy || createOptions.length === 0}
         >
           {showForm ? "Tutup form" : "Tambah akun"}
         </Button>
@@ -254,12 +289,10 @@ export function PenggunaManager({ currentUserId }: Props) {
                   id="user-role"
                   className={selectClass}
                   value={role}
-                  onChange={(e) =>
-                    setRole(e.target.value as "admin" | "editor" | "siswa")
-                  }
+                  onChange={(e) => setRole(e.target.value as CmsRole)}
                   disabled={busy}
                 >
-                  {ROLE_OPTIONS.map((opt) => (
+                  {createOptions.map((opt) => (
                     <option key={opt.value} value={opt.value}>
                       {opt.label}
                     </option>
@@ -328,6 +361,8 @@ export function PenggunaManager({ currentUserId }: Props) {
               <tbody>
                 {users.map((user) => {
                   const isSelf = user.id === currentUserId;
+                  const editable = canEditUser(user);
+                  const options = roleOptionsForRow(user);
                   return (
                     <tr
                       key={user.id}
@@ -343,24 +378,28 @@ export function PenggunaManager({ currentUserId }: Props) {
                       </td>
                       <td className="px-4 py-3">{user.name ?? "—"}</td>
                       <td className="px-4 py-3">
-                        <select
-                          className={selectClass}
-                          value={user.role}
-                          disabled={busy}
-                          onChange={(e) =>
-                            void onChangeRole(
-                              user,
-                              e.target.value as CmsRole,
-                            )
-                          }
-                          aria-label={`Peran ${user.email ?? user.id}`}
-                        >
-                          {ALL_ROLE_OPTIONS.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                              {opt.label}
-                            </option>
-                          ))}
-                        </select>
+                        {editable ? (
+                          <select
+                            className={selectClass}
+                            value={user.role}
+                            disabled={busy}
+                            onChange={(e) =>
+                              void onChangeRole(
+                                user,
+                                e.target.value as CmsRole,
+                              )
+                            }
+                            aria-label={`Peran ${user.email ?? user.id}`}
+                          >
+                            {options.map((value) => (
+                              <option key={value} value={value}>
+                                {CMS_ROLE_LABEL[value]}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span>{CMS_ROLE_LABEL[user.role]}</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-[color:var(--color-body-subtle)]">
                         {formatDate(user.createdAt)}
@@ -370,7 +409,7 @@ export function PenggunaManager({ currentUserId }: Props) {
                           type="button"
                           variant="danger"
                           size="sm"
-                          disabled={busy || isSelf}
+                          disabled={busy || !editable}
                           onClick={() => void onDelete(user)}
                         >
                           Hapus

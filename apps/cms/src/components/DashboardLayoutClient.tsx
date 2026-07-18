@@ -5,6 +5,7 @@ import {
   CMS_ROLE_LABEL,
   cmsRoleCanAccessBeritaSekolah,
   cmsRoleCanManageSettings,
+  cmsRoleCanManageUsers,
   cmsRoleCanModerate,
   cmsRoleCanUploadMedia,
   cmsRoleCanViewModerasi,
@@ -78,6 +79,7 @@ export function DashboardLayoutClient() {
   const canViewModerasi = cmsRoleCanViewModerasi(role);
   const canAccessBeritaSekolah = cmsRoleCanAccessBeritaSekolah(role);
   const canManageSettings = cmsRoleCanManageSettings(role);
+  const canManageUsers = cmsRoleCanManageUsers(role);
 
   return (
     <CmsRoleProvider
@@ -90,6 +92,7 @@ export function DashboardLayoutClient() {
       canViewModerasi={canViewModerasi}
       canAccessBeritaSekolah={canAccessBeritaSekolah}
       canManageSettings={canManageSettings}
+      canManageUsers={canManageUsers}
     >
       <div className="min-h-screen bg-[color:var(--color-neutral-soft)]">
         <CmsApplicationNavbar

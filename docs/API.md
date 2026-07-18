@@ -169,14 +169,16 @@ CMS mengirim `Authorization: Bearer <Clerk JWT>` (atau session token yang di-ver
 
 Label UI: `admin` → Super Admin, `editor` → Admin, `siswa` → Siswa, `viewer` → Viewer.
 
-### Users (Super Admin only)
+### Users (invite-only: Super Admin + Admin)
 
 | Method | Path | Auth | Keterangan |
 |--------|------|------|------------|
-| `GET` | `/v1/users` | Bearer **admin** | List Clerk users |
-| `POST` | `/v1/users` | Bearer **admin** | Create user atau undangan |
-| `PATCH` | `/v1/users/:id` | Bearer **admin** | Update role / nama |
-| `DELETE` | `/v1/users/:id` | Bearer **admin** | Hapus (bukan self) |
+| `GET` | `/v1/users` | Bearer admin\|editor | List Clerk users |
+| `POST` | `/v1/users` | Bearer admin\|editor | Create / undang (matrix di bawah) |
+| `PATCH` | `/v1/users/:id` | Bearer admin\|editor | Update role / nama |
+| `DELETE` | `/v1/users/:id` | Bearer admin\|editor | Hapus (bukan self; bukan Super Admin terakhir) |
+
+Assign matrix: Super Admin → `admin|editor|siswa|viewer`; Admin (`editor`) → `siswa` saja.
 
 Enforcement di teknovo-web (`src/lib/cms-auth.ts` + layout/API):
 | Role | Baca dashboard | Berita sekolah | Artikel siswa | Kategori tambah | Media upload | Moderasi approve | Pengaturan |

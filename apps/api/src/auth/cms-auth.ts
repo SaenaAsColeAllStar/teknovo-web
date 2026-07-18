@@ -9,6 +9,7 @@ import {
   cmsRoleCanViewModerasi,
   cmsRoleCanAccessBeritaSekolah,
   cmsRoleCanManageSettings,
+  cmsRoleCanManageUsers,
   type CmsRole,
 } from "@teknovo/shared";
 
@@ -35,6 +36,7 @@ export type CmsSession = {
   canViewModerasi: boolean;
   canAccessBeritaSekolah: boolean;
   canManageSettings: boolean;
+  canManageUsers: boolean;
 };
 
 function sessionFromRole(
@@ -56,6 +58,7 @@ function sessionFromRole(
     canViewModerasi: cmsRoleCanViewModerasi(role),
     canAccessBeritaSekolah: cmsRoleCanAccessBeritaSekolah(role),
     canManageSettings: cmsRoleCanManageSettings(role),
+    canManageUsers: cmsRoleCanManageUsers(role),
   };
 }
 
@@ -140,6 +143,18 @@ export async function requireCmsAdmin(request: Request, env: Env) {
   const cms = await requireCmsSession(request, env);
   if (!cms.canManageSettings) {
     throw new CmsAuthError("Hanya admin yang dapat mengakses pengaturan.", 403);
+  }
+  return cms;
+}
+
+/** Super Admin or Admin (`editor`) — invite-only user management. */
+export async function requireCmsUserManager(request: Request, env: Env) {
+  const cms = await requireCmsSession(request, env);
+  if (!cms.canManageUsers) {
+    throw new CmsAuthError(
+      "Hanya Super Admin atau Admin yang dapat mengelola pengguna.",
+      403,
+    );
   }
   return cms;
 }

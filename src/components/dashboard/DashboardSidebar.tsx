@@ -48,13 +48,14 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const {
     canManageSettings,
+    canManageUsers,
     canAccessBeritaSekolah,
     canViewModerasi,
   } = useCmsRole();
 
   const nav = DASHBOARD_NAV.filter((item) => {
     if (item.href === "/dashboard/pengaturan") return canManageSettings;
-    if (item.href === "/dashboard/pengguna") return canManageSettings;
+    if (item.href === "/dashboard/pengguna") return canManageUsers;
     if (item.href === "/dashboard/berita") return canAccessBeritaSekolah;
     if (item.href === "/dashboard/moderasi") return canViewModerasi;
     return true;

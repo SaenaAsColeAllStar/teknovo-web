@@ -39,9 +39,10 @@ export function App() {
     <ClerkProvider
       publishableKey={pk}
       signInUrl="/sign-in"
-      signUpUrl="/sign-up"
+      // Invite-only: no public sign-up. Keep URL so Clerk redirects land on our gate.
+      signUpUrl="/sign-in"
       signInFallbackRedirectUrl="/"
-      signUpFallbackRedirectUrl="/"
+      signUpFallbackRedirectUrl="/sign-in"
       afterSignOutUrl="/sign-in"
     >
       <BrowserRouter>

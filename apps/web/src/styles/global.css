@@ -62,6 +62,31 @@
 html {
   /* Mencegah loncatan lebar saat scrollbar muncul/hilang — `.public-site-container` tetap selaras antar halaman */
   scrollbar-gutter: stable;
+  /*
+   * Sticky three-tier nav clearance for hash / Lenis.scrollTo.
+   * `--public-nav-bottom` is set by PublicMarketingNavbar (ResizeObserver).
+   * Lenis reads scroll-padding-top at scrollTo time.
+   */
+  scroll-padding-top: var(--public-nav-bottom, 11rem);
+}
+
+/**
+ * View Transitions (Astro ClientRouter): keep the three-tier navbar visually
+ * stable while main content fades. Astro already disables animations when
+ * prefers-reduced-motion: reduce.
+ */
+.public-marketing-navbar {
+  view-transition-name: public-nav;
+}
+
+::view-transition-old(public-nav),
+::view-transition-new(public-nav) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-group(public-nav) {
+  z-index: 50;
 }
 
 body {

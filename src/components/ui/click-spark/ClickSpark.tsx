@@ -5,7 +5,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type MouseEvent,
   type ReactElement,
   type ReactNode,
 } from "react";
@@ -34,6 +33,7 @@ type Spark = {
 
 /**
  * React Bits ClickSpark (JS + CSS / inline-style variant) — canvas spark bursts on click.
+ * Fixed full-viewport overlay so sparks paint above page chrome; clicks via document capture.
  * Respects `prefers-reduced-motion: reduce` (no sparks / no animation loop).
  * RAF only runs while sparks are alive (avoids perpetual main-thread work / INP drag).
  */
@@ -69,16 +69,27 @@ export function ClickSpark({
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const parent = canvas.parentElement;
-    if (!parent) return;
-
     let resizeTimeout: ReturnType<typeof setTimeout>;
 
     const resizeCanvas = () => {
-      const { width, height } = parent.getBoundingClientRect();
-      if (canvas.width !== width || canvas.height !== height) {
-        canvas.width = width;
-        canvas.height = height;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const nextW = Math.max(1, Math.floor(width * dpr));
+      const nextH = Math.max(1, Math.floor(height * dpr));
+
+      if (canvas.width !== nextW || canvas.height !== nextH) {
+        canvas.width = nextW;
+        canvas.height = nextH;
+      }
+
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        // Draw in CSS pixels; device pixels handled by backing store + transform.
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       }
     };
 
@@ -87,13 +98,15 @@ export function ClickSpark({
       resizeTimeout = setTimeout(resizeCanvas, 100);
     };
 
-    const ro = new ResizeObserver(handleResize);
-    ro.observe(parent);
-
     resizeCanvas();
+    window.addEventListener("resize", handleResize);
+    document.addEventListener("astro:page-load", resizeCanvas);
+    document.addEventListener("astro:after-swap", resizeCanvas);
 
     return () => {
-      ro.disconnect();
+      window.removeEventListener("resize", handleResize);
+      document.removeEventListener("astro:page-load", resizeCanvas);
+      document.removeEventListener("astro:after-swap", resizeCanvas);
       clearTimeout(resizeTimeout);
     };
   }, []);
@@ -121,7 +134,11 @@ export function ClickSpark({
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (canvas && ctx) {
+      // Reset any residual transform then clear in device pixels.
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }
   }, []);
 
@@ -143,7 +160,11 @@ export function ClickSpark({
     animatingRef.current = true;
 
     const draw = (timestamp: number) => {
+      // Clear in CSS-pixel space (transform already applied).
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
 
       sparksRef.current = sparksRef.current.filter((spark) => {
         const elapsed = timestamp - spark.startTime;
@@ -176,33 +197,44 @@ export function ClickSpark({
         requestAnimationFrame(draw);
       } else {
         animatingRef.current = false;
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
       }
     };
 
     requestAnimationFrame(draw);
   }, [sparkColor, sparkSize, sparkRadius, duration, extraScale]);
 
-  const handleClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (reduceMotionRef.current) return;
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (reduceMotionRef.current) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+      const canvas = canvasRef.current;
+      if (!canvas) return;
 
-    const now = performance.now();
-    const newSparks: Spark[] = Array.from({ length: sparkCount }, (_, i) => ({
-      x,
-      y,
-      angle: (2 * Math.PI * i) / sparkCount,
-      startTime: now,
-    }));
+      // Fixed viewport canvas: client coords map 1:1 to CSS-pixel canvas space.
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-    sparksRef.current.push(...newSparks);
-    startAnimating();
-  };
+      const now = performance.now();
+      const newSparks: Spark[] = Array.from({ length: sparkCount }, (_, i) => ({
+        x,
+        y,
+        angle: (2 * Math.PI * i) / sparkCount,
+        startTime: now,
+      }));
+
+      sparksRef.current.push(...newSparks);
+      startAnimating();
+    };
+
+    // Capture phase so clicks on cards/nav/sections still spawn sparks.
+    document.addEventListener("click", handleClick, true);
+    return () => document.removeEventListener("click", handleClick, true);
+  }, [sparkCount, startAnimating]);
 
   return (
     <div
@@ -210,28 +242,25 @@ export function ClickSpark({
       style={{
         position: "relative",
         width: "100%",
-        // Prefer min-height so scrollable pages still size the canvas to content
-        // when the parent chain lacks an explicit height.
         minHeight: "100%",
         height: "100%",
       }}
-      onClick={handleClick}
     >
+      {children}
       <canvas
         ref={canvasRef}
         style={{
+          position: "fixed",
+          inset: 0,
           width: "100%",
           height: "100%",
+          zIndex: 9999,
           display: "block",
           userSelect: "none",
-          position: "absolute",
-          top: 0,
-          left: 0,
           pointerEvents: "none",
         }}
         aria-hidden
       />
-      {children}
     </div>
   );
 }

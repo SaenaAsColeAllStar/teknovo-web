@@ -152,7 +152,7 @@ export function PublicMarketingNavbar({
     <header
       ref={headerRef}
       className={cn(
-        "sticky top-0 z-50 w-full overflow-visible bg-surface",
+        "public-marketing-navbar sticky top-0 z-50 w-full overflow-visible bg-surface",
         "[--public-nav-bottom:11rem]",
       )}
     >

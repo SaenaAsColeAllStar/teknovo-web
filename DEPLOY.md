@@ -111,9 +111,15 @@ Workflows:
 1. Buat Pages projects: `teknovo-web`, `teknovo-cms`; attach custom domains apex + `cms.`.
 2. Deploy Worker `teknovo-cms-api`; custom domain `cf.smkteknovo.sch.id`.
 3. **Redirect Rule:** `www.smkteknovo.sch.id/*` → `https://smkteknovo.sch.id/$1` (301).
-4. Clerk: add domain `cms.smkteknovo.sch.id`; webhook → `https://cf.smkteknovo.sch.id/api/webhook/clerk`.
-5. Lepas custom domain OpenNext lama dari Worker `teknovo-web` (root wrangler) setelah apex Pages live.
-6. Matikan Workers Builds OpenNext.
+4. Clerk custom domains (Dashboard → Domains; ikuti CNAME Clerk, biasanya DNS-only):
+   - `clerk.smkteknovo.sch.id` → Frontend API (`frontend-api.clerk.services`)
+   - `accounts.smkteknovo.sch.id` → Accounts Portal (`accounts.clerk.services`)
+   - Application URL / satellite: `https://cms.smkteknovo.sch.id` (hindari `auth.smkteknovo.sch.id` kecuali CNAME-nya sudah live)
+   - Allowed origins: `https://cms.smkteknovo.sch.id` (+ localhost untuk dev)
+   - Webhook → `https://cf.smkteknovo.sch.id/api/webhook/clerk`
+5. CMS Pages CSP (`apps/cms/public/_headers`) harus allow FAPI di `connect-src` / `script-src` / `frame-src`.
+6. Lepas custom domain OpenNext lama dari Worker `teknovo-web` (root wrangler) setelah apex Pages live.
+7. Matikan Workers Builds OpenNext.
 
 ## Monorepo layout
 

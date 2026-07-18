@@ -11,7 +11,10 @@ type LinkProps = AnchorHTMLAttributes<HTMLAnchorElement> & {
   legacyBehavior?: boolean;
 };
 
-/** Shim next/link → plain anchor (Astro full page loads). */
+/**
+ * Shim next/link → plain anchor.
+ * Same-origin clicks are intercepted by Astro `ClientRouter` (view transitions).
+ */
 export default function Link({
   href,
   children,

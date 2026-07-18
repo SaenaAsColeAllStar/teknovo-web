@@ -1,16 +1,6 @@
-import { SignUp } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
+/** Public self sign-up disabled — CMS / dashboard is invite-only. */
 export default function SignUpPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[color:var(--color-neutral-soft)] px-4">
-      <SignUp
-        appearance={{
-          elements: {
-            rootBox: "mx-auto",
-            card: "rounded-none border border-[#E8E8F8] shadow-none",
-          },
-        }}
-      />
-    </div>
-  );
+  redirect("/sign-in?message=invite-only");
 }

@@ -5,9 +5,11 @@ import {
   cmsUserCreateSchema,
   cmsUserPatchSchema,
   parseCmsRole,
+  cmsRoleCanAssignRole,
+  type CmsRole,
   type CmsUserListItem,
 } from "@teknovo/shared";
-import { requireCmsAdmin, CmsAuthError } from "../auth/cms-auth";
+import { requireCmsUserManager, CmsAuthError } from "../auth/cms-auth";
 import {
   errJson,
   handleApiError,
@@ -22,6 +24,8 @@ function requireClerk(env: Env) {
   }
   return createClerkClient({ secretKey: env.CLERK_SECRET_KEY });
 }
+
+type ClerkClient = NonNullable<ReturnType<typeof requireClerk>>;
 
 function splitNama(nama: string | undefined | null): {
   firstName?: string;
@@ -72,11 +76,89 @@ function isClerkConflict(err: unknown): boolean {
   );
 }
 
+function assertCanAssign(actorRole: CmsRole, targetRole: CmsRole): void {
+  if (!cmsRoleCanAssignRole(actorRole, targetRole)) {
+    if (actorRole === "editor") {
+      throw new CmsAuthError(
+        "Admin hanya dapat mengundang/membuat akun dengan peran Siswa.",
+        403,
+      );
+    }
+    if (targetRole === "admin") {
+      throw new CmsAuthError(
+        "Hanya Super Admin yang dapat menetapkan peran Super Admin.",
+        403,
+      );
+    }
+    throw new CmsAuthError("Anda tidak dapat menetapkan peran tersebut.", 403);
+  }
+}
+
+/** Editors may only mutate siswa accounts; never themselves or staff. */
+function assertEditorMayTouchTarget(
+  actorRole: CmsRole,
+  actorUserId: string,
+  targetUserId: string,
+  targetRole: CmsRole,
+): void {
+  if (actorRole !== "editor") return;
+  if (targetUserId === actorUserId) {
+    throw new CmsAuthError(
+      "Tidak dapat mengubah peran atau akun Anda sendiri.",
+      403,
+    );
+  }
+  if (targetRole !== "siswa") {
+    throw new CmsAuthError(
+      "Admin hanya dapat mengelola akun Siswa.",
+      403,
+    );
+  }
+}
+
+/** Count Super Admins (`role=admin`) across Clerk users (paginated). */
+async function countSuperAdmins(clerk: ClerkClient): Promise<number> {
+  let offset = 0;
+  const limit = 100;
+  let total = 0;
+  for (;;) {
+    const page = await clerk.users.getUserList({
+      limit,
+      offset,
+      orderBy: "-created_at",
+    });
+    for (const user of page.data) {
+      if (parseCmsRole(user.publicMetadata) === "admin") total += 1;
+    }
+    offset += page.data.length;
+    if (offset >= page.totalCount || page.data.length === 0) break;
+  }
+  return total;
+}
+
+/**
+ * Block demote/delete that would leave zero Super Admins.
+ * Call when target currently has role `admin` and would lose that role.
+ */
+async function assertNotLastSuperAdmin(
+  clerk: ClerkClient,
+  existingRole: CmsRole,
+): Promise<void> {
+  if (existingRole !== "admin") return;
+  const admins = await countSuperAdmins(clerk);
+  if (admins <= 1) {
+    throw new CmsAuthError(
+      "Tidak dapat menurunkan atau menghapus Super Admin terakhir. Promosikan Super Admin lain terlebih dahulu.",
+      403,
+    );
+  }
+}
+
 export const usersRoutes = new Hono<AppEnv>();
 
 usersRoutes.get("/", async (c) => {
   try {
-    await requireCmsAdmin(c.req.raw, c.env);
+    await requireCmsUserManager(c.req.raw, c.env);
     const clerk = requireClerk(c.env);
     if (!clerk) {
       return errJson(c, "UNCONFIGURED", "CLERK_SECRET_KEY belum dikonfigurasi.", 503);
@@ -108,7 +190,7 @@ usersRoutes.get("/", async (c) => {
 
 usersRoutes.post("/", async (c) => {
   try {
-    await requireCmsAdmin(c.req.raw, c.env);
+    const session = await requireCmsUserManager(c.req.raw, c.env);
     const json = await c.req.json();
     const parsed = cmsUserCreateSchema.safeParse(json);
     if (!parsed.success) {
@@ -121,6 +203,8 @@ usersRoutes.post("/", async (c) => {
     }
 
     const { email, nama, role, password } = parsed.data;
+    assertCanAssign(session.role, role);
+
     const clerk = requireClerk(c.env);
     if (!clerk) {
       return errJson(c, "UNCONFIGURED", "CLERK_SECRET_KEY belum dikonfigurasi.", 503);
@@ -189,7 +273,7 @@ usersRoutes.post("/", async (c) => {
 
 usersRoutes.patch("/:id", async (c) => {
   try {
-    const session = await requireCmsAdmin(c.req.raw, c.env);
+    const session = await requireCmsUserManager(c.req.raw, c.env);
     const userId = c.req.param("id");
     const json = await c.req.json();
     const parsed = cmsUserPatchSchema.safeParse(json);
@@ -206,9 +290,35 @@ usersRoutes.patch("/:id", async (c) => {
     if (!clerk) {
       return errJson(c, "UNCONFIGURED", "CLERK_SECRET_KEY belum dikonfigurasi.", 503);
     }
-    void session;
 
     try {
+      const existing = await clerk.users.getUser(userId);
+      const existingRole = parseCmsRole(existing.publicMetadata);
+
+      assertEditorMayTouchTarget(
+        session.role,
+        session.userId,
+        userId,
+        existingRole,
+      );
+
+      if (parsed.data.role !== undefined) {
+        // Block self-promotion / self-demotion (any role) and enforce assignable matrix.
+        if (userId === session.userId && parsed.data.role !== existingRole) {
+          throw new CmsAuthError(
+            "Tidak dapat mengubah peran akun Anda sendiri.",
+            403,
+          );
+        }
+        assertCanAssign(session.role, parsed.data.role);
+        if (
+          existingRole === "admin" &&
+          parsed.data.role !== "admin"
+        ) {
+          await assertNotLastSuperAdmin(clerk, existingRole);
+        }
+      }
+
       if (parsed.data.nama !== undefined) {
         const names = splitNama(parsed.data.nama);
         await clerk.users.updateUser(userId, {
@@ -224,6 +334,7 @@ usersRoutes.patch("/:id", async (c) => {
       const user = await clerk.users.getUser(userId);
       return okJson(c, toListItem(user));
     } catch (err) {
+      if (err instanceof CmsAuthError) throw err;
       const msg = clerkErrorMessage(err).toLowerCase();
       if (msg.includes("not found") || msg.includes("couldn't find")) {
         return errJson(c, "NOT_FOUND", "Pengguna tidak ditemukan.", 404);
@@ -237,7 +348,7 @@ usersRoutes.patch("/:id", async (c) => {
 
 usersRoutes.delete("/:id", async (c) => {
   try {
-    const session = await requireCmsAdmin(c.req.raw, c.env);
+    const session = await requireCmsUserManager(c.req.raw, c.env);
     const userId = c.req.param("id");
 
     if (userId === session.userId) {
@@ -254,9 +365,24 @@ usersRoutes.delete("/:id", async (c) => {
       return errJson(c, "UNCONFIGURED", "CLERK_SECRET_KEY belum dikonfigurasi.", 503);
     }
     try {
+      const existing = await clerk.users.getUser(userId);
+      const existingRole = parseCmsRole(existing.publicMetadata);
+
+      assertEditorMayTouchTarget(
+        session.role,
+        session.userId,
+        userId,
+        existingRole,
+      );
+
+      if (existingRole === "admin") {
+        await assertNotLastSuperAdmin(clerk, existingRole);
+      }
+
       await clerk.users.deleteUser(userId);
       return okJson(c, { deleted: true });
     } catch (err) {
+      if (err instanceof CmsAuthError) throw err;
       const msg = clerkErrorMessage(err).toLowerCase();
       if (msg.includes("not found") || msg.includes("couldn't find")) {
         return errJson(c, "NOT_FOUND", "Pengguna tidak ditemukan.", 404);

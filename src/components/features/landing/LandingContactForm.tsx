@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { ReactElement } from "react";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type FieldErrors } from "react-hook-form";
 import { z } from "zod";
 
 import { TurnstileField } from "@/components/turnstile/TurnstileField";
@@ -15,6 +15,7 @@ import {
   KONTAK_FORM_SUBMIT_LABEL,
 } from "@/lib/kontak-landing-content";
 import { PUBLIK_CONTACT_EMAIL } from "@/lib/kontak-publik";
+import { scrollToPublic } from "@/lib/lenis-public";
 import { verifyTurnstileToken } from "@/lib/turnstile-public";
 import { cn } from "@/lib/utils";
 
@@ -56,10 +57,31 @@ export function LandingContactForm(): ReactElement {
   const [turnstileError, setTurnstileError] = useState<string | null>(null);
   const [resetSignal, setResetSignal] = useState(0);
 
+  function scrollToFormField(elementId: string): void {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    // Nav clearance via html scroll-padding-top (Lenis reads it at scrollTo time).
+    scrollToPublic(el, { duration: 0.55 });
+    window.requestAnimationFrame(() => {
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        el.focus({ preventScroll: true });
+      }
+    });
+  }
+
+  function onInvalid(formErrors: FieldErrors<FormValues>): void {
+    const order = ["name", "email", "phone", "subject", "message"] as const;
+    const first = order.find((key) => formErrors[key]);
+    if (first) {
+      scrollToFormField(`landing-contact-${first}`);
+    }
+  }
+
   async function onSubmit(data: FormValues): Promise<void> {
     setTurnstileError(null);
     if (!turnstileToken) {
       setTurnstileError("Selesaikan verifikasi keamanan sebelum mengirim.");
+      scrollToFormField("landing-contact-turnstile");
       return;
     }
 
@@ -68,6 +90,7 @@ export function LandingContactForm(): ReactElement {
       setTurnstileError("Verifikasi keamanan gagal. Coba lagi.");
       setTurnstileToken(null);
       setResetSignal((n) => n + 1);
+      scrollToFormField("landing-contact-turnstile");
       return;
     }
 
@@ -94,7 +117,7 @@ export function LandingContactForm(): ReactElement {
       <p className="mt-3 max-w-prose text-sm leading-relaxed text-body">{KONTAK_FORM_LEDE}</p>
 
       <form
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(onSubmit, onInvalid)}
         className="mt-8 flex flex-1 flex-col gap-5"
         noValidate
       >
@@ -183,7 +206,7 @@ export function LandingContactForm(): ReactElement {
           ) : null}
         </div>
 
-        <div>
+        <div id="landing-contact-turnstile">
           <p className="mb-1.5 text-sm font-medium text-heading">
             Verifikasi keamanan <RequiredMark />
           </p>

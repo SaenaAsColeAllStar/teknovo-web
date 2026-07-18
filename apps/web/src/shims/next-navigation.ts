@@ -1,10 +1,18 @@
 "use client";
 
+import { navigate } from "astro:transitions/client";
 import { useSyncExternalStore } from "react";
 
+/** Astro ClientRouter updates history without always firing `popstate`. */
 function subscribe(onStoreChange: () => void) {
   window.addEventListener("popstate", onStoreChange);
-  return () => window.removeEventListener("popstate", onStoreChange);
+  document.addEventListener("astro:after-swap", onStoreChange);
+  document.addEventListener("astro:page-load", onStoreChange);
+  return () => {
+    window.removeEventListener("popstate", onStoreChange);
+    document.removeEventListener("astro:after-swap", onStoreChange);
+    document.removeEventListener("astro:page-load", onStoreChange);
+  };
 }
 
 function getPathname() {
@@ -18,13 +26,13 @@ export function usePathname(): string {
 export function useRouter() {
   return {
     push(href: string) {
-      window.location.assign(href);
+      void navigate(href);
     },
     replace(href: string) {
-      window.location.replace(href);
+      void navigate(href, { history: "replace" });
     },
     refresh() {
-      window.location.reload();
+      void navigate(window.location.href, { history: "replace" });
     },
     back() {
       window.history.back();
@@ -39,14 +47,14 @@ export function notFound(): never {
 
 export function redirect(url: string): never {
   if (typeof window !== "undefined") {
-    window.location.assign(url);
+    void navigate(url);
   }
   throw new Error(`REDIRECT:${url}`);
 }
 
 export function permanentRedirect(url: string): never {
   if (typeof window !== "undefined") {
-    window.location.replace(url);
+    void navigate(url, { history: "replace" });
   }
   throw new Error(`REDIRECT:${url}`);
 }

@@ -1,13 +1,13 @@
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { Navigate } from "react-router-dom";
 import {
-  cmsRoleCanManageSettings,
+  cmsRoleCanManageUsers,
   parseCmsRole,
 } from "@teknovo/shared";
 
 import { PenggunaManager } from "@/components/dashboard/pengguna/PenggunaManager";
 
-/** Super Admin only — mirrors `/dashboard/pengaturan` gate. */
+/** Super Admin + Admin (`editor`) — invite/create users per role matrix. */
 export function PenggunaPage() {
   const { isLoaded } = useAuth();
   const { user } = useUser();
@@ -19,7 +19,7 @@ export function PenggunaPage() {
   }
 
   const role = parseCmsRole(user?.publicMetadata);
-  if (!cmsRoleCanManageSettings(role)) {
+  if (!cmsRoleCanManageUsers(role)) {
     return <Navigate to="/" replace />;
   }
 

@@ -21,6 +21,7 @@ export default async function DashboardLayout({
   const canViewModerasi = session?.canViewModerasi ?? false;
   const canAccessBeritaSekolah = session?.canAccessBeritaSekolah ?? true;
   const canManageSettings = session?.canManageSettings ?? false;
+  const canManageUsers = session?.canManageUsers ?? false;
 
   return (
     <CmsRoleProvider
@@ -33,6 +34,7 @@ export default async function DashboardLayout({
       canViewModerasi={canViewModerasi}
       canAccessBeritaSekolah={canAccessBeritaSekolah}
       canManageSettings={canManageSettings}
+      canManageUsers={canManageUsers}
     >
       <div className="flex min-h-screen bg-[color:var(--color-neutral-soft)]">
         <DashboardSidebar />

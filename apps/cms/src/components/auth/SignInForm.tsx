@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import {
@@ -94,6 +94,7 @@ function firstFieldMessage(
 
 export function SignInForm({ className }: { className?: string }): ReactElement {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const clerk = useClerk();
   const { isSignedIn } = useAuth();
   // clerk-react v5: Future custom-flow APIs (`sso`, `password`, `finalize`) live on
@@ -110,6 +111,7 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
   const [oauthBusy, setOauthBusy] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [turnstileReset, setTurnstileReset] = useState(0);
+  const inviteOnlyBanner = searchParams.get("message") === "invite-only";
 
   const busy = fetchStatus === "fetching" || oauthBusy;
   const providers = useMemo(() => resolveOAuthProviders(oauthStrategies), [oauthStrategies]);
@@ -121,6 +123,12 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
       /* ignore */
     }
   }, []);
+
+  useEffect(() => {
+    if (inviteOnlyBanner) {
+      toast.message("Akses hanya via undangan Super Admin");
+    }
+  }, [inviteOnlyBanner]);
 
   useEffect(() => {
     if (!clerk.loaded) return;
@@ -334,6 +342,14 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
 
   return (
     <FormShell className={className} title="Masuk ke CMS">
+      {inviteOnlyBanner ? (
+        <p
+          role="status"
+          className="mb-5 border border-[color:var(--color-brand)]/25 bg-[color:var(--color-brand)]/5 px-3 py-2 text-sm text-[color:var(--color-heading)]"
+        >
+          Akses hanya via undangan Super Admin
+        </p>
+      ) : null}
       <form className="space-y-5" onSubmit={handlePasswordSubmit}>
         {providers.length > 0 ? (
           <>
@@ -436,13 +452,7 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
         </Button>
 
         <p className="text-center text-sm text-[color:var(--color-body)]">
-          Belum punya akun?{" "}
-          <Link
-            to="/sign-up"
-            className="font-medium text-[color:var(--color-brand)] underline-offset-2 hover:underline"
-          >
-            Daftar
-          </Link>
+          Akses hanya via undangan Super Admin.
         </p>
       </form>
     </FormShell>

@@ -18,12 +18,10 @@ export default function SsoCallbackPage(): ReactElement {
         <p className="text-sm font-medium text-[color:var(--color-body)]">Menyelesaikan masuk…</p>
         <AuthenticateWithRedirectCallback
           signInFallbackRedirectUrl="/dashboard"
-          signUpFallbackRedirectUrl="/dashboard"
+          signUpFallbackRedirectUrl="/sign-in?message=invite-only"
           signInUrl="/sign-in"
-          signUpUrl="/sign-up"
+          signUpUrl="/sign-in"
         />
-        {/* Clerk bot protection / captcha mount point for transferable OAuth sign-ups */}
-        <div id="clerk-captcha" className="mt-4" />
       </div>
     </main>
   );

@@ -81,6 +81,28 @@ export function cmsRoleCanManageSettings(role: CmsRole): boolean {
   return role === "admin";
 }
 
+/** Invite-only user management: Super Admin + Admin (`editor`). */
+export function cmsRoleCanManageUsers(role: CmsRole): boolean {
+  return role === "admin" || role === "editor";
+}
+
+/**
+ * Roles that `actor` may assign when inviting / creating / patching users.
+ * Super Admin (`admin`) may invite other Super Admins; Admin (`editor`) → Siswa only.
+ */
+export function cmsAssignableRoles(actor: CmsRole): readonly CmsRole[] {
+  if (actor === "admin") return ["admin", "editor", "siswa", "viewer"] as const;
+  if (actor === "editor") return ["siswa"] as const;
+  return [] as const;
+}
+
+export function cmsRoleCanAssignRole(
+  actor: CmsRole,
+  targetRole: CmsRole,
+): boolean {
+  return (cmsAssignableRoles(actor) as readonly string[]).includes(targetRole);
+}
+
 /** UI labels — Super Admin / Admin (staff) / Siswa are the primary create targets. */
 export const CMS_ROLE_LABEL: Record<CmsRole, string> = {
   admin: "Super Admin",
@@ -89,5 +111,11 @@ export const CMS_ROLE_LABEL: Record<CmsRole, string> = {
   siswa: "Siswa",
 };
 
-export const CMS_MANAGEABLE_ROLES = ["admin", "editor", "siswa"] as const;
+/** @deprecated Prefer `cmsAssignableRoles(actor)`. */
+export const CMS_MANAGEABLE_ROLES = [
+  "admin",
+  "editor",
+  "siswa",
+  "viewer",
+] as const;
 export type CmsManageableRole = (typeof CMS_MANAGEABLE_ROLES)[number];

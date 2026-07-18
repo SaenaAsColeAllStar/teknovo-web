@@ -10,12 +10,20 @@ import {
   type ReactNode,
 } from "react";
 
+import {
+  publicLenisOptions,
+  setLenisInstance,
+} from "@/lib/lenis-public";
+
 import "lenis/dist/lenis.css";
 
 /**
  * Smooth scroll for the public site via Lenis (root / document scroll).
  * Syncs RAF with Framer Motion so scroll-reveal (`MotionInView`) stays in step.
  * Skips Lenis entirely when `prefers-reduced-motion: reduce`.
+ *
+ * Astro ClientRouter remounts chrome each navigation — we re-bind on mount and
+ * sync scroll on `astro:after-swap` / `astro:page-load` (instant top or hash).
  */
 export function SmoothScrollProvider({
   children,
@@ -35,6 +43,35 @@ export function SmoothScrollProvider({
   }, []);
 
   useEffect(() => {
+    if (!smoothEnabled) {
+      setLenisInstance(null);
+      return;
+    }
+
+    let cancelled = false;
+    let tries = 0;
+
+    const bind = () => {
+      if (cancelled) return;
+      const instance = lenisRef.current?.lenis;
+      if (instance) {
+        setLenisInstance(instance);
+        return;
+      }
+      if (tries++ < 24) {
+        window.requestAnimationFrame(bind);
+      }
+    };
+
+    bind();
+
+    return () => {
+      cancelled = true;
+      setLenisInstance(null);
+    };
+  }, [smoothEnabled]);
+
+  useEffect(() => {
     if (!smoothEnabled) return;
 
     const update = ({ timestamp }: { timestamp: number }) => {
@@ -45,23 +82,99 @@ export function SmoothScrollProvider({
     return () => cancelFrame(update);
   }, [smoothEnabled]);
 
+  /**
+   * Prevent native hash jumps from fighting Lenis anchors (capture phase).
+   * Lenis `anchors` still handles `scrollTo` on bubble.
+   */
+  useEffect(() => {
+    if (!smoothEnabled) return;
+
+    function onClickCapture(event: MouseEvent): void {
+      if (event.defaultPrevented) return;
+      if (event.button !== 0) return;
+      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+      const anchor = event
+        .composedPath()
+        .find(
+          (node): node is HTMLAnchorElement =>
+            node instanceof HTMLAnchorElement && Boolean(node.href),
+        );
+      if (!anchor) return;
+
+      let targetUrl: URL;
+      let currentUrl: URL;
+      try {
+        targetUrl = new URL(anchor.href);
+        currentUrl = new URL(window.location.href);
+      } catch {
+        return;
+      }
+
+      if (
+        targetUrl.host !== currentUrl.host ||
+        targetUrl.pathname !== currentUrl.pathname ||
+        !targetUrl.hash
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      if (targetUrl.hash !== currentUrl.hash) {
+        history.pushState(null, "", `${targetUrl.pathname}${targetUrl.search}${targetUrl.hash}`);
+      }
+    }
+
+    window.addEventListener("click", onClickCapture, true);
+    return () => window.removeEventListener("click", onClickCapture, true);
+  }, [smoothEnabled]);
+
+  /**
+   * After Astro ClientRouter swaps (or on remount), sync Lenis:
+   * - hash → immediate scroll to target (scroll-margin / scroll-padding apply)
+   * - else → instant jump to top of the new page
+   */
+  useEffect(() => {
+    if (!smoothEnabled) return;
+
+    const syncScroll = () => {
+      const lenis = lenisRef.current?.lenis;
+      if (!lenis) return;
+
+      lenis.resize();
+
+      const hash = window.location.hash;
+      if (hash.length > 1) {
+        try {
+          const el = document.querySelector(hash);
+          if (el instanceof HTMLElement) {
+            lenis.scrollTo(el, { immediate: true });
+            return;
+          }
+        } catch {
+          /* invalid hash selector */
+        }
+      }
+
+      lenis.scrollTo(0, { immediate: true });
+    };
+
+    const id = window.requestAnimationFrame(syncScroll);
+    document.addEventListener("astro:page-load", syncScroll);
+    document.addEventListener("astro:after-swap", syncScroll);
+    return () => {
+      window.cancelAnimationFrame(id);
+      document.removeEventListener("astro:page-load", syncScroll);
+      document.removeEventListener("astro:after-swap", syncScroll);
+    };
+  }, [smoothEnabled]);
+
   if (!smoothEnabled) {
     return <>{children}</>;
   }
 
   return (
-    <ReactLenis
-      root
-      ref={lenisRef}
-      options={{
-        autoRaf: false,
-        // Hash / in-page anchors via Lenis.scrollTo — respects scroll-margin / scroll-mt-*
-        anchors: true,
-        lerp: 0.1,
-        // Avoid lingering inertia when clicking internal links
-        stopInertiaOnNavigate: true,
-      }}
-    >
+    <ReactLenis root ref={lenisRef} options={publicLenisOptions}>
       {children}
     </ReactLenis>
   );

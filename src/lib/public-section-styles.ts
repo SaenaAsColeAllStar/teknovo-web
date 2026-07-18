@@ -2,14 +2,17 @@
  * Lapisan section konten publik — shell full-width; isi di dalam `.public-site-container`
  * (max-w-7xl / 1280px, selaras navbar).
  * Atlas tokens: flat `#E8E8F8` border, surface white — no slate/dark chrome.
+ *
+ * Anchor clearance uses `html { scroll-padding-top: var(--public-nav-bottom) }`
+ * (see apps/web global.css) so Lenis + native hash scroll clear the sticky nav.
+ * Keep local `scroll-mt-*` only when a section needs extra offset (sticky subnav).
  */
 export const publicSectionShellBase =
-  "w-full min-w-0 scroll-mt-20 border-b border-border-default";
+  "w-full min-w-0 border-b border-border-default";
 
 /** Sambutan kepala sekolah */
 export const publicSectionShellSambutanClassName =
-  "w-full min-w-0 scroll-mt-20 border-b border-border-default";
-
+  "w-full min-w-0 border-b border-border-default";
 /** Kesiswaan & soft content bands */
 export const publicContentSectionClassName = `${publicSectionShellBase} bg-neutral-soft py-16 sm:py-20`;
 

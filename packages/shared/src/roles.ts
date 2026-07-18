@@ -53,6 +53,31 @@ export function cmsRoleCanManageSettings(role: CmsRole): boolean {
   return role === "admin";
 }
 
+/**
+ * Invite-only CMS: Super Admin (`admin`) and Admin (`editor`) may manage users.
+ * Siswa / viewer / public cannot create accounts.
+ */
+export function cmsRoleCanManageUsers(role: CmsRole): boolean {
+  return role === "admin" || role === "editor";
+}
+
+/**
+ * Roles that `actor` may assign when inviting / creating / patching users.
+ * Super Admin (`admin`) may invite other Super Admins; Admin (`editor`) → Siswa only.
+ */
+export function cmsAssignableRoles(actor: CmsRole): readonly CmsRole[] {
+  if (actor === "admin") return ["admin", "editor", "siswa", "viewer"] as const;
+  if (actor === "editor") return ["siswa"] as const;
+  return [] as const;
+}
+
+export function cmsRoleCanAssignRole(
+  actor: CmsRole,
+  targetRole: CmsRole,
+): boolean {
+  return (cmsAssignableRoles(actor) as readonly string[]).includes(targetRole);
+}
+
 /** UI labels — Super Admin / Admin (staff) / Siswa are the primary create targets. */
 export const CMS_ROLE_LABEL: Record<CmsRole, string> = {
   admin: "Super Admin",
@@ -61,6 +86,14 @@ export const CMS_ROLE_LABEL: Record<CmsRole, string> = {
   siswa: "Siswa",
 };
 
-/** Roles selectable when creating/managing accounts in CMS. */
-export const CMS_MANAGEABLE_ROLES = ["admin", "editor", "siswa"] as const;
+/**
+ * @deprecated Prefer `cmsAssignableRoles(actor)`.
+ * Kept for older UI that listed create targets without actor context.
+ */
+export const CMS_MANAGEABLE_ROLES = [
+  "admin",
+  "editor",
+  "siswa",
+  "viewer",
+] as const;
 export type CmsManageableRole = (typeof CMS_MANAGEABLE_ROLES)[number];

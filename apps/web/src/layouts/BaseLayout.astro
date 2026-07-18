@@ -1,4 +1,5 @@
 ---
+import { ClientRouter, fade } from "astro:transitions";
 import { PublicChrome } from "../components/PublicChrome";
 import "../styles/global.css";
 
@@ -33,10 +34,13 @@ const apiOrigin = (
 )
   .replace(/\/$/, "")
   .replace(/\/api$/, "");
+
+/** Subtle main-content crossfade; navbar uses view-transition-name (see global.css). */
+const pageFade = fade({ duration: "180ms" });
 ---
 
 <!doctype html>
-<html lang="id" class="h-full antialiased">
+<html lang="id" class="h-full antialiased" transition:animate="none">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -78,13 +82,22 @@ const apiOrigin = (
       }
     </style>
     <link rel="alternate" type="application/rss+xml" title="Berita SMK TEKNOVO" href="/rss.xml" />
+    <!-- Client-side MPA routing; prefers-reduced-motion disables animations automatically. -->
+    <ClientRouter />
   </head>
   <body class="bg-surface font-sans text-body min-h-full">
+    {/*
+      Do not transition:persist PublicChrome: it wraps page <slot /> as React children.
+      Persisting would keep Lenis/ClickSpark but risk stale nested islands / children.
+      Remount re-inits providers; navbar stays visually stable via view-transition-name.
+    */}
     <PublicChrome
       client:load
       hideNavbar={Astro.url.pathname === "/" || Astro.url.pathname === ""}
     >
-      <slot />
+      <div class="public-page-main" transition:animate={pageFade} transition:name="public-page-main">
+        <slot />
+      </div>
     </PublicChrome>
   </body>
 </html>

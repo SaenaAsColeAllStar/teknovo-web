@@ -75,21 +75,48 @@ pnpm --filter @teknovo/cms deploy
 ## Clerk
 
 Tambahkan domain `cms.smkteknovo.sch.id` di Clerk Dashboard. Auth hanya di CMS
-(bukan apex):
+(bukan apex). **CMS adalah invite-only** — tidak ada daftar publik.
 
 | Path | Halaman |
 |------|---------|
 | `/sign-in` | Login dua kolom (custom `useSignInSignal` + OAuth) |
-| `/sign-up` | Daftar (Clerk `<SignUp />`) |
+| `/sign-up` | Redirect → `/sign-in?message=invite-only` (pendaftaran ditutup) |
 | `/forgot-password` | Reset kata sandi (full-bleed dua kolom) |
-| `/sso-callback` | Callback OAuth untuk `signIn.sso()` |
+| `/sso-callback` | Callback OAuth untuk `signIn.sso()` — **sign-in only** (bukan sign-up) |
 
 Setelah masuk, redirect ke `/` (dashboard CMS).
+
+### Kebijakan akses (invite-only)
+
+| Actor | Metadata `role` | Dapat mengundang / membuat |
+|-------|-----------------|----------------------------|
+| **Super Admin** | `admin` | Super Admin (`admin`), Admin (`editor`), Siswa (`siswa`), Viewer (`viewer`) |
+| **Admin** | `editor` | **Hanya** Siswa (`siswa`) |
+| Siswa / Viewer / publik | — | Tidak ada sign-up |
+
+- Google OAuth & password login **OK** untuk user yang sudah diundang / dibuat.
+- Bootstrap Super Admin pertama (atau recovery):
+  ```bash
+  node --env-file=.env.local scripts/bootstrap-super-admin.mjs diegocole234@gmail.com
+  ```
+  Script meng-set `publicMetadata.role = "admin"` jika user sudah ada, atau mengirim undangan Clerk dengan role `admin` jika belum. Alternatif: Clerk Dashboard → User → Public metadata `{ "role": "admin" }`.
+- API `POST|PATCH /api/v1/users`: Super Admin boleh assign `admin`; Admin hanya `siswa`. Super Admin terakhir tidak dapat diturunkan/dihapus.
+- Editor tidak dapat mengubah peran diri sendiri atau mengelola akun non-siswa.
+
+### Clerk Dashboard (wajib untuk menutup daftar publik)
+
+1. **Configure → Restrictions** (atau *User & authentication → Restrictions*)
+   - Disable **Sign-up** / public registrations (atau set *Allowlist* / *Invitations only*).
+2. **Configure → SSO connections → Google**
+   - Enable Google for **sign-in**. Prefer blocking new accounts via OAuth if the
+     dashboard offers “sign in only” / disable “sign up with Google”.
+3. Invitations: CMS memakai Clerk Backend `invitations.createInvitation` (email) bila
+   form Pengguna dikirim tanpa password; atau `users.createUser` bila password ≥8 diisi.
 
 ### Google OAuth (wajib untuk tombol Google)
 
 Custom sign-in memakai Future API lewat `useSignInSignal()` (`@clerk/clerk-react/experimental`)
-dan `signIn.sso({ strategy: "oauth_google", … })`. Jika tombol Google masih gagal setelah deploy
+dan `signIn.sso({ strategy: "oauth_google", … })` — **sign-in**, bukan sign-up. Jika tombol Google masih gagal setelah deploy
 kode ini, sisa masalah hampir selalu **konfigurasi Clerk + Google Cloud**, bukan UI:
 
 1. **Clerk Dashboard → Configure → SSO connections → Google**
@@ -102,15 +129,25 @@ kode ini, sisa masalah hampir selalu **konfigurasi Clerk + Google Cloud**, bukan
      - `https://clerk.smkteknovo.sch.id/v1/oauth_callback`
      - (jika masih pakai `.clerk.accounts.dev` di staging) `https://<instance>.clerk.accounts.dev/v1/oauth_callback`
 3. **Clerk Dashboard → Domains**
-   - Application domain / satellite: `cms.smkteknovo.sch.id`
+   - **Application / primary app URL:** `https://cms.smkteknovo.sch.id` (bukan `auth.smkteknovo.sch.id` — DNS itu belum ada; FAPI `environment.display_config.home_url` masih bisa menunjuk ke `auth.` sampai diperbaiki di Dashboard).
+   - Frontend API CNAME: `clerk.smkteknovo.sch.id` → `frontend-api.clerk.services` (DNS-only / sesuai instruksi Clerk).
+   - Accounts Portal CNAME: `accounts.smkteknovo.sch.id` → `accounts.clerk.services`.
    - Allowed redirect URLs include:
      - `https://cms.smkteknovo.sch.id`
      - `https://cms.smkteknovo.sch.id/sso-callback`
      - `https://cms.smkteknovo.sch.id/`
+   - **Allowed origins** (CORS untuk FAPI): `https://cms.smkteknovo.sch.id` (+ `http://localhost:5173` / `http://127.0.0.1:5173` untuk `pnpm --filter @teknovo/cms dev`).
 4. Error klasik `401 invalid_client` / “OAuth client was not found” = Client ID salah, secret
    mismatch, atau redirect URI di GCP tidak tepat sama dengan `…/v1/oauth_callback` di atas.
 
 App-side paths yang harus ada (sudah di SPA): `/sign-in`, `/sso-callback`, redirect sukses `/`.
+
+### ClerkJS `Failed to fetch` pada `/v1/client/sign_ins`
+
+1. **CSP** — `apps/cms/public/_headers` harus mengizinkan FAPI di `connect-src` / `script-src` / `frame-src` (`https://clerk.smkteknovo.sch.id`, plus `wss://…`, Accounts Portal, Turnstile, telemetry). Redeploy Pages setelah ubah `_headers`.
+2. **DNS / SSL** — `dig clerk.smkteknovo.sch.id CNAME` → `frontend-api.clerk.services.`; `curl -I https://clerk.smkteknovo.sch.id/v1/client` → 200.
+3. **CORS** — dari browser origin CMS, preflight OPTIONS harus mengembalikan `access-control-allow-origin: https://cms.smkteknovo.sch.id` + `access-control-allow-methods` (cek Allowed origins di Dashboard).
+4. **Publishable key** — `VITE_CLERK_PUBLISHABLE_KEY` production harus decode ke `clerk.smkteknovo.sch.id$` (bukan instance `.clerk.accounts.dev` lama).
 
 ### Turnstile (password sign-in)
 
@@ -126,16 +163,18 @@ Role di `user.publicMetadata.role`:
 
 | Metadata | Label UI | Capabilitas utama |
 |----------|----------|-------------------|
-| `admin` | Super Admin | Semua + moderasi approve + pengaturan + **kelola pengguna** |
-| `editor` | Admin | CRUD berita/artikel, lihat moderasi (tanpa approve) |
+| `admin` | Super Admin | Semua + moderasi approve + pengaturan + **kelola pengguna** (Super Admin/Admin/Siswa/Viewer) |
+| `editor` | Admin | CRUD berita/artikel, lihat moderasi (tanpa approve), **undang Siswa** |
 | `siswa` | Siswa | Artikel milik sendiri, kategori, media |
 | `viewer` | Viewer | Baca saja (default jika metadata kosong) |
 
 ## Pengguna
 
-Halaman `/pengguna` (nav: **Pengguna**, virtual path `/dashboard/pengguna`) — hanya Super Admin
-(`canManageSettings` / `role === "admin"`). UI: `PenggunaPage` → `PenggunaManager`; API via
-`fetchCmsUsers` / `createCmsUser` / `updateCmsUser` / `deleteCmsUser` → `GET|POST|PATCH|DELETE /api/v1/users`.
+Halaman `/pengguna` (nav: **Pengguna**, virtual path `/dashboard/pengguna`) — Super Admin
+dan Admin (`canManageUsers` / `role === "admin" | "editor"`). UI: `PenggunaPage` →
+`PenggunaManager`; API via `fetchCmsUsers` / `createCmsUser` / `updateCmsUser` /
+`deleteCmsUser` → `GET|POST|PATCH|DELETE /api/v1/users`.
 
 Tambah akun: email wajib, nama & password opsional (password ≥8 → `users.createUser`; kosong →
-undangan Clerk). Bisa ubah peran dan hapus akun (konfirmasi; tidak bisa hapus diri sendiri).
+undangan Clerk). Opsi peran mengikuti aktor (lihat matriks di atas). Ubah peran / hapus:
+Super Admin penuh (kecuali diri sendiri); Admin hanya akun Siswa.

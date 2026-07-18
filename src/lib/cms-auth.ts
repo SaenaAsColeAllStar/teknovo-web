@@ -12,6 +12,7 @@ import {
   cmsRoleCanViewModerasi,
   cmsRoleCanAccessBeritaSekolah,
   cmsRoleCanManageSettings,
+  cmsRoleCanManageUsers,
 } from "@/lib/clerk";
 
 export class CmsAuthError extends Error {
@@ -35,6 +36,7 @@ export type CmsSession = {
   canViewModerasi: boolean;
   canAccessBeritaSekolah: boolean;
   canManageSettings: boolean;
+  canManageUsers: boolean;
 };
 
 /** Resolve Clerk user + `publicMetadata.role` for dashboard/API guards. */
@@ -56,6 +58,7 @@ export async function getCmsSession(): Promise<CmsSession | null> {
     canViewModerasi: cmsRoleCanViewModerasi(role),
     canAccessBeritaSekolah: cmsRoleCanAccessBeritaSekolah(role),
     canManageSettings: cmsRoleCanManageSettings(role),
+    canManageUsers: cmsRoleCanManageUsers(role),
   };
 }
 
@@ -120,6 +123,18 @@ export async function requireCmsAdmin(): Promise<CmsSession> {
   const cms = await requireCmsSession();
   if (!cms.canManageSettings) {
     throw new CmsAuthError("Hanya admin yang dapat mengakses pengaturan.", 403);
+  }
+  return cms;
+}
+
+/** Super Admin or Admin (`editor`) — invite-only user management. */
+export async function requireCmsUserManager(): Promise<CmsSession> {
+  const cms = await requireCmsSession();
+  if (!cms.canManageUsers) {
+    throw new CmsAuthError(
+      "Hanya Super Admin atau Admin yang dapat mengelola pengguna.",
+      403,
+    );
   }
   return cms;
 }

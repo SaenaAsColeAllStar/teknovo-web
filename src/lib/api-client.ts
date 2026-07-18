@@ -617,7 +617,7 @@ export async function updatePengaturanCms(
   return data.data;
 }
 
-/* ─── Users (Super Admin) ─────────────────────────────────────────── */
+/* ─── Users (Super Admin + Admin invite) ───────────────────────────── */
 
 export type CmsUserListItem = {
   id: string;
@@ -631,7 +631,7 @@ export type CmsUserListItem = {
 export type CmsUserCreateInput = {
   email: string;
   nama?: string;
-  role: "admin" | "editor" | "siswa";
+  role: "admin" | "editor" | "siswa" | "viewer";
   password?: string;
 };
 
@@ -639,7 +639,6 @@ export type CmsUserPatchInput = {
   role?: "admin" | "editor" | "viewer" | "siswa";
   nama?: string;
 };
-
 export async function fetchCmsUsers(
   token: string,
   opts?: { limit?: number; offset?: number },

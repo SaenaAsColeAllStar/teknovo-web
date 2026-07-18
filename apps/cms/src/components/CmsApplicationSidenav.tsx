@@ -93,6 +93,7 @@ export function CmsApplicationSidenav({
   const { getToken } = useAuth();
   const {
     canManageSettings,
+    canManageUsers,
     canAccessBeritaSekolah,
     canViewModerasi,
     canWrite,
@@ -186,7 +187,7 @@ export function CmsApplicationSidenav({
     },
   ];
 
-  if (canManageSettings) {
+  if (canManageUsers) {
     primaryNav.push({
       kind: "link",
       id: "pengguna",
@@ -421,7 +422,7 @@ export function CmsApplicationSidenav({
             <CircleHelp className="size-4 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1 truncate">Bantuan & ketentuan</span>
           </a>
-          {canManageSettings ? (
+          {canManageUsers ? (
             <Link
               to="/pengguna"
               onClick={handleNav}

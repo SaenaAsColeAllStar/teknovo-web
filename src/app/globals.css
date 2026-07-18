@@ -61,6 +61,8 @@
 html {
   /* Mencegah loncatan lebar saat scrollbar muncul/hilang — `.public-site-container` tetap selaras antar halaman */
   scrollbar-gutter: stable;
+  /* Sticky nav clearance for hash / Lenis.scrollTo — mirrors apps/web global.css */
+  scroll-padding-top: var(--public-nav-bottom, 11rem);
 }
 
 body {

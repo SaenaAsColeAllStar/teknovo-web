@@ -13,13 +13,12 @@ export function SsoCallbackPage(): ReactElement {
         <p className="text-sm font-medium text-[color:var(--color-body)]">Menyelesaikan masuk…</p>
         <AuthenticateWithRedirectCallback
           signInFallbackRedirectUrl="/"
-          signUpFallbackRedirectUrl="/"
+          // Invite-only: OAuth must not open a public sign-up transfer.
+          signUpFallbackRedirectUrl="/sign-in?message=invite-only"
           signInUrl="/sign-in"
-          signUpUrl="/sign-up"
-          continueSignUpUrl="/sign-up"
+          signUpUrl="/sign-in"
+          continueSignUpUrl="/sign-in"
         />
-        {/* Required when OAuth transfers into a sign-up (bot protection). */}
-        <div id="clerk-captcha" className="mt-4" />
       </div>
     </main>
   );

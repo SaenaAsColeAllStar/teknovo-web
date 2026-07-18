@@ -3,7 +3,14 @@
 import type { ReactNode } from "react";
 import { PublicSiteLayout } from "@/components/layout/PublicSiteLayout";
 
-/** Public chrome — same as Next `(site)/layout`. */
+/**
+ * Public chrome — same as Next `(site)/layout`.
+ *
+ * Astro View Transitions: this island remounts on each client navigation
+ * (do not `transition:persist` — it wraps page slot children). Lenis /
+ * ClickSpark / nested page islands re-init cleanly on remount. Active nav
+ * follows `usePathname` (listens to `astro:after-swap` / `astro:page-load`).
+ */
 export function PublicChrome({
   children,
   hideNavbar,

@@ -66,6 +66,9 @@ kategoriRoutes.post("/", async (c) => {
       );
     }
     const created = await d1CreateKategori(c.env.DB, parsed.data);
+    c.executionCtx.waitUntil(
+      triggerWebRebuild(c.env, `kategori:create:${created.slug}`),
+    );
     return okJson(c, created, 201);
   } catch (err) {
     return handleApiError(c, err);
@@ -91,6 +94,9 @@ kategoriRoutes.patch("/:id", async (c) => {
       parsed.data,
     );
     if (!updated) return errJson(c, "NOT_FOUND", "Kategori tidak ditemukan.", 404);
+    c.executionCtx.waitUntil(
+      triggerWebRebuild(c.env, `kategori:update:${updated.slug}`),
+    );
     return okJson(c, updated);
   } catch (err) {
     return handleApiError(c, err);
@@ -102,6 +108,9 @@ kategoriRoutes.delete("/:id", async (c) => {
     await requireCmsWriter(c.req.raw, c.env);
     const ok = await d1DeleteKategori(c.env.DB, c.req.param("id"));
     if (!ok) return errJson(c, "NOT_FOUND", "Kategori tidak ditemukan.", 404);
+    c.executionCtx.waitUntil(
+      triggerWebRebuild(c.env, `kategori:delete:${c.req.param("id")}`),
+    );
     return okJson(c, { deleted: true });
   } catch (err) {
     return handleApiError(c, err);

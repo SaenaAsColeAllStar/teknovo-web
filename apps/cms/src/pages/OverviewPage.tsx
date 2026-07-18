@@ -175,7 +175,8 @@ export function OverviewPage() {
           </p>
           <p>
             Clerk roles: <code>publicMetadata.role</code> ∈{" "}
-            <code>admin|editor|viewer|siswa</code>. Artikel siswa:{" "}
+            <code>admin|editor|viewer|siswa</code>. Invite-only: Super Admin
+            undang Super Admin/Admin/Siswa/Viewer; Admin undang Siswa. Artikel siswa:{" "}
             <code>/v1/artikel-siswa</code> · moderasi approve hanya <code>admin</code>.
             Pengaturan: <code>/v1/pengaturan</code> (admin).
           </p>

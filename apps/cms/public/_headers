@@ -1,7 +1,17 @@
 # Cloudflare Pages security headers for CMS (Vite SPA + Clerk).
 # Clerk needs style-src 'unsafe-inline' (CSS-in-JS) and script-src 'unsafe-inline'
 # for its bootstrap. Production Clerk docs: omit 'unsafe-eval' (Vite build does not need it).
-# FAPI host: clerk.smkteknovo.sch.id (custom). Google OAuth frames: accounts.google.com.
+#
+# FAPI (pk_live decodes to this): https://clerk.smkteknovo.sch.id
+# Accounts Portal: https://accounts.smkteknovo.sch.id
+# App / satellite: https://cms.smkteknovo.sch.id
+# Google OAuth frames: accounts.google.com
+# Turnstile: challenges.cloudflare.com + siteverify Worker
+# Poppins (index.html): fonts.googleapis.com / fonts.gstatic.com
+#
+# connect-src must allow FAPI + optional wss (Clerk realtime) + telemetry.
+# If sign-in still shows ClerkJS "Failed to fetch", check Clerk Dashboard
+# Allowed origins / CNAME — see apps/cms/README.md → Clerk.
 
 /*
   X-Content-Type-Options: nosniff
@@ -9,7 +19,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com https://clerk.smkteknovo.sch.id https://*.clerk.accounts.dev; script-src 'self' 'unsafe-inline' https://clerk.smkteknovo.sch.id https://*.clerk.accounts.dev https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://img.clerk.com https://r2.ctos.web.id; font-src 'self' data:; connect-src 'self' https://cf.smkteknovo.sch.id https://r2.ctos.web.id https://clerk.smkteknovo.sch.id https://*.clerk.accounts.dev https://clerk-telemetry.com https://*.clerk-telemetry.com https://challenges.cloudflare.com https://turnstile-siteverify-teknovo-web.fajarnugrahayusman-06.workers.dev; worker-src 'self' blob:; frame-src 'self' https://clerk.smkteknovo.sch.id https://*.clerk.accounts.dev https://challenges.cloudflare.com https://accounts.google.com; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://accounts.google.com https://clerk.smkteknovo.sch.id https://accounts.smkteknovo.sch.id https://auth.smkteknovo.sch.id https://*.clerk.accounts.dev; script-src 'self' 'unsafe-inline' https://clerk.smkteknovo.sch.id https://*.clerk.accounts.dev https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: blob: https://img.clerk.com https://images.clerk.dev https://r2.ctos.web.id; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://cf.smkteknovo.sch.id https://r2.ctos.web.id https://clerk.smkteknovo.sch.id wss://clerk.smkteknovo.sch.id https://accounts.smkteknovo.sch.id https://auth.smkteknovo.sch.id https://*.clerk.accounts.dev wss://*.clerk.accounts.dev https://api.clerk.com https://clerk-telemetry.com https://*.clerk-telemetry.com https://challenges.cloudflare.com https://turnstile-siteverify-teknovo-web.fajarnugrahayusman-06.workers.dev https://fonts.googleapis.com https://fonts.gstatic.com; worker-src 'self' blob:; frame-src 'self' https://clerk.smkteknovo.sch.id https://accounts.smkteknovo.sch.id https://auth.smkteknovo.sch.id https://*.clerk.accounts.dev https://challenges.cloudflare.com https://accounts.google.com; upgrade-insecure-requests
 
 /assets/*
   Cache-Control: public, max-age=31536000, immutable

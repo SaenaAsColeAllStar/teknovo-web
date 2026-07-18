@@ -346,13 +346,7 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
         </Button>
 
         <p className="text-center text-sm text-[color:var(--color-body)]">
-          Belum punya akun?{" "}
-          <Link
-            href="/sign-up"
-            className="font-medium text-[color:var(--color-brand)] underline-offset-2 hover:underline"
-          >
-            Daftar
-          </Link>
+          Akses hanya via undangan Super Admin.
         </p>
       </form>
     </FormShell>

@@ -61,12 +61,27 @@ Tanpa role di Clerk, user dianggap `viewer` (aman-by-default).
 
 ### Manajemen pengguna (CMS)
 
-Hanya Super Admin (`publicMetadata.role = "admin"`) dapat mengelola akun lewat CMS `/pengguna` (API `/api/v1/users` di `apps/api`).
+Super Admin (`admin`) dan Admin (`editor`) dapat mengelola akun lewat CMS `/pengguna`
+(API `/api/v1/users` di `apps/api`), dengan matriks undangan:
+
+| Actor | Dapat mengundang / assign |
+|-------|---------------------------|
+| Super Admin (`admin`) | Super Admin, Admin (`editor`), Siswa, Viewer |
+| Admin (`editor`) | Siswa saja |
 
 - List: Clerk `users.getUserList`
 - Create: `users.createUser` (dengan password) atau `invitations.createInvitation` (tanpa password)
 - Update: role via `updateUserMetadata` + nama via `updateUser`
-- Delete: `users.deleteUser` (self-delete ditolak)
+- Delete: `users.deleteUser` (self-delete ditolak; Super Admin terakhir tidak dapat diturunkan/dihapus)
+
+#### Bootstrap Super Admin
+
+```bash
+node --env-file=.env.local scripts/bootstrap-super-admin.mjs diegocole234@gmail.com
+```
+
+Membutuhkan `CLERK_SECRET_KEY` di `.env.local`. Jika user sudah ada → set
+`publicMetadata.role = "admin"`; jika belum → undangan Clerk dengan role `admin`.
 
 Prasyarat Clerk Dashboard:
 

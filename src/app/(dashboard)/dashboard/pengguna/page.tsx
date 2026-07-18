@@ -5,7 +5,7 @@ import { getCmsSession } from "@/lib/cms-auth";
 
 export default async function PenggunaPage() {
   const session = await getCmsSession();
-  if (!session?.canManageSettings) {
+  if (!session?.canManageUsers) {
     redirect("/dashboard");
   }
 
