@@ -43,17 +43,18 @@ pnpm dev
 
 ### Workers Builds (dashboard Cloudflare)
 
-Jangan pakai `pnpm run build` — itu hanya `next build` dan **tidak** menghasilkan `.open-next/`.
-
-Di **Workers → Settings → Build**:
+**Wajib** set di **Workers → Settings → Build** (Workers Builds tidak membaca `[build]` di `wrangler.toml`):
 
 | Setting | Nilai |
 |---------|--------|
 | Build command | `pnpm run build:cf` |
 | Deploy command | `npx wrangler deploy` |
 
-Alternatif resmi OpenNext: build `npx opennextjs-cloudflare build`, deploy `npx opennextjs-cloudflare deploy`.
+- `build:cf` = `cf-typegen` + `opennextjs-cloudflare build` → menghasilkan `.open-next/` (termasuk compiled OpenNext config).
+- **Jangan** pakai `pnpm run build` lalu `wrangler deploy` — itu hanya `next build`. Deploy lalu gagal dengan: *Could not find compiled Open Next config, did you run the build command?*
+- Jangan pakai `pnpm run deploy` sebagai Deploy command jika Build step sudah menjalankan `build:cf` (akan build dua kali). Pakai `npx wrangler deploy` saja.
+- Alternatif resmi OpenNext (satu langkah di Deploy): build `npx opennextjs-cloudflare build`, deploy `npx opennextjs-cloudflare deploy`.
 
-Setelah ubah setting, trigger ulang deploy.
+Setelah ubah setting di dashboard, trigger ulang deploy.
 
 **Auth boundary:** pakai `src/middleware.ts` (Edge), bukan `proxy.ts`. OpenNext Cloudflare belum mendukung Node.js middleware / `proxy.ts` (error: *Node.js middleware is not currently supported*).

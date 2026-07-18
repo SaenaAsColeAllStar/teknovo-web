@@ -32,6 +32,15 @@ Homelab (masa depan)
 - TanStack Query, Zod, react-hook-form, TipTap (deps), Sonner
 - OpenNext Cloudflare adapter + Wrangler
 
+## Deploy (Cloudflare Workers Builds)
+
+| Step | Command |
+|------|---------|
+| Build | `pnpm run build:cf` |
+| Deploy | `npx wrangler deploy` |
+
+Plain `pnpm run build` (`next build`) tidak cukup — OpenNext butuh `.open-next/` sebelum `wrangler deploy`. Detail: README → *Workers Builds*.
+
 ## Relasi ke monorepo `rtek`
 
 `apps/web` di monorepo tetap ada (nginx path `/`). Repo ini adalah **split** untuk Cloudflare Pages/Workers: marketing + CMS ringan, API konten di homelab.

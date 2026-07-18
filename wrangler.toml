@@ -1,5 +1,10 @@
 # Cloudflare Workers + OpenNext (@opennextjs/cloudflare)
 # Docs: https://opennext.js.org/cloudflare
+#
+# Workers Builds (dashboard → Settings → Build) — NOT wrangler [build]:
+#   Build command:  pnpm run build:cf
+#   Deploy command: npx wrangler deploy
+# Wrong: `pnpm run build` (plain next build) → "Could not find compiled Open Next config"
 
 name = "teknovo-web"
 main = ".open-next/worker.js"
