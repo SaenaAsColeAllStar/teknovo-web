@@ -61,7 +61,11 @@ Body `POST/PATCH` (Zod mirror di `src/lib/api-client.ts`):
   "konten": "html string",
   "kategoriId": "uuid?",
   "status": "DRAFT|PUBLISHED|ARCHIVED",
-  "coverUrl": "https://...?"
+  "coverUrl": "https://...?",
+  "metaTitle": "string? (max ~70)",
+  "metaDescription": "string? (max ~160)",
+  "ogImageUrl": "https://...?",
+  "canonicalUrl": "https://...?"
 }
 ```
 
@@ -128,6 +132,25 @@ Upload/list/delete langsung ke binding Workers `CMS_BUCKET` (prefix `cms/uploads
 
 URL publik: `R2_PUBLIC_URL` + key (`publicAssetUrl` / `r2ObjectUrl`). Hanya key di bawah `cms/uploads/` yang boleh dihapus (aset landing `media/` / `brand/` aman).
 
+### Pengaturan situs (admin)
+
+Singleton metadata portal:
+
+| Method | Path | Auth | Keterangan |
+|--------|------|------|------------|
+| `GET` | `/v1/pengaturan` | Publik atau Bearer | Baca settings (publik boleh subset) |
+| `PATCH` | `/v1/pengaturan` | Bearer **admin** | Update penuh |
+
+Body `PATCH` (mirror `zPengaturanSitusPublikPatch`): SEO (`siteTitle`, `siteDescription`, `defaultOgImageUrl`, `googleAnalyticsId`), kontak/PPDB, sambutan, sosial, serta field legacy marquee.
+
+### Analytics (CMS)
+
+| Method | Path | Auth | Keterangan |
+|--------|------|------|------------|
+| `GET` | `/v1/analytics/overview` | Bearer admin\|editor | Opsional — counts ringkas |
+
+Jika endpoint belum ada, teknovo-web mengagregasi dari list berita/artikel/kategori (sample limit 100).
+
 ### Auth bridge
 
 CMS mengirim `Authorization: Bearer <Clerk JWT>` (atau session token yang di-verify di api-web). Mapping role: `publicMetadata.role` ∈ `admin|editor|viewer|siswa`.
@@ -164,6 +187,8 @@ services/api-web/
     routes/v1/berita.ts
     routes/v1/artikel-siswa.ts
     routes/v1/kategori.ts
+    routes/v1/pengaturan.ts
+    routes/v1/analytics.ts
     middleware/auth.ts
   prisma/
   Dockerfile

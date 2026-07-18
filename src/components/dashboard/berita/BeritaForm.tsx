@@ -58,6 +58,10 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
       kategoriId: initial?.kategori?.id ?? "",
       status: initial?.status ?? "DRAFT",
       coverUrl: initial?.coverUrl ?? "",
+      metaTitle: initial?.metaTitle ?? "",
+      metaDescription: initial?.metaDescription ?? "",
+      ogImageUrl: initial?.ogImageUrl ?? "",
+      canonicalUrl: initial?.canonicalUrl ?? "",
     },
   });
 
@@ -316,6 +320,76 @@ export function BeritaForm({ mode, initial, kategori }: Props) {
           </p>
         ) : null}
       </div>
+
+      <fieldset className="space-y-4 border border-[color:var(--color-border)] p-4">
+        <legend className="px-1 text-sm font-semibold text-[color:var(--color-brand)]">
+          SEO & metadata
+        </legend>
+        <p className="text-xs text-[color:var(--color-body-subtle)]">
+          Kosongkan untuk memakai judul / ringkasan / cover sebagai fallback
+          publik.
+        </p>
+        <div className="space-y-2">
+          <Label htmlFor="metaTitle">
+            Meta title{" "}
+            <span className="font-normal text-[color:var(--color-body-subtle)]">
+              (max 70)
+            </span>
+          </Label>
+          <Input
+            id="metaTitle"
+            disabled={!!busy || readOnly}
+            maxLength={70}
+            {...form.register("metaTitle")}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="metaDescription">
+            Meta description{" "}
+            <span className="font-normal text-[color:var(--color-body-subtle)]">
+              (max 160)
+            </span>
+          </Label>
+          <textarea
+            id="metaDescription"
+            rows={3}
+            maxLength={160}
+            disabled={!!busy || readOnly}
+            className="flex min-h-[5rem] w-full rounded-none border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 disabled:opacity-50"
+            {...form.register("metaDescription")}
+          />
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="ogImageUrl">OG image URL</Label>
+            <Input
+              id="ogImageUrl"
+              disabled={!!busy || readOnly}
+              placeholder="https://… (kosong = cover)"
+              {...form.register("ogImageUrl")}
+            />
+            {form.formState.errors.ogImageUrl ? (
+              <p className="text-xs text-[color:var(--color-danger)]">
+                {form.formState.errors.ogImageUrl.message}
+              </p>
+            ) : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="canonicalUrl">Canonical URL</Label>
+            <Input
+              id="canonicalUrl"
+              disabled={!!busy || readOnly}
+              placeholder="https://… (opsional)"
+              {...form.register("canonicalUrl")}
+            />
+            {form.formState.errors.canonicalUrl ? (
+              <p className="text-xs text-[color:var(--color-danger)]">
+                {form.formState.errors.canonicalUrl.message}
+              </p>
+            ) : null}
+          </div>
+        </div>
+      </fieldset>
 
       {canWrite ? (
         <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--color-border)] pt-4">

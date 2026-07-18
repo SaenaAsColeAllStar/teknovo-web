@@ -26,6 +26,14 @@ export type PengaturanSitusPublikData = {
   whatsappPpdb: string;
   sambutanNamaKepala: string | null;
   sambutanJabatan: string | null;
+  siteTitle: string;
+  siteDescription: string;
+  defaultOgImageUrl: string;
+  googleAnalyticsId: string;
+  sosialInstagramUrl: string;
+  sosialYoutubeUrl: string;
+  sosialFacebookUrl: string;
+  sosialTiktokUrl: string;
   updatedAt: string | null;
 };
 
@@ -36,8 +44,11 @@ export const DEFAULT_PPDB_GELOMBANG_2 =
 export const DEFAULT_PPDB_JAM_LAYANAN = "Senin–Jumat, 08.00–15.00 WIB";
 export const DEFAULT_PPDB_BIAYA_KETERANGAN =
   "Biaya pendaftaran dan administrasi mengikuti keputusan yayasan sekolah. Rincian nominal dan tata cara pembayaran diinformasikan setelah verifikasi berkas awal.";
-export const DEFAULT_KONTAK_EMAIL = "info@smateknovo.sch.id";
+export const DEFAULT_KONTAK_EMAIL = "info@smkteknovo.sch.id";
 export const DEFAULT_WHATSAPP_PPDB = "0898-8131-858";
+export const DEFAULT_SITE_TITLE = "SMK TEKNOVO — Teknologi & Vokasional";
+export const DEFAULT_SITE_DESCRIPTION =
+  "SMK Teknologi dan Vokasional Miftahul Huda Rancasari — program kejuruan, PPDB, berita sekolah, dan layanan digital untuk siswa serta orang tua.";
 
 const DEFAULT_LANDING_MARQUEE: LandingMarqueeItem[] = HOME_FLASH_MARQUEE_ITEMS.map((label) => ({
   label,
@@ -58,4 +69,12 @@ export const PENGATURAN_SITUS_PUBLIK_DEFAULTS: Omit<PengaturanSitusPublikData, "
   whatsappPpdb: DEFAULT_WHATSAPP_PPDB,
   sambutanNamaKepala: null,
   sambutanJabatan: null,
+  siteTitle: DEFAULT_SITE_TITLE,
+  siteDescription: DEFAULT_SITE_DESCRIPTION,
+  defaultOgImageUrl: "",
+  googleAnalyticsId: "",
+  sosialInstagramUrl: "https://www.instagram.com/smateknovo/",
+  sosialYoutubeUrl: "",
+  sosialFacebookUrl: "",
+  sosialTiktokUrl: "",
 };

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
+import type { PengaturanSitusPublikData } from "@/lib/pengaturan-situs-publik-defaults";
+import type { PengaturanSitusPublikPatchInput } from "@/lib/validations/pengaturan-situs-publik";
 import type { ApiListResponse, ApiOk } from "@/types/api";
+import type { CmsAnalyticsOverview } from "@/types/analytics";
 import type {
   ArtikelSiswa,
   ArtikelSiswaListItem,
@@ -325,6 +328,10 @@ function normalizeBeritaPayload(values: BeritaFormValues) {
     kategoriId: values.kategoriId?.trim() || undefined,
     status: values.status,
     coverUrl: values.coverUrl?.trim() || undefined,
+    metaTitle: values.metaTitle?.trim() || undefined,
+    metaDescription: values.metaDescription?.trim() || undefined,
+    ogImageUrl: values.ogImageUrl?.trim() || undefined,
+    canonicalUrl: values.canonicalUrl?.trim() || undefined,
   };
 }
 
@@ -340,6 +347,10 @@ export const beritaFormSchema = z.object({
   kategoriId: z.string().optional(),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]),
   coverUrl: z.string().url().optional().or(z.literal("")),
+  metaTitle: z.string().max(70).optional().or(z.literal("")),
+  metaDescription: z.string().max(160).optional().or(z.literal("")),
+  ogImageUrl: z.string().url().optional().or(z.literal("")),
+  canonicalUrl: z.string().url().optional().or(z.literal("")),
 });
 
 export type BeritaFormValues = z.infer<typeof beritaFormSchema>;
@@ -561,3 +572,91 @@ export const artikelSiswaFormSchema = z.object({
 });
 
 export type ArtikelSiswaFormValues = z.infer<typeof artikelSiswaFormSchema>;
+
+/* ─── Pengaturan situs (admin) ───────────────────────────────────── */
+
+export async function fetchPengaturanCms(
+  token: string,
+): Promise<PengaturanSitusPublikData> {
+  const data = await request<ApiOk<PengaturanSitusPublikData>>(
+    "/v1/pengaturan",
+    { token, cache: "no-store" },
+  );
+  return data.data;
+}
+
+export async function updatePengaturanCms(
+  values: PengaturanSitusPublikPatchInput,
+  token: string,
+): Promise<PengaturanSitusPublikData> {
+  const data = await request<ApiOk<PengaturanSitusPublikData>>(
+    "/v1/pengaturan",
+    {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(values),
+    },
+  );
+  return data.data;
+}
+
+/** Prefer dedicated analytics endpoint; fall back to aggregating list queries. */
+export async function fetchCmsAnalytics(
+  token: string,
+): Promise<CmsAnalyticsOverview> {
+  if (!API_URL) {
+    return emptyAnalytics("unavailable");
+  }
+
+  try {
+    const data = await request<ApiOk<CmsAnalyticsOverview>>(
+      "/v1/analytics/overview",
+      { token, cache: "no-store" },
+    );
+    return { ...data.data, source: "api" };
+  } catch {
+    /* aggregate below */
+  }
+
+  try {
+    const [beritaAll, artikelAll, kategoriAll] = await Promise.all([
+      fetchBeritaListCms(token, { limit: 100 }),
+      fetchArtikelSiswaListCms(token, { limit: 100 }),
+      fetchKategoriListCms(token),
+    ]);
+
+    const berita = beritaAll.data;
+    const artikel = artikelAll.data;
+    const kategori = kategoriAll.data;
+
+    return {
+      beritaTotal: beritaAll.meta?.total ?? berita.length,
+      beritaPublished: berita.filter((b) => b.status === "PUBLISHED").length,
+      beritaDraft: berita.filter((b) => b.status === "DRAFT").length,
+      beritaArchived: berita.filter((b) => b.status === "ARCHIVED").length,
+      artikelTotal: artikelAll.meta?.total ?? artikel.length,
+      artikelReview: artikel.filter((a) => a.status === "REVIEW").length,
+      artikelPublished: artikel.filter((a) => a.status === "PUBLISHED").length,
+      kategoriTotal: kategoriAll.meta?.total ?? kategori.length,
+      source: "aggregate",
+    };
+  } catch {
+    return emptyAnalytics("unavailable");
+  }
+}
+
+function emptyAnalytics(
+  source: CmsAnalyticsOverview["source"],
+): CmsAnalyticsOverview {
+  return {
+    beritaTotal: 0,
+    beritaPublished: 0,
+    beritaDraft: 0,
+    beritaArchived: 0,
+    artikelTotal: 0,
+    artikelReview: 0,
+    artikelPublished: 0,
+    kategoriTotal: 0,
+    source,
+  };
+}

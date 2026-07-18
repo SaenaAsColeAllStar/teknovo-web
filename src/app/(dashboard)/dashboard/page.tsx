@@ -9,6 +9,7 @@ import {
   Tags,
 } from "lucide-react";
 
+import { DashboardAnalytics } from "@/components/dashboard/DashboardAnalytics";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -47,6 +48,13 @@ export default async function DashboardHomePage() {
           Peran Anda: <strong>{CMS_ROLE_LABEL[role]}</strong>.
         </p>
       </div>
+
+      {!isSiswa ? (
+        <DashboardAnalytics
+          canAccessBerita={canAccessBeritaSekolah}
+          canViewModerasi={canViewModerasi}
+        />
+      ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {canAccessBeritaSekolah ? (
@@ -189,7 +197,7 @@ export default async function DashboardHomePage() {
             Clerk roles: <code>publicMetadata.role</code> ∈{" "}
             <code>admin|editor|viewer|siswa</code>. Artikel siswa:{" "}
             <code>/v1/artikel-siswa</code> · moderasi approve hanya{" "}
-            <code>admin</code>.
+            <code>admin</code>. Pengaturan: <code>/v1/pengaturan</code> (admin).
           </p>
         </CardContent>
       </Card>
