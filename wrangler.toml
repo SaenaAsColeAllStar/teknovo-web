@@ -15,7 +15,14 @@ binding = "ASSETS"
 binding = "WORKER_SELF_REFERENCE"
 service = "teknovo-web"
 
-# CMS content + media (JSON berita/kategori + uploads)
+# CMS structured content (berita, artikel, kategori, pengaturan)
+[[d1_databases]]
+binding = "DB"
+database_name = "teknovo-article"
+database_id = "3defaaff-95fd-44f2-a85f-c40a1ce85c6e"
+migrations_dir = "migrations"
+
+# CMS media uploads + landing assets
 [[r2_buckets]]
 binding = "CMS_BUCKET"
 bucket_name = "teknovo"

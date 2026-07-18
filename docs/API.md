@@ -1,17 +1,29 @@
-# API Contract — teknovo-web ↔ api-web (homelab)
+# API Contract — teknovo-web CMS
 
-Base URL: `API_URL` / `NEXT_PUBLIC_API_URL` (tanpa trailing slash).
+**Default backend (sekarang): Cloudflare D1** `teknovo-article` via binding `DB`, exposed as same-origin `/api/v1/*`.
+
+Optional: set `API_URL` / `NEXT_PUBLIC_API_URL` to point at external api-web instead (homelab). Jika kosong, client memakai `/api/v1/...` (D1).
+
+Media tetap di **R2** (`CMS_BUCKET`).
 
 ## Env (teknovo-web)
 
 | Variable | Required | Keterangan |
 |----------|----------|------------|
-| `API_URL` | Ya (server) | Base URL api-web, mis. `http://127.0.0.1:4010` |
-| `NEXT_PUBLIC_API_URL` | Ya (CMS browser) | Sama dengan `API_URL` agar form dashboard memanggil API dari klien |
-| `REVALIDATE_SECRET` | Ya (callback) | Shared secret untuk `POST /api/revalidate` dari api-web |
+| D1 `DB` | Ya (Workers) | Binding di `wrangler.toml` → database `teknovo-article` |
+| `API_URL` | Tidak | Jika di-set, override ke api-web eksternal |
+| `NEXT_PUBLIC_API_URL` | Tidak | Sama; kosong = same-origin D1 |
+| `REVALIDATE_SECRET` | Opsional | Callback eksternal ke `POST /api/revalidate` |
 | Clerk keys | Ya (CMS) | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` |
 
-Tanpa `API_URL` / `NEXT_PUBLIC_API_URL`, dashboard menampilkan error state yang jelas; halaman publik berita kegiatan memakai konten fallback lokal; artikel siswa publik kosong aman.
+Migrasi:
+
+```bash
+pnpm d1:migrate:remote   # production D1
+pnpm d1:migrate:local    # local wrangler D1
+```
+
+Tanpa binding D1 (plain `next dev`), route `/api/v1` mengembalikan 503 dengan pesan jelas. Gunakan `pnpm preview` / deploy.
 
 Semua respons sukses berbentuk:
 

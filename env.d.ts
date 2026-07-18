@@ -6,6 +6,7 @@
  * Run `pnpm cf-typegen` locally for the full generated Env + runtime types.
  */
 interface CloudflareEnv {
+  DB: D1Database;
   CMS_BUCKET: R2Bucket;
   ASSETS: Fetcher;
   WORKER_SELF_REFERENCE: Fetcher;

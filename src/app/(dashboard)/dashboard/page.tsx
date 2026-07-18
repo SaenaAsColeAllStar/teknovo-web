@@ -174,18 +174,19 @@ export default async function DashboardHomePage() {
         <CardHeader>
           <CardTitle>Status integrasi</CardTitle>
           <CardDescription>
-            CMS memanggil API homelab (`API_URL`) dan R2 (`CMS_BUCKET`). Lihat
-            docs/API.md.
+            CMS memakai Cloudflare D1 (`teknovo-article`) via `/api/v1`,
+            media di R2 (`CMS_BUCKET`). Lihat docs/API.md.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-[color:var(--color-body)]">
           <p>
-            API_URL:{" "}
+            Backend konten:{" "}
             <code className="bg-[color:var(--color-neutral-soft)] px-1">
-              {process.env.NEXT_PUBLIC_API_URL ||
-                process.env.API_URL ||
-                "(belum diset)"}
+              D1 teknovo-article (/api/v1)
             </code>
+            {process.env.NEXT_PUBLIC_API_URL || process.env.API_URL
+              ? " — override API_URL aktif"
+              : ""}
           </p>
           <p>
             R2_PUBLIC_URL:{" "}

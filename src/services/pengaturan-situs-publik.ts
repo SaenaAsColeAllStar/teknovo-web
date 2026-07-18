@@ -4,7 +4,8 @@ import {
   type PengaturanSitusPublikData,
 } from "@/lib/pengaturan-situs-publik-defaults";
 import type { PengaturanSitusPublikPatchInput } from "@/lib/validations/pengaturan-situs-publik";
-import { getApiBaseUrl } from "@/lib/api-client";
+import { getDb } from "@/lib/d1";
+import { d1GetPengaturan } from "@/lib/d1/pengaturan-repo";
 
 function defaultsToData(): PengaturanSitusPublikData {
   return {
@@ -14,32 +15,11 @@ function defaultsToData(): PengaturanSitusPublikData {
   };
 }
 
-function mergeWithDefaults(
-  partial: Partial<PengaturanSitusPublikData> | null | undefined,
-): PengaturanSitusPublikData {
-  return {
-    ...defaultsToData(),
-    ...partial,
-    id: partial?.id ?? PENGATURAN_SITUS_PUBLIK_ID,
-    landingMarquee:
-      partial?.landingMarquee ?? PENGATURAN_SITUS_PUBLIK_DEFAULTS.landingMarquee,
-  };
-}
-
-/** Server: coba GET publik /v1/pengaturan; fallback defaults. */
+/** Server: baca dari D1; fallback defaults. */
 export async function getPengaturanSitusPublikRaw(): Promise<PengaturanSitusPublikData> {
-  const base = getApiBaseUrl();
-  if (!base) return defaultsToData();
-
   try {
-    const res = await fetch(`${base}/v1/pengaturan`, {
-      headers: { Accept: "application/json" },
-      next: { revalidate: 120, tags: ["pengaturan-situs"] },
-    });
-    if (!res.ok) return defaultsToData();
-    const json = (await res.json()) as { ok?: boolean; data?: PengaturanSitusPublikData };
-    if (!json?.ok || !json.data) return defaultsToData();
-    return mergeWithDefaults(json.data);
+    const db = await getDb();
+    return await d1GetPengaturan(db);
   } catch {
     return defaultsToData();
   }
@@ -59,7 +39,7 @@ export async function updatePengaturanSitusPublik(
   _input: PengaturanSitusPublikPatchInput,
 ): Promise<PengaturanSitusPublikData> {
   throw new Error(
-    "Gunakan updatePengaturanCms di dashboard (Bearer Clerk) — PATCH /v1/pengaturan.",
+    "Gunakan updatePengaturanCms / PATCH /api/v1/pengaturan (admin + D1).",
   );
 }
 

@@ -12,17 +12,42 @@ import type {
 import type { Berita, BeritaListItem, BeritaStatus } from "@/types/berita";
 import type { Kategori } from "@/types/kategori";
 
-const API_URL =
+const EXTERNAL_API_URL =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
   process.env.API_URL?.replace(/\/$/, "") ||
   "";
 
+/**
+ * Base URL for CMS content API.
+ * - If `API_URL` / `NEXT_PUBLIC_API_URL` set → external api-web
+ * - Else → same-origin D1 routes under `/api/v1/...`
+ */
 export function getApiBaseUrl(): string {
-  return API_URL;
+  if (EXTERNAL_API_URL) return EXTERNAL_API_URL;
+  if (typeof window !== "undefined") return "";
+  return (
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
+    "http://127.0.0.1:3000"
+  );
 }
 
+/** D1 same-origin is always “configured”; binding may still 503 on plain `next dev`. */
 export function isApiConfigured(): boolean {
-  return Boolean(API_URL);
+  return true;
+}
+
+export function isExternalApi(): boolean {
+  return Boolean(EXTERNAL_API_URL);
+}
+
+function resolveRequestUrl(path: string): string {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  const base = getApiBaseUrl();
+  if (EXTERNAL_API_URL) {
+    return `${EXTERNAL_API_URL}${normalized}`;
+  }
+  // D1-backed Next.js route handlers
+  return `${base}/api${normalized}`;
 }
 
 export class ApiClientError extends Error {
@@ -48,7 +73,7 @@ function apiErrorMessage(status: number, body: unknown): string {
   ) {
     return (body.error as { message: string }).message;
   }
-  if (status === 503) return "API_URL belum dikonfigurasi atau API tidak tersedia.";
+  if (status === 503) return "D1/API tidak tersedia. Deploy Workers + jalankan migrasi D1.";
   if (status === 401 || status === 403) return "Sesi tidak valid. Masuk ulang lalu coba lagi.";
   if (status === 404) return "Data tidak ditemukan.";
   return `Permintaan API gagal (${status}).`;
@@ -58,10 +83,6 @@ async function request<T>(
   path: string,
   init?: RequestInit & { token?: string },
 ): Promise<T> {
-  if (!API_URL) {
-    throw new ApiClientError("API_URL belum dikonfigurasi", 503);
-  }
-
   const headers = new Headers(init?.headers);
   headers.set("Accept", "application/json");
   if (init?.body && !headers.has("Content-Type")) {
@@ -73,12 +94,12 @@ async function request<T>(
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, {
+    res = await fetch(resolveRequestUrl(path), {
       ...init,
       headers,
     });
   } catch {
-    throw new ApiClientError("Tidak dapat terhubung ke API homelab", 503);
+    throw new ApiClientError("Tidak dapat terhubung ke API CMS (D1/api-web)", 503);
   }
 
   if (!res.ok) {
@@ -134,7 +155,6 @@ export async function fetchBeritaList(
 export async function fetchBeritaListOrNull(
   params?: BeritaListParams,
 ): Promise<BeritaListItem[] | null> {
-  if (!API_URL) return null;
   const qs = new URLSearchParams();
   if (params?.page) qs.set("page", String(params.page));
   if (params?.limit) qs.set("limit", String(params.limit));
@@ -170,7 +190,6 @@ export async function fetchBeritaBySlug(
 export async function fetchBeritaBySlugOrNull(
   slug: string,
 ): Promise<Berita | null | undefined> {
-  if (!API_URL) return undefined;
   try {
     const data = await request<ApiOk<Berita>>(`/v1/berita/${slug}`, {
       next: { revalidate: 60, tags: [`berita:${slug}`] },
@@ -400,7 +419,6 @@ export async function fetchArtikelSiswaList(
 export async function fetchArtikelSiswaListOrNull(
   params?: ArtikelSiswaListParams,
 ): Promise<ArtikelSiswaListItem[] | null> {
-  if (!API_URL) return null;
   const qs = new URLSearchParams();
   if (params?.page) qs.set("page", String(params.page));
   if (params?.limit) qs.set("limit", String(params.limit));
@@ -436,7 +454,6 @@ export async function fetchArtikelSiswaBySlug(
 export async function fetchArtikelSiswaBySlugOrNull(
   slug: string,
 ): Promise<ArtikelSiswa | null | undefined> {
-  if (!API_URL) return undefined;
   try {
     const data = await request<ApiOk<ArtikelSiswa>>(
       `/v1/artikel-siswa/${slug}`,
@@ -604,10 +621,6 @@ export async function updatePengaturanCms(
 export async function fetchCmsAnalytics(
   token: string,
 ): Promise<CmsAnalyticsOverview> {
-  if (!API_URL) {
-    return emptyAnalytics("unavailable");
-  }
-
   try {
     const data = await request<ApiOk<CmsAnalyticsOverview>>(
       "/v1/analytics/overview",
