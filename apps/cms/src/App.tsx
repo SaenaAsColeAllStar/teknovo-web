@@ -1,57 +1,24 @@
-import { ClerkProvider, useAuth } from "@clerk/clerk-react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { ClerkProvider } from "@clerk/clerk-react";
+import { lazy, Suspense } from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 
-import { DashboardLayoutClient } from "./components/DashboardLayoutClient";
-import { ArtikelFormPage, ArtikelListPage } from "./pages/ArtikelPages";
-import { BeritaFormPage } from "./pages/BeritaFormPage";
-import { BeritaListPage } from "./pages/BeritaListPage";
 import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
-import { KategoriPage } from "./pages/KategoriPage";
-import { MediaPage } from "./pages/MediaPage";
-import { ModerasiPage } from "./pages/ModerasiPage";
-import { OverviewPage } from "./pages/OverviewPage";
-import { PengaturanPage } from "./pages/PengaturanPage";
-import { PenggunaPage } from "./pages/PenggunaPage";
 import { SignInPage } from "./pages/SignInPage";
 import { SignUpPage } from "./pages/SignUpPage";
 import { SsoCallbackPage } from "./pages/SsoCallbackPage";
 
 const pk = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
 
-function ProtectedApp() {
-  const { isLoaded, isSignedIn } = useAuth();
+const ProtectedApp = lazy(() =>
+  import("./ProtectedApp").then((m) => ({ default: m.ProtectedApp })),
+);
 
-  if (!isLoaded) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[color:var(--color-neutral-soft)] text-sm text-[color:var(--color-body)]">
-        Memuat sesi…
-      </div>
-    );
-  }
-
-  if (!isSignedIn) {
-    return <Navigate to="/sign-in" replace />;
-  }
-
+function AuthLoading() {
   return (
-    <Routes>
-      <Route element={<DashboardLayoutClient />}>
-        <Route index element={<OverviewPage />} />
-        <Route path="berita" element={<BeritaListPage />} />
-        <Route path="berita/baru" element={<BeritaFormPage mode="create" />} />
-        <Route path="berita/:id/edit" element={<BeritaFormPage mode="edit" />} />
-        <Route path="artikel" element={<ArtikelListPage />} />
-        <Route path="artikel/baru" element={<ArtikelFormPage mode="create" />} />
-        <Route path="artikel/:id/edit" element={<ArtikelFormPage mode="edit" />} />
-        <Route path="moderasi" element={<ModerasiPage />} />
-        <Route path="kategori" element={<KategoriPage />} />
-        <Route path="media" element={<MediaPage />} />
-        <Route path="pengguna" element={<PenggunaPage />} />
-        <Route path="pengaturan" element={<PengaturanPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+    <div className="flex min-h-screen items-center justify-center bg-[color:var(--color-neutral-soft)] text-sm text-[color:var(--color-body)]">
+      Memuat sesi…
+    </div>
   );
 }
 
@@ -81,7 +48,14 @@ export function App() {
           <Route path="/sign-up/*" element={<SignUpPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/sso-callback" element={<SsoCallbackPage />} />
-          <Route path="/*" element={<ProtectedApp />} />
+          <Route
+            path="/*"
+            element={
+              <Suspense fallback={<AuthLoading />}>
+                <ProtectedApp />
+              </Suspense>
+            }
+          />
         </Routes>
         <Toaster position="top-right" />
       </BrowserRouter>

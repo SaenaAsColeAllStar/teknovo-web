@@ -35,6 +35,7 @@ type Spark = {
 /**
  * React Bits ClickSpark (JS + CSS / inline-style variant) — canvas spark bursts on click.
  * Respects `prefers-reduced-motion: reduce` (no sparks / no animation loop).
+ * RAF only runs while sparks are alive (avoids perpetual main-thread work / INP drag).
  */
 export function ClickSpark({
   sparkColor = "#fff",
@@ -49,12 +50,16 @@ export function ClickSpark({
 }: ClickSparkProps): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sparksRef = useRef<Spark[]>([]);
-  const startTimeRef = useRef<number | null>(null);
+  const animatingRef = useRef(false);
+  const reduceMotionRef = useRef(false);
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sync = () => setReduceMotion(media.matches);
+    const sync = () => {
+      reduceMotionRef.current = media.matches;
+      setReduceMotion(media.matches);
+    };
     sync();
     media.addEventListener("change", sync);
     return () => media.removeEventListener("change", sync);
@@ -109,28 +114,35 @@ export function ClickSpark({
     [easing],
   );
 
-  useEffect(() => {
-    if (reduceMotion) {
-      sparksRef.current = [];
-      const canvas = canvasRef.current;
-      const ctx = canvas?.getContext("2d");
-      if (canvas && ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-      return;
+  const easeFuncRef = useRef(easeFunc);
+  easeFuncRef.current = easeFunc;
+
+  const clearCanvas = useCallback(() => {
+    const canvas = canvasRef.current;
+    const ctx = canvas?.getContext("2d");
+    if (canvas && ctx) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+  }, []);
+
+  useEffect(() => {
+    if (!reduceMotion) return;
+    sparksRef.current = [];
+    animatingRef.current = false;
+    clearCanvas();
+  }, [reduceMotion, clearCanvas]);
+
+  const startAnimating = useCallback(() => {
+    if (animatingRef.current || reduceMotionRef.current) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    let animationId: number;
+    animatingRef.current = true;
 
     const draw = (timestamp: number) => {
-      if (!startTimeRef.current) {
-        startTimeRef.current = timestamp;
-      }
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       sparksRef.current = sparksRef.current.filter((spark) => {
@@ -140,7 +152,7 @@ export function ClickSpark({
         }
 
         const progress = elapsed / duration;
-        const eased = easeFunc(progress);
+        const eased = easeFuncRef.current(progress);
 
         const distance = eased * sparkRadius * extraScale;
         const lineLength = sparkSize * (1 - eased);
@@ -160,27 +172,19 @@ export function ClickSpark({
         return true;
       });
 
-      animationId = requestAnimationFrame(draw);
+      if (sparksRef.current.length > 0) {
+        requestAnimationFrame(draw);
+      } else {
+        animatingRef.current = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
     };
 
-    animationId = requestAnimationFrame(draw);
-
-    return () => {
-      cancelAnimationFrame(animationId);
-    };
-  }, [
-    sparkColor,
-    sparkSize,
-    sparkRadius,
-    sparkCount,
-    duration,
-    easeFunc,
-    extraScale,
-    reduceMotion,
-  ]);
+    requestAnimationFrame(draw);
+  }, [sparkColor, sparkSize, sparkRadius, duration, extraScale]);
 
   const handleClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (reduceMotion) return;
+    if (reduceMotionRef.current) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -197,6 +201,7 @@ export function ClickSpark({
     }));
 
     sparksRef.current.push(...newSparks);
+    startAnimating();
   };
 
   return (

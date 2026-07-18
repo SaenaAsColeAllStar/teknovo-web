@@ -74,7 +74,6 @@ function BlogFeaturedCard({ item }: { item: BeritaItem }): ReactElement {
             alt=""
             fill
             sizes="(max-width: 1024px) 100vw, 33vw"
-            priority
             className="object-cover"
           />
         ) : (

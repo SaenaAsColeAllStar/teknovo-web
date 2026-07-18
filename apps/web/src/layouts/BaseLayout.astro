@@ -7,6 +7,8 @@ type Props = {
   description?: string;
   canonical?: string;
   ogImage?: string;
+  /** High-priority image URLs to preload (e.g. home hero LCP). */
+  preloadImages?: string[];
 };
 
 const {
@@ -14,10 +16,16 @@ const {
   description = "Portal resmi SMK TEKNOVO — Teknologi & Vokasional di Pamanukan Subang.",
   canonical,
   ogImage,
+  preloadImages = [],
 } = Astro.props;
 
 const site = Astro.site?.href?.replace(/\/$/, "") || "https://smkteknovo.sch.id";
 const url = canonical || new URL(Astro.url.pathname, site).href;
+const r2Origin = (
+  (typeof import.meta.env.PUBLIC_R2_URL === "string" &&
+    import.meta.env.PUBLIC_R2_URL) ||
+  "https://r2.ctos.web.id"
+).replace(/\/$/, "");
 ---
 
 <!doctype html>
@@ -40,6 +48,13 @@ const url = canonical || new URL(Astro.url.pathname, site).href;
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href={r2Origin} crossorigin />
+    <link rel="dns-prefetch" href={r2Origin} />
+    {
+      preloadImages.map((href) => (
+        <link rel="preload" as="image" href={href} fetchpriority="high" />
+      ))
+    }
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
       rel="stylesheet"

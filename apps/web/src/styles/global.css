@@ -110,6 +110,28 @@ body {
   }
 }
 
+/**
+ * Hero overlay hamburger — stay visible until primary links appear (≥lg).
+ * Do not reuse `.ds-menu-toggle` (hides at 768px) or tablet loses nav access.
+ */
+.hero-menu-toggle {
+  display: inline-flex;
+}
+
+.hero-mobile-nav {
+  display: block;
+}
+
+@media (min-width: 1024px) {
+  .hero-menu-toggle {
+    display: none !important;
+  }
+
+  .hero-mobile-nav {
+    display: none !important;
+  }
+}
+
 /* Drawer navigasi mobile */
 @keyframes teknovo-slide-in-right {
   from {

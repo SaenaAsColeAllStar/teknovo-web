@@ -5,8 +5,8 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 
+import { HeroOverlayNav } from "@/components/features/landing/HeroOverlayNav";
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
-import { HomeCardNav } from "@/components/ui/card-nav/HomeCardNav";
 import {
   HOME_HERO_CTA_LABEL,
   HOME_HERO_LEDE,
@@ -20,13 +20,15 @@ import { cn } from "@/lib/utils";
 const SLIDES = LANDING_MEDIA.hero.slides;
 
 /**
- * Hero beranda full-bleed: foto/video edge-to-edge di bawah overlay nav,
- * tipografi watermark, anchor kiri (judul + lede + CTA), carousel thumb kanan-bawah.
+ * Hero beranda full-bleed: foto edge-to-edge, overlay nav pin di atas section,
+ * watermark, anchor kiri (judul + lede + CTA), carousel thumb kanan-bawah.
  */
 export function HeroSection(): ReactElement {
   const reduceMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [videoFailed, setVideoFailed] = useState(false);
+  /** Defer ~1MB MP4 until after LCP so the still WebP remains the LCP element. */
+  const [videoAllowed, setVideoAllowed] = useState(false);
 
   const slide = SLIDES[index] ?? SLIDES[0];
   const count = SLIDES.length;
@@ -48,13 +50,51 @@ export function HeroSection(): ReactElement {
     return () => window.clearInterval(id);
   }, [go, index, reduceMotion]);
 
+  useEffect(() => {
+    if (reduceMotion) {
+      setVideoAllowed(false);
+      return;
+    }
+
+    let cancelled = false;
+    let idleId: number | undefined;
+    let timeoutId: number | undefined;
+
+    const enable = () => {
+      if (!cancelled) setVideoAllowed(true);
+    };
+
+    const schedule = () => {
+      if (typeof window.requestIdleCallback === "function") {
+        idleId = window.requestIdleCallback(enable, { timeout: 2500 });
+      } else {
+        timeoutId = window.setTimeout(enable, 1200);
+      }
+    };
+
+    if (document.readyState === "complete") {
+      schedule();
+    } else {
+      window.addEventListener("load", schedule, { once: true });
+    }
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("load", schedule);
+      if (idleId !== undefined && typeof window.cancelIdleCallback === "function") {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, [reduceMotion]);
+
   return (
     <section
       id="beranda"
       className="relative isolate flex min-h-[100svh] w-full flex-col overflow-hidden bg-brand-strong text-white"
       aria-label="Beranda SMK TEKNOVO"
     >
-      {/* Full-bleed media */}
+      {/* Full-bleed photographic scene — image always present; video enhances when available */}
       <div className="absolute inset-0">
         <AnimatePresence mode="sync" initial={false}>
           <m.div
@@ -65,31 +105,31 @@ export function HeroSection(): ReactElement {
             exit={reduceMotion ? undefined : { opacity: 0 }}
             transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
           >
-            {!videoFailed ? (
+            <Image
+              src={slide.bg}
+              alt=""
+              fill
+              priority={index === 0}
+              fetchPriority={index === 0 ? "high" : "auto"}
+              unoptimized
+              className="object-cover"
+              sizes="100vw"
+            />
+            {videoAllowed && !videoFailed ? (
               <video
                 key={slide.videoMp4}
-                className="h-full w-full object-cover"
+                className="absolute inset-0 h-full w-full object-cover"
                 autoPlay
                 muted
                 playsInline
                 loop
-                preload="metadata"
+                preload="none"
                 poster={slide.bg}
                 onError={() => setVideoFailed(true)}
               >
                 <source src={slide.videoMp4} type="video/mp4" />
               </video>
-            ) : (
-              <Image
-                src={slide.bg}
-                alt=""
-                fill
-                priority={index === 0}
-                unoptimized
-                className="object-cover"
-                sizes="100vw"
-              />
-            )}
+            ) : null}
           </m.div>
         </AnimatePresence>
 
@@ -100,10 +140,10 @@ export function HeroSection(): ReactElement {
         />
       </div>
 
-      {/* Floating CardNav — three-tier PublicMarketingNavbar stays hidden on `/` */}
-      <HomeCardNav />
+      {/* Pinned hero overlay nav — three-tier chrome stays hidden on `/` */}
+      <HeroOverlayNav />
 
-      {/* Oversized watermark between sky and building */}
+      {/* Oversized watermark between sky and subject */}
       <m.p
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-[22%] z-[1] w-[150%] -translate-x-1/2 select-none text-center text-[22vw] font-bold leading-none tracking-[-0.05em] text-white mix-blend-soft-light sm:top-[20%] sm:text-[16vw] lg:top-[18%] lg:text-[13vw]"
@@ -114,10 +154,9 @@ export function HeroSection(): ReactElement {
         {HOME_HERO_WATERMARK}
       </m.p>
 
-      {/* Bottom anchors */}
+      {/* Bottom anchors — story above thumbs on mobile */}
       <div className="relative z-[2] mt-auto flex flex-1 flex-col justify-end">
         <div className="public-site-container flex w-full flex-col gap-10 pb-8 pt-8 sm:pb-12 sm:pt-10 md:pb-14 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
-          {/* Story — above thumbs on narrow */}
           <m.div
             className="max-w-xl space-y-4 lg:pb-1"
             initial={reduceMotion ? false : { opacity: 0, y: 28 }}

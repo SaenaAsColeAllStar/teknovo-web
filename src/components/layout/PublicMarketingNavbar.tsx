@@ -73,7 +73,7 @@ const navItemActiveClassName = "text-brand underline decoration-2 underline-offs
 
 export type PublicMarketingNavbarProps = {
   /**
-   * Sembunyikan chrome tiga tingkat (beranda memakai HomeCardNav di dalam hero).
+   * Sembunyikan chrome tiga tingkat (beranda memakai `HeroOverlayNav` di dalam hero).
    * Bila tidak di-set, otomatis true saat pathname situs publik adalah `/`.
    */
   hidden?: boolean;
@@ -118,13 +118,19 @@ export function PublicMarketingNavbar({
     if (!header || typeof ResizeObserver === "undefined") return;
 
     const syncNavBottom = () => {
-      header.style.setProperty("--public-nav-bottom", `${header.offsetHeight}px`);
+      document.documentElement.style.setProperty(
+        "--public-nav-bottom",
+        `${header.offsetHeight}px`,
+      );
     };
 
     syncNavBottom();
     const observer = new ResizeObserver(syncNavBottom);
     observer.observe(header);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      document.documentElement.style.removeProperty("--public-nav-bottom");
+    };
   }, [mobileOpen, hideChrome]);
 
   function onSearchSubmit(event: FormEvent<HTMLFormElement>) {

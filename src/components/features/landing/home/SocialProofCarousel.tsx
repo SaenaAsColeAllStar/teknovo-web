@@ -99,7 +99,6 @@ export function SocialProofCarousel({ slides }: SocialProofCarouselProps): React
                 fill
                 sizes={visibleCount > 1 ? "(max-width: 768px) 100vw, 50vw" : "100vw"}
                 className="object-cover"
-                priority={safePage === 0 && idx === 0}
               />
             </div>
           </li>

@@ -5,6 +5,7 @@ import { getPublishedArtikelSiswaCards } from "@/services/artikel-berita-publik"
 import { getPublishedBeritaKegiatanCards } from "@/services/berita-kegiatan-publik";
 import { getLandingPublicStats } from "@/services/landing-stats";
 import { getLocalSeoPageConfig } from "@/lib/local-seo-keywords";
+import { LANDING_MEDIA } from "@/lib/public-media-paths";
 
 const [stats, artikelSiswa, beritaKegiatan] = await Promise.all([
   getLandingPublicStats(),
@@ -15,7 +16,11 @@ const [stats, artikelSiswa, beritaKegiatan] = await Promise.all([
 const seo = getLocalSeoPageConfig("home");
 ---
 
-<BaseLayout title={seo.title} description={seo.description}>
+<BaseLayout
+  title={seo.title}
+  description={seo.description}
+  preloadImages={[LANDING_MEDIA.hero.bg01Webp]}
+>
   <HomePage
     client:load
     stats={stats}
