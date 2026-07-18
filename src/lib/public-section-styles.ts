@@ -1,5 +1,6 @@
 /**
- * Lapisan lebar penuh untuk section konten publik — `main` + `.public-site-container` (full-bleed di landing).
+ * Lapisan section konten publik — shell full-width; isi di dalam `.public-site-container`
+ * (max-w-7xl / 1280px, selaras navbar).
  * Atlas tokens: flat `#E8E8F8` border, surface white — no slate/dark chrome.
  */
 export const publicSectionShellBase =

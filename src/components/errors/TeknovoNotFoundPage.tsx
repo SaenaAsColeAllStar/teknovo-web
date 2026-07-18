@@ -58,7 +58,7 @@ export function TeknovoNotFoundPage({
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(19,19,186,0.06),transparent_55%),radial-gradient(ellipse_at_85%_70%,rgba(232,232,248,0.9),transparent_50%)]"
       />
 
-      <div className="relative mx-auto flex w-full max-w-[80rem] flex-1 flex-col justify-center px-5 py-12 sm:px-8 lg:px-12 xl:px-16">
+      <div className="public-site-container relative flex flex-1 flex-col justify-center py-12">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14 xl:gap-20">
           {/* Left — reading order first */}
           <div className="flex flex-col items-start text-left">

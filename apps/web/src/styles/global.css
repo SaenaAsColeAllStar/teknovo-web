@@ -71,13 +71,16 @@ body {
 }
 
 /**
- * Situs publik: lebar penuh di desktop (padding horizontal saja);
+ * Situs publik: lebar selaras navbar pemasaran (~1280px);
  * dashboard tetap kolom terbatas agar form/tabel mudah dibaca.
  */
 @layer components {
-  /** Landing & halaman publik — full-bleed dari `md:` ke atas, padding aman di tepi. */
+  /**
+   * Landing, navbar, footer — satu frame: max-w-7xl (1280px), px-4 (16px),
+   * tanpa padding horizontal dari breakpoint 2xl ke atas.
+   */
   .public-site-container {
-    @apply mx-auto w-full min-w-0 max-w-none px-3 sm:px-6 ps-[max(0.75rem,env(safe-area-inset-left,0px))] pe-[max(0.75rem,env(safe-area-inset-right,0px))] md:px-8 lg:px-10 xl:px-12;
+    @apply mx-auto w-full min-w-0 max-w-7xl px-4 2xl:px-0;
   }
 
   .dashboard-app-container {

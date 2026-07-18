@@ -12,9 +12,14 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@teknovo/shared": ["../../packages/shared/src/index.ts"]
+      "next/link": ["./src/shims/next-link.tsx"],
+      "next/navigation": ["./src/shims/next-navigation.ts"],
+      "@clerk/nextjs": ["./src/shims/clerk-nextjs.ts"],
+      "@/lib/cms-revalidate": ["./src/shims/cms-revalidate.ts"],
+      "@teknovo/shared": ["../../packages/shared/src/index.ts"],
+      "@/*": ["../../src/*"]
     }
   },
   "include": ["src"]

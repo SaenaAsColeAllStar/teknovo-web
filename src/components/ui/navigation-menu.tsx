@@ -12,26 +12,19 @@ import {
 
 import { cn } from "@/lib/utils";
 
-type NavigationMenuProps = ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root> & {
-  viewportVariant?: "default" | "public-mega";
-};
-
-const NavigationMenu = forwardRef<ComponentRef<typeof NavigationMenuPrimitive.Root>, NavigationMenuProps>(
-  ({ className, children, viewportVariant = "default", ...props }, ref): ReactElement => (
-    <NavigationMenuPrimitive.Root
-      ref={ref}
-      className={cn(
-        "relative z-10 flex max-w-max flex-1 items-center justify-center",
-        viewportVariant === "public-mega" && "static",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <NavigationMenuViewport variant={viewportVariant} />
-    </NavigationMenuPrimitive.Root>
-  ),
-);
+const NavigationMenu = forwardRef<
+  ComponentRef<typeof NavigationMenuPrimitive.Root>,
+  ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Root>
+>(({ className, children, ...props }, ref): ReactElement => (
+  <NavigationMenuPrimitive.Root
+    ref={ref}
+    className={cn("relative z-10 flex max-w-max flex-1 items-center justify-center", className)}
+    {...props}
+  >
+    {children}
+    <NavigationMenuViewport />
+  </NavigationMenuPrimitive.Root>
+));
 NavigationMenu.displayName = NavigationMenuPrimitive.Root.displayName;
 
 const NavigationMenuList = forwardRef<
@@ -90,23 +83,12 @@ const NavigationMenuLink = NavigationMenuPrimitive.Link;
 
 const NavigationMenuViewport = forwardRef<
   ComponentRef<typeof NavigationMenuPrimitive.Viewport>,
-  ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport> & {
-    variant?: "default" | "public-mega";
-  }
->(({ className, variant = "default", ...props }, ref): ReactElement => (
-  <div
-    className={cn(
-      "absolute left-0 top-full flex justify-center",
-      // Anchor to sticky header bottom (nearest positioned ancestor), not a guessed rem offset.
-      variant === "public-mega" &&
-        "pointer-events-none inset-x-0 z-[60] justify-center px-4",
-    )}
-  >
+  ComponentPropsWithoutRef<typeof NavigationMenuPrimitive.Viewport>
+>(({ className, ...props }, ref): ReactElement => (
+  <div className="absolute left-0 top-full flex justify-center">
     <NavigationMenuPrimitive.Viewport
       className={cn(
         "origin-top-center relative mt-1.5 h-[var(--radix-navigation-menu-viewport-height)] w-full overflow-hidden rounded-none border border-border-default bg-surface text-heading shadow-[0_16px_40px_-24px_rgb(19_19_186/0.28)] transition-[width,height] duration-300 ease-out md:w-[var(--radix-navigation-menu-viewport-width)]",
-        variant === "public-mega" &&
-          "pointer-events-auto mt-0 w-[min(100vw-2rem,72rem)] max-w-[min(100vw-2rem,72rem)] origin-top rounded-none border border-border-default bg-surface text-heading shadow-[0_16px_40px_-24px_rgb(19_19_186/0.35)] md:w-[min(100vw-2rem,72rem)]",
         className,
       )}
       ref={ref}

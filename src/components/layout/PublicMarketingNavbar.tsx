@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Three-tier marketing navbar — announcement + main (date/brand/actions) + bottom (nav/search).
+ * Three-tier marketing navbar — announcement + main (contact/brand/actions) + bottom (nav/search).
  * Self-contained chrome for the public site layout.
  */
 import { ChevronDown, Mail, Menu, Phone, Search, X } from "lucide-react";
@@ -16,27 +16,13 @@ import {
 } from "react";
 
 import { BrandLogoMark } from "@/components/brand/BrandLogoMark";
-import { PublicNavMegaPanel } from "@/components/layout/PublicNavMegaPanel";
-import { PublicNavbarClock } from "@/components/layout/PublicNavbarClock";
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
 import { usePublicSitePathname } from "@/hooks/use-public-site-pathname";
-import {
-  BRAND_SHORT,
-  BRAND_WORDMARK_LINE1,
-  BRAND_WORDMARK_LINE2,
-} from "@/lib/branding";
+import { BRAND_SHORT } from "@/lib/branding";
 import { CONTACT } from "@/lib/constants";
+import { HOME_FLASH_MARQUEE_ITEMS } from "@/lib/home-landing-content";
 import {
   getPublikWhatsAppUrl,
   PUBLIK_CONTACT_EMAIL,
@@ -45,18 +31,20 @@ import {
 import { isPublicSiteNavEntryActive } from "@/lib/public-site-nav-active";
 import {
   PUBLIC_SITE_MAIN_NAV,
-  PUBLIC_SITE_NAV_PPDB_CTA_LABEL,
   PUBLIC_SITE_PPDB_HREF,
   type PublicSiteNavGroup,
 } from "@/lib/public-site-nav";
 import { cn } from "@/lib/utils";
 
+const CMS_HREF = "https://cms.smkteknovo.sch.id" as const;
+
 const ANNOUNCEMENT_HREF = PUBLIC_SITE_PPDB_HREF;
 const ANNOUNCEMENT_TEXT =
-  "PPDB Tahun Ajaran 2026/2027 telah dibuka — daftar online atau hubungi Tata Usaha untuk info jurusan TM & ULW.";
+  HOME_FLASH_MARQUEE_ITEMS[0] ??
+  "PPDB Tahun Ajaran 2026/2027 telah dibuka — pantau halaman PPDB resmi sekolah.";
 
 const SEARCH_CATEGORIES = [
-  { id: "all", label: "Semua kategori", href: "/berita/berita-terbaru" },
+  { id: "all", label: "Semua", href: "/berita/berita-terbaru" },
   { id: "berita", label: "Berita", href: "/berita/berita-terbaru" },
   { id: "akademik", label: "Akademik", href: "/akademik" },
   { id: "jurusan", label: "Jurusan", href: "/akademik/jurusan" },
@@ -78,13 +66,10 @@ const contactEmailHref = `mailto:${contactEmailDisplay}`;
 
 const tierContainerClassName = "public-site-container flex items-center";
 
-const navLinkClassName = cn(
-  navigationMenuTriggerStyle(),
-  "h-auto rounded-none bg-transparent px-0 text-sm font-medium text-[color:var(--color-heading)] shadow-none hover:bg-transparent hover:text-[color:var(--color-brand-strong)] focus:bg-transparent focus:text-[color:var(--color-brand-strong)] data-[state=open]:bg-transparent data-[state=open]:text-[color:var(--color-brand)] data-[state=open]:shadow-none",
-);
+const navItemClassName =
+  "inline-flex items-center gap-1 text-sm font-medium text-heading transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30";
 
-const navLinkActiveClassName =
-  "text-[color:var(--color-brand)] underline decoration-2 underline-offset-4";
+const navItemActiveClassName = "text-brand underline decoration-2 underline-offset-4";
 
 function buildSearchHref(categoryId: SearchCategoryId, query: string): string {
   const category =
@@ -95,6 +80,79 @@ function buildSearchHref(categoryId: SearchCategoryId, query: string): string {
   }
   const params = new URLSearchParams({ q: trimmed });
   return `${category.href}?${params.toString()}`;
+}
+
+function DesktopNavDropdown({
+  entry,
+  active,
+}: {
+  entry: PublicSiteNavGroup;
+  active: boolean;
+}): ReactElement {
+  const panelId = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={rootRef} className="relative">
+      <button
+        type="button"
+        className={cn(navItemClassName, active && navItemActiveClassName)}
+        aria-expanded={open}
+        aria-controls={panelId}
+        aria-haspopup="menu"
+        onClick={() => setOpen((value) => !value)}
+      >
+        {entry.label}
+        <ChevronDown
+          className={cn(
+            "size-3.5 shrink-0 text-body-subtle transition-transform duration-200",
+            open && "rotate-180 text-brand",
+          )}
+          aria-hidden
+        />
+      </button>
+      {open ? (
+        <div
+          id={panelId}
+          role="menu"
+          className="absolute top-full left-0 z-50 mt-2 min-w-[14rem] border border-border-default bg-surface py-1 shadow-sm"
+        >
+          {entry.items.map((item) => (
+            <PublicSiteLink
+              key={item.href}
+              href={item.href}
+              role="menuitem"
+              className="block px-3 py-2 text-sm font-medium text-heading transition-colors hover:bg-neutral-soft hover:text-brand"
+              onClick={() => setOpen(false)}
+            >
+              {item.label}
+            </PublicSiteLink>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
 }
 
 function MobileNavGroup({
@@ -108,11 +166,11 @@ function MobileNavGroup({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="border-t border-[color:var(--color-border-default)] first:border-t-0">
+    <div className="border-t border-border-default first:border-t-0">
       <button
         type="button"
         id={`${groupId}-trigger`}
-        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm font-medium text-[color:var(--color-heading)]"
+        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm font-medium text-heading"
         aria-expanded={open}
         aria-controls={`${groupId}-panel`}
         onClick={() => setOpen((value) => !value)}
@@ -120,19 +178,24 @@ function MobileNavGroup({
         {entry.label}
         <ChevronDown
           className={cn(
-            "size-4 shrink-0 text-[color:var(--color-body-subtle)] transition-transform duration-200",
-            open && "rotate-180 text-[color:var(--color-brand)]",
+            "size-4 shrink-0 text-body-subtle transition-transform duration-200",
+            open && "rotate-180 text-brand",
           )}
           aria-hidden
         />
       </button>
       {open ? (
-        <div id={`${groupId}-panel`} role="region" aria-labelledby={`${groupId}-trigger`} className="space-y-0.5 pb-2">
+        <div
+          id={`${groupId}-panel`}
+          role="region"
+          aria-labelledby={`${groupId}-trigger`}
+          className="space-y-0.5 pb-2"
+        >
           {entry.items.map((item) => (
             <PublicSiteLink
               key={item.href}
               href={item.href}
-              className="block px-3 py-2 pl-5 text-sm text-[color:var(--color-body)] hover:text-[color:var(--color-heading)]"
+              className="block px-3 py-2 pl-5 text-sm text-body hover:text-heading"
               onClick={onNavigate}
             >
               {item.label}
@@ -144,12 +207,77 @@ function MobileNavGroup({
   );
 }
 
+function JoinedSearchForm({
+  idPrefix,
+  searchQuery,
+  searchCategory,
+  onQueryChange,
+  onCategoryChange,
+  onSubmit,
+  className,
+}: {
+  idPrefix: string;
+  searchQuery: string;
+  searchCategory: SearchCategoryId;
+  onQueryChange: (value: string) => void;
+  onCategoryChange: (value: SearchCategoryId) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  className?: string;
+}): ReactElement {
+  const categoryId = `${idPrefix}-category`;
+  const inputId = `${idPrefix}-query`;
+
+  return (
+    <form
+      onSubmit={onSubmit}
+      className={className}
+      role="search"
+      aria-label="Cari konten sekolah"
+    >
+      <div className="flex w-full min-w-0 max-w-[480px] items-stretch overflow-hidden border border-border-default">
+        <label className="sr-only" htmlFor={categoryId}>
+          Kategori pencarian
+        </label>
+        <select
+          id={categoryId}
+          value={searchCategory}
+          onChange={(event) => onCategoryChange(event.target.value as SearchCategoryId)}
+          className="h-10 shrink-0 border-0 border-r border-border-default bg-surface px-3 text-sm font-medium text-heading focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20"
+        >
+          {SEARCH_CATEGORIES.map((category) => (
+            <option key={category.id} value={category.id}>
+              {category.label}
+            </option>
+          ))}
+        </select>
+        <label className="sr-only" htmlFor={inputId}>
+          Kata kunci
+        </label>
+        <Input
+          id={inputId}
+          value={searchQuery}
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="Cari berita, jurusan…"
+          className="h-10 min-w-0 flex-1 rounded-none border-0 focus-visible:ring-0"
+        />
+        <Button
+          type="submit"
+          className="h-10 shrink-0 gap-2 rounded-none px-4 text-sm font-medium [&_svg]:size-[18px]"
+        >
+          <Search aria-hidden />
+          Cari
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export function PublicMarketingNavbar(): ReactElement {
   const pathname = usePublicSitePathname();
   const router = useRouter();
   const headerRef = useRef<HTMLElement>(null);
   const mobileNavId = useId();
-  const searchInputId = useId();
+  const searchFormId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<SearchCategoryId>("all");
@@ -192,16 +320,16 @@ export function PublicMarketingNavbar(): ReactElement {
     <header
       ref={headerRef}
       className={cn(
-        "sticky top-0 z-50 w-full overflow-visible bg-[color:var(--color-surface)]",
+        "sticky top-0 z-50 w-full overflow-visible bg-surface",
         "[--public-nav-bottom:11rem]",
       )}
     >
       {/* Announcement bar */}
-      <div className="border-b border-[color:var(--color-border-default)] bg-[color:var(--color-border-default)]/55 py-2.5">
+      <div className="border-b border-border-default bg-neutral-soft py-2.5">
         <div className={cn(tierContainerClassName, "justify-center")}>
           <PublicSiteLink
             href={ANNOUNCEMENT_HREF}
-            className="text-center text-xs font-medium text-[color:var(--color-body)] transition-colors hover:text-[color:var(--color-heading)] sm:text-sm"
+            className="text-center text-xs font-medium text-body transition-colors hover:text-heading sm:text-sm"
           >
             {ANNOUNCEMENT_TEXT}
           </PublicSiteLink>
@@ -209,46 +337,72 @@ export function PublicMarketingNavbar(): ReactElement {
       </div>
 
       {/* Main bar */}
-      <div className="border-b border-[color:var(--color-border-default)] py-4">
+      <div className="border-b border-border-default py-4">
         <div
           className={cn(
             tierContainerClassName,
             "relative grid grid-cols-[1fr_auto_1fr] items-center gap-3",
           )}
         >
-          {/* Live date — start (replaces phone/email in top bar) */}
-          <div className="hidden min-w-0 items-center sm:flex">
-            <PublicNavbarClock />
+          {/* Contact — start */}
+          <div className="hidden min-w-0 items-center gap-4 sm:flex">
+            <a
+              href={contactPhoneHref}
+              className="inline-flex items-center gap-2 text-sm font-medium text-body transition-colors hover:text-heading"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              <Phone className="size-[18px] shrink-0" aria-hidden />
+              <span className="truncate">{contactPhoneDisplay}</span>
+            </a>
+            <a
+              href={contactEmailHref}
+              className="inline-flex min-w-0 items-center gap-2 text-sm font-medium text-body transition-colors hover:text-heading"
+            >
+              <Mail className="size-[18px] shrink-0" aria-hidden />
+              <span className="truncate">{contactEmailDisplay}</span>
+            </a>
           </div>
 
-          {/* Brand — center: lambang above wordmark */}
+          {/* Brand — center */}
           <PublicSiteLink
             href="/"
-            className="col-start-2 inline-flex max-w-full shrink-0 flex-col items-center gap-1 justify-self-center text-center focus:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 sm:gap-1.5"
+            className="col-start-2 inline-flex shrink-0 items-center justify-self-center focus:outline-none focus-visible:ring-4 focus-visible:ring-brand/20"
             aria-label={`Beranda ${BRAND_SHORT}`}
           >
-            <BrandLogoMark size="md" shine priority roundedClassName="rounded-none" />
-            <span className="flex min-w-0 flex-col items-center leading-none">
-              <span className="text-xs font-bold tracking-tight text-[color:var(--color-brand)] sm:text-sm">
-                {BRAND_WORDMARK_LINE1}
-              </span>
-              <span className="mt-0.5 max-w-[9.5rem] text-[8px] font-semibold uppercase tracking-[0.04em] text-[color:var(--color-heading)] sm:max-w-none sm:text-[10px] sm:tracking-[0.06em]">
-                {BRAND_WORDMARK_LINE2}
-              </span>
-            </span>
+            <BrandLogoMark
+              pixelSize={32}
+              shine
+              priority
+              roundedClassName="rounded-none"
+            />
           </PublicSiteLink>
 
-          {/* Actions — end: PPDB CTA + mobile menu */}
-          <div className="col-start-3 flex items-center justify-end gap-2 sm:gap-3">
-            <Button asChild className="h-auto px-3 py-2.5 text-sm font-medium sm:px-5">
-              <PublicSiteLink href={PUBLIC_SITE_PPDB_HREF}>
-                {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
-              </PublicSiteLink>
+          {/* Actions — end */}
+          <div className="col-start-3 flex items-center justify-end gap-4">
+            <a
+              href={contactPhoneHref}
+              className="hidden items-center gap-2 text-sm font-medium text-heading transition-colors hover:text-brand md:inline-flex"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Hubungi kami
+              <Phone className="size-[18px] shrink-0" aria-hidden />
+            </a>
+
+            <Button
+              asChild
+              variant="secondary"
+              className="h-auto px-5 py-2.5 text-sm font-medium text-heading"
+            >
+              <a href={CMS_HREF} rel="noopener noreferrer">
+                CMS
+              </a>
             </Button>
 
             <button
               type="button"
-              className="ds-menu-toggle inline-flex size-10 items-center justify-center border border-[color:var(--color-border-default)] text-[color:var(--color-heading)] transition-colors hover:bg-[color:var(--color-border-default)]/40"
+              className="ds-menu-toggle inline-flex size-10 items-center justify-center border border-border-default text-heading transition-colors hover:bg-neutral-soft"
               aria-expanded={mobileOpen}
               aria-controls={mobileNavId}
               aria-label={mobileOpen ? "Tutup menu" : "Buka menu"}
@@ -264,104 +418,57 @@ export function PublicMarketingNavbar(): ReactElement {
         </div>
       </div>
 
-      {/* Bottom bar — primary nav (≥768) + search */}
-      <div className="overflow-visible border-b border-[color:var(--color-border-default)] py-3">
+      {/* Bottom bar — primary nav (≥lg) + joined search (≥md) */}
+      <div className="overflow-visible border-b border-border-default py-3">
         <div
           className={cn(
             tierContainerClassName,
-            "flex-col items-stretch gap-3 overflow-visible lg:flex-row lg:items-center lg:justify-between lg:gap-4",
+            "justify-between gap-4 overflow-visible",
           )}
         >
-          <NavigationMenu
-            className="hidden max-w-none min-w-0 flex-1 justify-start md:flex"
-            viewportVariant="public-mega"
-            delayDuration={120}
+          <nav
+            className="hidden min-w-0 flex-1 items-center gap-6 lg:flex"
+            aria-label="Menu utama"
           >
-            <NavigationMenuList className="flex-wrap justify-start gap-x-6 gap-y-2">
-              {PUBLIC_SITE_MAIN_NAV.map((entry) => {
-                const active = isPublicSiteNavEntryActive(pathname, entry);
+            {PUBLIC_SITE_MAIN_NAV.map((entry) => {
+              const active = isPublicSiteNavEntryActive(pathname, entry);
 
-                if (entry.type === "link") {
-                  return (
-                    <NavigationMenuItem key={entry.href}>
-                      <NavigationMenuLink asChild>
-                        <PublicSiteLink
-                          href={entry.href}
-                          className={cn(navLinkClassName, active && navLinkActiveClassName)}
-                          aria-current={active ? "page" : undefined}
-                        >
-                          {entry.label}
-                        </PublicSiteLink>
-                      </NavigationMenuLink>
-                    </NavigationMenuItem>
-                  );
-                }
-
+              if (entry.type === "link") {
                 return (
-                  <NavigationMenuItem key={entry.id}>
-                    <NavigationMenuTrigger
-                      className={cn(navLinkClassName, active && navLinkActiveClassName)}
-                    >
-                      {entry.label}
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent className="p-0">
-                      <PublicNavMegaPanel entry={entry} />
-                    </NavigationMenuContent>
-                  </NavigationMenuItem>
+                  <PublicSiteLink
+                    key={entry.href}
+                    href={entry.href}
+                    className={cn(navItemClassName, active && navItemActiveClassName)}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    {entry.label}
+                  </PublicSiteLink>
                 );
-              })}
-            </NavigationMenuList>
-          </NavigationMenu>
+              }
 
-          <form
+              return (
+                <DesktopNavDropdown key={entry.id} entry={entry} active={active} />
+              );
+            })}
+          </nav>
+
+          <JoinedSearchForm
+            idPrefix={searchFormId}
+            searchQuery={searchQuery}
+            searchCategory={searchCategory}
+            onQueryChange={setSearchQuery}
+            onCategoryChange={setSearchCategory}
             onSubmit={onSearchSubmit}
-            className="hidden w-full max-w-none md:flex lg:ml-auto lg:max-w-[480px]"
-            role="search"
-            aria-label="Cari konten sekolah"
-          >
-            <div className="flex w-full min-w-0 items-stretch overflow-hidden border border-[color:var(--color-border-default)]">
-              <label className="sr-only" htmlFor={`${searchInputId}-category`}>
-                Kategori pencarian
-              </label>
-              <select
-                id={`${searchInputId}-category`}
-                value={searchCategory}
-                onChange={(event) => setSearchCategory(event.target.value as SearchCategoryId)}
-                className="hidden h-10 shrink-0 border-0 border-r border-[color:var(--color-border-default)] bg-[color:var(--color-surface)] px-3 text-sm font-medium text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 lg:block"
-              >
-                {SEARCH_CATEGORIES.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.label}
-                  </option>
-                ))}
-              </select>
-              <label className="sr-only" htmlFor={searchInputId}>
-                Kata kunci
-              </label>
-              <Input
-                id={searchInputId}
-                value={searchQuery}
-                onChange={(event) => setSearchQuery(event.target.value)}
-                placeholder="Cari berita, jurusan…"
-                className="h-10 min-w-0 flex-1 rounded-none border-0 focus-visible:ring-0"
-              />
-              <Button
-                type="submit"
-                className="h-10 shrink-0 gap-2 rounded-none px-4 text-sm font-medium [&_svg]:size-[18px]"
-              >
-                <Search aria-hidden />
-                Cari
-              </Button>
-            </div>
-          </form>
+            className="ml-auto hidden w-full max-w-[480px] md:flex"
+          />
         </div>
       </div>
 
-      {/* Mobile menu — &lt;768px via .ds-menu-toggle companion panel */}
+      {/* Mobile menu — ≤768px via .ds-menu-toggle companion panel */}
       {mobileOpen ? (
         <div
           id={mobileNavId}
-          className="ds-mobile-nav border-b border-[color:var(--color-border-default)] bg-[color:var(--color-surface)]"
+          className="ds-mobile-nav border-b border-border-default bg-surface"
         >
           <nav
             className={cn(
@@ -378,9 +485,8 @@ export function PublicMarketingNavbar(): ReactElement {
                     key={entry.href}
                     href={entry.href}
                     className={cn(
-                      "block border border-transparent px-3 py-2.5 text-sm font-medium text-[color:var(--color-heading)]",
-                      active &&
-                        "border-[color:var(--color-border-default)] bg-[color:var(--color-border-default)]/40",
+                      "block border border-transparent px-3 py-2.5 text-sm font-medium text-heading",
+                      active && "border-border-default bg-neutral-soft",
                     )}
                     onClick={() => setMobileOpen(false)}
                   >
@@ -398,10 +504,10 @@ export function PublicMarketingNavbar(): ReactElement {
               );
             })}
 
-            <div className="flex flex-col gap-2 border-t border-[color:var(--color-border-default)] pt-3 sm:hidden">
+            <div className="flex flex-col gap-2 border-t border-border-default pt-3 sm:hidden">
               <a
                 href={contactPhoneHref}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-[color:var(--color-body)]"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-body"
                 rel="noopener noreferrer"
                 target="_blank"
                 onClick={() => setMobileOpen(false)}
@@ -411,7 +517,7 @@ export function PublicMarketingNavbar(): ReactElement {
               </a>
               <a
                 href={contactEmailHref}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-[color:var(--color-body)]"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-body"
                 onClick={() => setMobileOpen(false)}
               >
                 <Mail className="size-[18px]" aria-hidden />
@@ -419,45 +525,43 @@ export function PublicMarketingNavbar(): ReactElement {
               </a>
             </div>
 
-            <div className="border-t border-[color:var(--color-border-default)] pt-3 md:hidden">
-              <Button asChild className="h-auto w-full px-3 py-2.5 text-sm font-semibold">
-                <PublicSiteLink
-                  href={PUBLIC_SITE_PPDB_HREF}
+            <div className="flex flex-col gap-2 border-t border-border-default pt-3 md:hidden">
+              <a
+                href={contactPhoneHref}
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-heading"
+                rel="noopener noreferrer"
+                target="_blank"
+                onClick={() => setMobileOpen(false)}
+              >
+                Hubungi kami
+                <Phone className="size-[18px]" aria-hidden />
+              </a>
+              <Button
+                asChild
+                variant="secondary"
+                className="h-auto w-full px-5 py-2.5 text-sm font-medium text-heading"
+              >
+                <a
+                  href={CMS_HREF}
+                  rel="noopener noreferrer"
                   onClick={() => setMobileOpen(false)}
                 >
-                  {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
-                </PublicSiteLink>
+                  CMS
+                </a>
               </Button>
             </div>
 
-            <form
-              onSubmit={onSearchSubmit}
-              className="border-t border-[color:var(--color-border-default)] pt-3 md:hidden"
-              role="search"
-            >
-              <div className="flex flex-col gap-2">
-                <select
-                  value={searchCategory}
-                  onChange={(event) => setSearchCategory(event.target.value as SearchCategoryId)}
-                  className="h-10 w-full border border-[color:var(--color-border-default)] bg-[color:var(--color-surface)] px-3 text-sm font-medium text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20"
-                >
-                  {SEARCH_CATEGORIES.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.label}
-                    </option>
-                  ))}
-                </select>
-                <Input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Cari berita, jurusan…"
-                />
-                <Button type="submit" className="h-10 gap-2 text-sm font-medium [&_svg]:size-[18px]">
-                  <Search aria-hidden />
-                  Cari
-                </Button>
-              </div>
-            </form>
+            <div className="border-t border-border-default pt-3 md:hidden">
+              <JoinedSearchForm
+                idPrefix={`${searchFormId}-mobile`}
+                searchQuery={searchQuery}
+                searchCategory={searchCategory}
+                onQueryChange={setSearchQuery}
+                onCategoryChange={setSearchCategory}
+                onSubmit={onSearchSubmit}
+                className="w-full"
+              />
+            </div>
           </nav>
         </div>
       ) : null}

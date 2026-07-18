@@ -1,197 +1,102 @@
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import {
-  beritaFormSchema,
-  slugifyJudul,
-  type Berita,
-  type BeritaFormValues,
-  type BeritaStatus,
-} from "@teknovo/shared";
-import { toast } from "sonner";
-import { RichTextEditor } from "../components/RichTextEditor";
-import { apiRequest } from "../lib/api";
+import { Link, useParams } from "react-router-dom";
 
-const empty: BeritaFormValues = {
-  judul: "",
-  slug: "",
-  ringkasan: "",
-  konten: "",
-  kategoriId: "",
-  status: "DRAFT",
-  coverUrl: "",
-  metaTitle: "",
-  metaDescription: "",
-  ogImageUrl: "",
-  canonicalUrl: "",
-};
+import { BeritaForm } from "@/components/dashboard/berita/BeritaForm";
+import { Button } from "@/components/ui/button";
+import { ApiClientError, fetchBeritaById, fetchKategoriList } from "@/lib/api-client";
+import type { Berita } from "@/types/berita";
+import type { Kategori } from "@/types/kategori";
 
+/** Mirrors `dashboard/berita/baru/page.tsx` + `dashboard/berita/[id]/edit/page.tsx`. */
 export function BeritaFormPage({ mode }: { mode: "create" | "edit" }) {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { getToken } = useAuth();
-  const [form, setForm] = useState<BeritaFormValues>(empty);
-  const [loading, setLoading] = useState(mode === "edit");
-  const [saving, setSaving] = useState(false);
+  const [kategori, setKategori] = useState<Kategori[]>([]);
+  const [berita, setBerita] = useState<Berita | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (mode !== "edit" || !id) return;
     let cancelled = false;
-    (async () => {
+    async function load() {
+      setLoading(true);
+      setError(null);
       try {
-        const token = await getToken();
-        const item = await apiRequest<Berita>(`/api/v1/berita/id/${id}`, {
-          token,
-        });
-        if (cancelled) return;
-        setForm({
-          judul: item.judul,
-          slug: item.slug,
-          ringkasan: item.ringkasan ?? "",
-          konten: item.konten,
-          kategoriId: item.kategori?.id ?? "",
-          status: item.status,
-          coverUrl: item.coverUrl ?? "",
-          metaTitle: item.metaTitle ?? "",
-          metaDescription: item.metaDescription ?? "",
-          ogImageUrl: item.ogImageUrl ?? "",
-          canonicalUrl: item.canonicalUrl ?? "",
-        });
+        if (mode === "edit" && id) {
+          const token = await getToken();
+          if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
+          const [row, cats] = await Promise.all([
+            fetchBeritaById(id, token),
+            fetchKategoriList(),
+          ]);
+          if (cancelled) return;
+          setBerita(row);
+          setKategori(cats);
+        } else {
+          const cats = await fetchKategoriList();
+          if (cancelled) return;
+          setKategori(cats);
+        }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : "Gagal memuat");
+        if (!cancelled) {
+          setError(err instanceof ApiClientError ? err.message : "Gagal memuat berita.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
-    })();
+    }
+    void load();
     return () => {
       cancelled = true;
     };
   }, [mode, id, getToken]);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const parsed = beritaFormSchema.safeParse(form);
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Validasi gagal");
-      return;
-    }
-    setSaving(true);
-    try {
-      const token = await getToken();
-      if (mode === "create") {
-        const created = await apiRequest<Berita>("/api/v1/berita", {
-          method: "POST",
-          token,
-          body: parsed.data,
-        });
-        toast.success("Berita dibuat");
-        navigate(`/berita/${created.id}/edit`);
-      } else if (id) {
-        await apiRequest<Berita>(`/api/v1/berita/${id}`, {
-          method: "PATCH",
-          token,
-          body: parsed.data,
-        });
-        toast.success("Berita disimpan");
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal menyimpan");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  if (loading) return <p className="text-sm text-[var(--muted)]">Memuat…</p>;
-
   return (
-    <form onSubmit={onSubmit} className="mx-auto max-w-3xl space-y-4">
-      <h1 className="text-2xl font-bold">
-        {mode === "create" ? "Berita baru" : "Edit berita"}
-      </h1>
-      <Field label="Judul">
-        <input
-          className="w-full border border-[var(--border)] px-3 py-2"
-          value={form.judul}
-          onChange={(e) => {
-            const judul = e.target.value;
-            setForm((f) => ({
-              ...f,
-              judul,
-              slug: mode === "create" ? slugifyJudul(judul) : f.slug,
-            }));
-          }}
-        />
-      </Field>
-      <Field label="Slug">
-        <input
-          className="w-full border border-[var(--border)] px-3 py-2"
-          value={form.slug}
-          onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-        />
-      </Field>
-      <Field label="Ringkasan">
-        <textarea
-          className="w-full border border-[var(--border)] px-3 py-2"
-          rows={3}
-          value={form.ringkasan ?? ""}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, ringkasan: e.target.value }))
-          }
-        />
-      </Field>
-      <Field label="Konten (TipTap)">
-        <RichTextEditor
-          value={form.konten}
-          onChange={(konten) => setForm((f) => ({ ...f, konten }))}
-        />
-      </Field>
-      <Field label="Status">
-        <select
-          className="border border-[var(--border)] px-3 py-2"
-          value={form.status}
-          onChange={(e) =>
-            setForm((f) => ({
-              ...f,
-              status: e.target.value as BeritaStatus,
-            }))
-          }
+    <div className="mx-auto max-w-3xl space-y-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-[color:var(--color-heading)]">
+            {mode === "create" ? "Berita baru" : "Edit berita"}
+          </h1>
+          <p className="text-sm text-[color:var(--color-body)]">
+            {mode === "create" ? (
+              <>
+                Form Zod + TipTap Starter Kit → <code>POST /v1/berita</code>.
+              </>
+            ) : (
+              <>
+                Muat via <code>GET /v1/berita/id/:id</code>, simpan via{" "}
+                <code>PATCH /v1/berita/:id</code>.
+              </>
+            )}
+          </p>
+        </div>
+        <Button asChild size="sm" variant="secondary">
+          <Link to="/berita">Kembali</Link>
+        </Button>
+      </div>
+
+      {error ? (
+        <div
+          role="alert"
+          className="border border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)] px-4 py-3 text-sm text-[color:var(--color-body)]"
         >
-          <option value="DRAFT">DRAFT</option>
-          <option value="PUBLISHED">PUBLISHED</option>
-          <option value="ARCHIVED">ARCHIVED</option>
-        </select>
-      </Field>
-      <Field label="Cover URL">
-        <input
-          className="w-full border border-[var(--border)] px-3 py-2"
-          value={form.coverUrl ?? ""}
-          onChange={(e) =>
-            setForm((f) => ({ ...f, coverUrl: e.target.value }))
-          }
-        />
-      </Field>
-      <button
-        type="submit"
-        disabled={saving}
-        className="border border-[var(--brand)] bg-[var(--brand)] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-      >
-        {saving ? "Menyimpan…" : "Simpan"}
-      </button>
-    </form>
-  );
-}
+          {error}
+        </div>
+      ) : null}
 
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block space-y-1">
-      <span className="text-sm font-medium">{label}</span>
-      {children}
-    </label>
+      {loading ? (
+        <p className="text-sm text-[color:var(--color-body)]">Memuat…</p>
+      ) : null}
+
+      {!loading && !error && mode === "create" ? (
+        <BeritaForm mode="create" kategori={kategori} />
+      ) : null}
+
+      {!loading && !error && mode === "edit" && berita ? (
+        <BeritaForm mode="edit" initial={berita} kategori={kategori} />
+      ) : null}
+    </div>
   );
 }
