@@ -10,6 +10,7 @@ import {
   Settings,
   ShieldCheck,
   Tags,
+  Users,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 
@@ -24,6 +25,7 @@ const ICONS = {
   ShieldCheck,
   Tags,
   Image: ImageIcon,
+  Users,
   Settings,
 } as const;
 
@@ -37,6 +39,7 @@ export function DashboardSidebar() {
 
   const nav = DASHBOARD_NAV.filter((item) => {
     if (item.href === "/dashboard/pengaturan") return canManageSettings;
+    if (item.href === "/dashboard/pengguna") return canManageSettings;
     if (item.href === "/dashboard/berita") return canAccessBeritaSekolah;
     if (item.href === "/dashboard/moderasi") return canViewModerasi;
     return true;

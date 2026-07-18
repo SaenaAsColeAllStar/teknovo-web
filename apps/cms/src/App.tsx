@@ -1,4 +1,4 @@
-import { ClerkProvider, SignIn, useAuth } from "@clerk/clerk-react";
+import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -6,21 +6,18 @@ import { DashboardLayoutClient } from "./components/DashboardLayoutClient";
 import { ArtikelFormPage, ArtikelListPage } from "./pages/ArtikelPages";
 import { BeritaFormPage } from "./pages/BeritaFormPage";
 import { BeritaListPage } from "./pages/BeritaListPage";
+import { ForgotPasswordPage } from "./pages/ForgotPasswordPage";
 import { KategoriPage } from "./pages/KategoriPage";
 import { MediaPage } from "./pages/MediaPage";
 import { ModerasiPage } from "./pages/ModerasiPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PengaturanPage } from "./pages/PengaturanPage";
+import { PenggunaPage } from "./pages/PenggunaPage";
+import { SignInPage } from "./pages/SignInPage";
+import { SignUpPage } from "./pages/SignUpPage";
+import { SsoCallbackPage } from "./pages/SsoCallbackPage";
 
 const pk = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
-
-function SignInRoute() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[color:var(--color-neutral-soft)] p-4">
-      <SignIn routing="path" path="/sign-in" fallbackRedirectUrl="/" />
-    </div>
-  );
-}
 
 function ProtectedApp() {
   const { isLoaded, isSignedIn } = useAuth();
@@ -50,6 +47,7 @@ function ProtectedApp() {
         <Route path="moderasi" element={<ModerasiPage />} />
         <Route path="kategori" element={<KategoriPage />} />
         <Route path="media" element={<MediaPage />} />
+        <Route path="pengguna" element={<PenggunaPage />} />
         <Route path="pengaturan" element={<PengaturanPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
@@ -71,10 +69,18 @@ export function App() {
   }
 
   return (
-    <ClerkProvider publishableKey={pk} signInUrl="/sign-in">
+    <ClerkProvider
+      publishableKey={pk}
+      signInUrl="/sign-in"
+      signUpUrl="/sign-up"
+      afterSignOutUrl="/sign-in"
+    >
       <BrowserRouter>
         <Routes>
-          <Route path="/sign-in/*" element={<SignInRoute />} />
+          <Route path="/sign-in/*" element={<SignInPage />} />
+          <Route path="/sign-up/*" element={<SignUpPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/sso-callback" element={<SsoCallbackPage />} />
           <Route path="/*" element={<ProtectedApp />} />
         </Routes>
         <Toaster position="top-right" />

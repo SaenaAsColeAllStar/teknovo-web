@@ -81,9 +81,13 @@ export function cmsRoleCanManageSettings(role: CmsRole): boolean {
   return role === "admin";
 }
 
+/** UI labels — Super Admin / Admin (staff) / Siswa are the primary create targets. */
 export const CMS_ROLE_LABEL: Record<CmsRole, string> = {
-  admin: "Admin",
-  editor: "Editor",
+  admin: "Super Admin",
+  editor: "Admin",
   viewer: "Viewer",
   siswa: "Siswa",
 };
+
+export const CMS_MANAGEABLE_ROLES = ["admin", "editor", "siswa"] as const;
+export type CmsManageableRole = (typeof CMS_MANAGEABLE_ROLES)[number];

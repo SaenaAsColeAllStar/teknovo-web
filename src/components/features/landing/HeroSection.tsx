@@ -5,8 +5,8 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 
-import { HeroOverlayNav } from "@/components/features/landing/HeroOverlayNav";
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
+import { HomeCardNav } from "@/components/ui/card-nav/HomeCardNav";
 import {
   HOME_HERO_CTA_LABEL,
   HOME_HERO_LEDE,
@@ -100,8 +100,8 @@ export function HeroSection(): ReactElement {
         />
       </div>
 
-      {/* Overlay top bar — mirrors primary nav; global three-tier is hidden on `/` */}
-      <HeroOverlayNav />
+      {/* Floating CardNav — three-tier PublicMarketingNavbar stays hidden on `/` */}
+      <HomeCardNav />
 
       {/* Oversized watermark between sky and building */}
       <m.p

@@ -72,5 +72,34 @@ pnpm --filter @teknovo/cms deploy
 
 ## Clerk
 
-Tambahkan domain `cms.smkteknovo.sch.id` di Clerk Dashboard. Sign-in hanya di CMS
-(bukan apex), di route `/sign-in`.
+Tambahkan domain `cms.smkteknovo.sch.id` di Clerk Dashboard. Auth hanya di CMS
+(bukan apex):
+
+| Path | Halaman |
+|------|---------|
+| `/sign-in` | Login dua kolom (custom `useSignIn` + OAuth) |
+| `/sign-up` | Daftar (Clerk `<SignUp />`) |
+| `/forgot-password` | Reset kata sandi (full-bleed dua kolom) |
+| `/sso-callback` | Callback OAuth untuk `signIn.sso()` |
+
+Setelah masuk, redirect ke `/` (dashboard CMS).
+
+### Roles
+
+Role di `user.publicMetadata.role`:
+
+| Metadata | Label UI | Capabilitas utama |
+|----------|----------|-------------------|
+| `admin` | Super Admin | Semua + moderasi approve + pengaturan + **kelola pengguna** |
+| `editor` | Admin | CRUD berita/artikel, lihat moderasi (tanpa approve) |
+| `siswa` | Siswa | Artikel milik sendiri, kategori, media |
+| `viewer` | Viewer | Baca saja (default jika metadata kosong) |
+
+## Pengguna
+
+Halaman `/pengguna` (nav: **Pengguna**, virtual path `/dashboard/pengguna`) — hanya Super Admin
+(`canManageSettings` / `role === "admin"`). UI: `PenggunaPage` → `PenggunaManager`; API via
+`fetchCmsUsers` / `createCmsUser` / `updateCmsUser` / `deleteCmsUser` → `GET|POST|PATCH|DELETE /api/v1/users`.
+
+Tambah akun: email wajib, nama & password opsional (password ≥8 → `users.createUser`; kosong →
+undangan Clerk). Bisa ubah peran dan hapus akun (konfirmasi; tidak bisa hapus diri sendiri).

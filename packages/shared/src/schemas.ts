@@ -90,6 +90,38 @@ export type PengaturanSitusPublikPatchInput = z.infer<
   typeof zPengaturanSitusPublikPatch
 >;
 
+/** Create CMS user via Clerk (admin only). */
+export const cmsUserCreateSchema = z.object({
+  email: z.string().trim().email().max(120),
+  nama: z.union([z.string().trim().max(160), z.literal("")]).optional(),
+  role: z.enum(["admin", "editor", "siswa"]),
+  /** If set (≥8), create account immediately. If omitted/empty, send Clerk invitation. */
+  password: z
+    .union([z.literal(""), z.string().min(8).max(128)])
+    .optional(),
+});
+
+export type CmsUserCreateInput = z.infer<typeof cmsUserCreateSchema>;
+
+export const cmsUserPatchSchema = z
+  .object({
+    role: z.enum(["admin", "editor", "viewer", "siswa"]).optional(),
+    nama: z.string().trim().max(160).optional().or(z.literal("")),
+  })
+  .refine((v) => v.role !== undefined || v.nama !== undefined, {
+    message: "Minimal satu field (role atau nama) wajib diisi.",
+  });
+
+export type CmsUserPatchInput = z.infer<typeof cmsUserPatchSchema>;
+
+export type CmsUserListItem = {
+  id: string;
+  email: string | null;
+  name: string | null;
+  role: "admin" | "editor" | "viewer" | "siswa";
+  createdAt: string;
+};
+
 export function slugifyJudul(judul: string): string {
   return judul
     .toLowerCase()

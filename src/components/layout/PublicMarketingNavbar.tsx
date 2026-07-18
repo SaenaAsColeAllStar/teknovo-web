@@ -3,7 +3,7 @@
 /**
  * Three-tier marketing navbar — announcement + main (brand/actions) + bottom (nav/search).
  * Self-contained chrome for the public site layout.
- * Dropdown/search primitives shared with HeroOverlayNav.
+ * Dropdown/search primitives shared with the public site chrome.
  */
 import { Mail, Menu, Phone, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -70,7 +70,7 @@ const navItemActiveClassName = "text-brand underline decoration-2 underline-offs
 
 export type PublicMarketingNavbarProps = {
   /**
-   * Sembunyikan chrome tiga tingkat (beranda memakai HeroOverlayNav di dalam hero).
+   * Sembunyikan chrome tiga tingkat (beranda memakai HomeCardNav di dalam hero).
    * Bila tidak di-set, otomatis true saat pathname situs publik adalah `/`.
    */
   hidden?: boolean;

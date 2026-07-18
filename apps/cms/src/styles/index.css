@@ -76,6 +76,13 @@ a {
  * Dashboard tetap kolom terbatas agar form/tabel mudah dibaca (selaras `src/app/globals.css`).
  */
 @layer components {
+  /**
+   * Auth / marketing frame — max-w-7xl (1280px), px-4 (selaras public site).
+   */
+  .public-site-container {
+    @apply mx-auto w-full min-w-0 max-w-7xl px-4 2xl:px-0;
+  }
+
   .dashboard-app-container {
     @apply mx-auto w-full min-w-0 max-w-6xl px-3 sm:px-6 ps-[max(0.75rem,env(safe-area-inset-left,0px))] pe-[max(0.75rem,env(safe-area-inset-right,0px))] xl:max-w-7xl 2xl:max-w-[min(100%,96rem)];
   }

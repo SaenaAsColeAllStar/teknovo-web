@@ -617,6 +617,78 @@ export async function updatePengaturanCms(
   return data.data;
 }
 
+/* ─── Users (Super Admin) ─────────────────────────────────────────── */
+
+export type CmsUserListItem = {
+  id: string;
+  email: string | null;
+  name: string | null;
+  role: "admin" | "editor" | "viewer" | "siswa";
+  createdAt: string;
+  invited?: boolean;
+};
+
+export type CmsUserCreateInput = {
+  email: string;
+  nama?: string;
+  role: "admin" | "editor" | "siswa";
+  password?: string;
+};
+
+export type CmsUserPatchInput = {
+  role?: "admin" | "editor" | "viewer" | "siswa";
+  nama?: string;
+};
+
+export async function fetchCmsUsers(
+  token: string,
+  opts?: { limit?: number; offset?: number },
+): Promise<ApiListResponse<CmsUserListItem>> {
+  const params = new URLSearchParams();
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.offset) params.set("offset", String(opts.offset));
+  const qs = params.toString();
+  return request<ApiListResponse<CmsUserListItem>>(
+    `/v1/users${qs ? `?${qs}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function createCmsUser(
+  values: CmsUserCreateInput,
+  token: string,
+): Promise<CmsUserListItem> {
+  const data = await request<ApiOk<CmsUserListItem>>("/v1/users", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updateCmsUser(
+  id: string,
+  values: CmsUserPatchInput,
+  token: string,
+): Promise<CmsUserListItem> {
+  const data = await request<ApiOk<CmsUserListItem>>(`/v1/users/${id}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function deleteCmsUser(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<ApiOk<{ deleted: boolean }>>(`/v1/users/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
 /** Prefer dedicated analytics endpoint; fall back to aggregating list queries. */
 export async function fetchCmsAnalytics(
   token: string,

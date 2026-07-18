@@ -169,6 +169,7 @@ artikelRoutes.patch("/:id", async (c) => {
       coverUrl: parsed.data.coverUrl || undefined,
       kategoriId: parsed.data.kategoriId || undefined,
       penulisKelas: parsed.data.penulisKelas,
+      penulisId: existing.penulis?.id ?? session.userId,
     });
 
     if (

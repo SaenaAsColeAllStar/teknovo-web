@@ -167,8 +167,18 @@ Jika endpoint belum ada, teknovo-web mengagregasi dari list berita/artikel/kateg
 
 CMS mengirim `Authorization: Bearer <Clerk JWT>` (atau session token yang di-verify di api-web). Mapping role: `publicMetadata.role` ∈ `admin|editor|viewer|siswa`.
 
-Enforcement di teknovo-web (`src/lib/cms-auth.ts` + layout/API):
+Label UI: `admin` → Super Admin, `editor` → Admin, `siswa` → Siswa, `viewer` → Viewer.
 
+### Users (Super Admin only)
+
+| Method | Path | Auth | Keterangan |
+|--------|------|------|------------|
+| `GET` | `/v1/users` | Bearer **admin** | List Clerk users |
+| `POST` | `/v1/users` | Bearer **admin** | Create user atau undangan |
+| `PATCH` | `/v1/users/:id` | Bearer **admin** | Update role / nama |
+| `DELETE` | `/v1/users/:id` | Bearer **admin** | Hapus (bukan self) |
+
+Enforcement di teknovo-web (`src/lib/cms-auth.ts` + layout/API):
 | Role | Baca dashboard | Berita sekolah | Artikel siswa | Kategori tambah | Media upload | Moderasi approve | Pengaturan |
 |------|----------------|----------------|---------------|-----------------|--------------|------------------|------------|
 | `viewer` | Ya | Baca | Baca | Tidak | Tidak | Tidak | Tidak |

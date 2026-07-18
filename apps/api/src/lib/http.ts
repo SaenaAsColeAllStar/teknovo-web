@@ -1,9 +1,10 @@
 import type { Context } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 import { CmsAuthError } from "../auth/cms-auth";
 
 export type AppEnv = { Bindings: Env };
 
-export function okJson<T>(c: Context<AppEnv>, data: T, status = 200) {
+export function okJson<T>(c: Context<AppEnv>, data: T, status: ContentfulStatusCode = 200) {
   return c.json({ ok: true as const, data }, status);
 }
 
@@ -19,7 +20,7 @@ export function errJson(
   c: Context<AppEnv>,
   code: string,
   message: string,
-  status: number,
+  status: ContentfulStatusCode,
 ) {
   return c.json({ ok: false as const, error: { code, message } }, status);
 }

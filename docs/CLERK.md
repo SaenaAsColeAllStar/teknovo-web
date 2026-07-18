@@ -53,14 +53,29 @@ Helpers:
 | `viewer` (default jika metadata kosong) | Baca daftar/form CMS (bukan siswa) |
 | `siswa` | Artikel milik sendiri (DRAFT→REVIEW), tambah kategori, upload media; **bukan** berita sekolah / moderasi / pengaturan |
 | `editor` | CRUD berita sekolah + artikel, kategori, media; lihat antrian moderasi (tanpa approve) |
-| `admin` | Semua editor + approve/tolak moderasi + `/dashboard/pengaturan` |
+| `admin` | Semua editor + approve/tolak moderasi + `/dashboard/pengaturan` + **`/dashboard/pengguna`** (kelola akun) |
 
 Mapping matrix enterprise: Super Admin → `admin`, Admin staff → `editor`, Siswa → `siswa`.
 
 Tanpa role di Clerk, user dianggap `viewer` (aman-by-default).
 
-### Set role di Clerk Dashboard
+### Manajemen pengguna (CMS)
 
+Hanya Super Admin (`publicMetadata.role = "admin"`) dapat mengelola akun lewat CMS `/pengguna` (API `/api/v1/users` di `apps/api`).
+
+- List: Clerk `users.getUserList`
+- Create: `users.createUser` (dengan password) atau `invitations.createInvitation` (tanpa password)
+- Update: role via `updateUserMetadata` + nama via `updateUser`
+- Delete: `users.deleteUser` (self-delete ditolak)
+
+Prasyarat Clerk Dashboard:
+
+1. Email uniqueness (default Clerk)
+2. Domain `cms.smkteknovo.sch.id` diizinkan
+3. Email invitations aktif jika memakai undangan tanpa password
+4. `CLERK_SECRET_KEY` di Worker `apps/api`
+
+### Set role di Clerk Dashboard
 1. Users → pilih user → **Metadata** → **Public**
 2. JSON:
 

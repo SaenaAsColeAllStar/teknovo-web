@@ -29,6 +29,7 @@ export const DASHBOARD_NAV = [
   { href: "/dashboard/moderasi", label: "Moderasi", icon: "ShieldCheck" },
   { href: "/dashboard/kategori", label: "Kategori", icon: "Tags" },
   { href: "/dashboard/media", label: "Media", icon: "Image" },
+  { href: "/dashboard/pengguna", label: "Pengguna", icon: "Users" },
   { href: "/dashboard/pengaturan", label: "Pengaturan", icon: "Settings" },
 ] as const;
 

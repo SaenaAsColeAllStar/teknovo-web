@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Joined category + query search used by PublicMarketingNavbar and HeroOverlayNav.
+ * Joined category + query search used by PublicMarketingNavbar.
  */
 import { Search } from "lucide-react";
 import {
