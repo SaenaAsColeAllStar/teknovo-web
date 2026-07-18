@@ -3,18 +3,16 @@ import { notFound } from "next/navigation";
 import type { ReactElement, ReactNode } from "react";
 
 import { PpdbCtaLink } from "@/components/brand/PpdbCtaLink";
-import { AkademikLearnMoreLink } from "@/components/features/landing/AkademikLearnMoreLink";
+import { DiamondSplitFeatureBands } from "@/components/features/landing/DiamondSplitFeatureBands";
 import { FasilitasIconGlyph } from "@/components/features/landing/FasilitasIconGlyph";
 import { FasilitasPageShell } from "@/components/features/landing/FasilitasPageShell";
-import {
-  PublicSplitContentCard,
-  publicSplitCardShellClassName,
-} from "@/components/features/landing/PublicSplitContentCard";
+import { publicSplitCardShellClassName } from "@/components/features/landing/PublicSplitContentCard";
 import { MotionInView } from "@/components/motion/MotionInView";
 import {
   PublicOptimizedImage,
   publicOptimizedImageContainerClassName,
 } from "@/components/shared/PublicOptimizedImage";
+import { getFasilitasDiamondBands } from "@/lib/fasilitas-diamond-bands";
 import {
   FASILITAS_FOOTER_CTA_BODY,
   FASILITAS_FOOTER_CTA_KONTAK_HREF,
@@ -94,6 +92,7 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
   const related = isLms ? getRelatedFasilitasItemsForLms() : getRelatedFasilitasItems(slug);
   const features = item.features ?? [];
   const displayStats = isLms ? resolveDisplayStats(item, liveStats) : [];
+  const diamondBands = getFasilitasDiamondBands(slug);
 
   return (
     <FasilitasPageShell
@@ -101,34 +100,11 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
       title={item.title}
       lede={item.description}
     >
-        <MotionInView as="article" className={cn(cardShellClass, "mt-10 min-h-[18rem] sm:min-h-[20rem]")} delay={0.04}>
-          <PublicSplitContentCard
-            tone="accent"
-            image={{
-              src: item.coverSrc,
-              alt: item.title,
-              quality: 70,
-              priority: true,
-            }}
-          >
-            <FasilitasIconGlyph iconKey={slug} className="size-8 text-blue-600 dark:text-blue-400" />
-            <ul className="flex flex-wrap gap-2">
-              {item.highlights.map((highlight) => (
-                <li
-                  key={highlight}
-                  className="rounded-full border border-blue-200/80 bg-white/80 px-3 py-1 text-xs font-medium text-blue-900 dark:border-blue-500/30 dark:bg-slate-950/50 dark:text-blue-100"
-                >
-                  {highlight}
-                </li>
-              ))}
-            </ul>
-            <FormalParagraph>{item.paragraphs[0] ?? item.description}</FormalParagraph>
-            <AkademikLearnMoreLink href="/fasilitas">Kembali ke ringkasan</AkademikLearnMoreLink>
-          </PublicSplitContentCard>
-        </MotionInView>
+      <div className="mt-12 space-y-14 sm:mt-14 sm:space-y-16 lg:mt-16">
+        <DiamondSplitFeatureBands bands={diamondBands} />
 
         {isLms && displayStats.length > 0 ? (
-          <MotionInView as="ul" className="mt-10 grid gap-3 sm:grid-cols-3 lg:grid-cols-5" delay={0.05}>
+          <MotionInView as="ul" className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5" delay={0.05}>
             {displayStats.map((stat) => (
               <li
                 key={`${stat.label}-${stat.value}`}
@@ -143,7 +119,7 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
           </MotionInView>
         ) : null}
 
-        <MotionInView as="div" className="mt-14 space-y-6" delay={0.06}>
+        <MotionInView as="div" className="space-y-6" delay={0.06}>
           {item.paragraphs.slice(1).map((paragraph) => (
             <FormalParagraph key={paragraph}>{paragraph}</FormalParagraph>
           ))}
@@ -152,7 +128,7 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
         {isLms && item.pathwaySteps && item.pathwaySteps.length > 0 ? (
           <MotionInView
             as="section"
-            className="mt-14 space-y-8"
+            className="space-y-8"
             delay={0.07}
             aria-labelledby="fasilitas-lms-alur"
           >
@@ -192,7 +168,7 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
         ) : null}
 
         {isLms && item.quote ? (
-          <MotionInView as="article" className={cn(cardShellClass, "mt-14")} delay={0.09}>
+          <MotionInView as="article" className={cardShellClass} delay={0.09}>
             <blockquote className="relative space-y-5 border-l-4 border-blue-600 bg-blue-50/60 p-6 dark:border-blue-500 dark:bg-blue-950/25 sm:p-8 lg:p-10">
               <FasilitasIconGlyph
                 iconKey={slug}
@@ -214,7 +190,7 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
         ) : null}
 
         {features.length > 0 ? (
-          <MotionInView as="section" className="mt-14 space-y-8" delay={0.08} aria-labelledby="fasilitas-fitur">
+          <MotionInView as="section" className="space-y-8" delay={0.08} aria-labelledby="fasilitas-fitur">
             <div>
               <h2 id="fasilitas-fitur" className={publicSectionTitleClassName}>
                 {isLibrary ? "Layanan & koleksi" : isLms ? "Pilar platform LMS" : "Keunggulan utama"}
@@ -244,31 +220,8 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
           </MotionInView>
         ) : null}
 
-        {isLms && item.splitNarrative ? (
-          <MotionInView as="article" className={cn(cardShellClass, "mt-14 min-h-[16rem] sm:min-h-[18rem]")} delay={0.11}>
-            <PublicSplitContentCard
-              tone="plain"
-              image={{
-                src: item.coverSrc,
-                alt: item.title,
-                quality: 65,
-              }}
-            >
-              <FasilitasIconGlyph iconKey={slug} className="size-8 text-blue-600 dark:text-blue-400" />
-              <h3 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                {item.splitNarrative.title}
-              </h3>
-              <div className="space-y-4">
-                {item.splitNarrative.paragraphs.map((paragraph) => (
-                  <FormalParagraph key={paragraph}>{paragraph}</FormalParagraph>
-                ))}
-              </div>
-            </PublicSplitContentCard>
-          </MotionInView>
-        ) : null}
-
         {item.hours && item.hours.length > 0 ? (
-          <MotionInView as="section" className="mt-14" delay={0.1} aria-labelledby="fasilitas-jam">
+          <MotionInView as="section" delay={0.1} aria-labelledby="fasilitas-jam">
             <div className={cn(cardShellClass, "p-6 sm:p-8")}>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-5">
                 <span className="inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
@@ -303,7 +256,7 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
         ) : null}
 
         {item.services && item.services.length > 0 ? (
-          <MotionInView as="section" className="mt-14 space-y-6" delay={0.12} aria-labelledby="fasilitas-layanan">
+          <MotionInView as="section" className="space-y-6" delay={0.12} aria-labelledby="fasilitas-layanan">
             <h2 id="fasilitas-layanan" className={publicSectionTitleClassName}>
               {isLms ? "Portal untuk setiap peran" : "Layanan pengguna"}
             </h2>
@@ -328,7 +281,7 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
           </MotionInView>
         ) : null}
 
-        <MotionInView as="section" className="mt-16 space-y-6" delay={0.14} aria-labelledby="fasilitas-lainnya">
+        <MotionInView as="section" className="space-y-6" delay={0.14} aria-labelledby="fasilitas-lainnya">
           <h2 id="fasilitas-lainnya" className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
             {isLms ? "Fasilitas pendukung pembelajaran" : "Fasilitas lainnya"}
           </h2>
@@ -360,7 +313,7 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
 
         <MotionInView
           as="section"
-          className="mt-16 rounded-2xl border border-blue-200/80 bg-blue-50 px-6 py-8 text-center dark:border-blue-800/50 dark:bg-blue-950/35 sm:px-10"
+          className="rounded-2xl border border-blue-200/80 bg-blue-50 px-6 py-8 text-center dark:border-blue-800/50 dark:bg-blue-950/35 sm:px-10"
           delay={0.16}
         >
           <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">{FASILITAS_FOOTER_CTA_TITLE}</h2>
@@ -393,6 +346,7 @@ export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProp
             ) : null}
           </div>
         </MotionInView>
+      </div>
     </FasilitasPageShell>
   );
 }

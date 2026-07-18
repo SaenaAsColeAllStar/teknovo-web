@@ -98,6 +98,24 @@ const PRESTASI_DATA: PrestasiPublikCard[] = [
     ringkasan: "Siswa berhasil membangun aplikasi prototipe layanan akademik berbasis web.",
     fileUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200&h=800&fit=crop&q=80",
   },
+  {
+    id: "prestasi-3",
+    judul: "Juara 1 Turnamen Futsal Antar SMK Subang",
+    penyelenggara: "Forum SMK Subang",
+    tanggalIso: "2025-11-22T00:00:00.000Z",
+    siswaLabel: "Tim Futsal TEKNOVO",
+    ringkasan: "Skuad futsal sekolah meraih juara 1 pada turnamen antar SMK se-Kabupaten Subang.",
+    fileUrl: LANDING_MEDIA.kegiatan.ekstraFutsalWebp,
+  },
+  {
+    id: "prestasi-4",
+    judul: "Juara 2 Lomba Blog Pelajar Kabupaten",
+    penyelenggara: "Disdik Kabupaten",
+    tanggalIso: "2025-09-14T00:00:00.000Z",
+    siswaLabel: "Blogger Club",
+    ringkasan: "Kontributor Blogger Club meraih juara 2 lomba blog pelajar tingkat kabupaten.",
+    fileUrl: LANDING_MEDIA.kegiatan.ekstraBloggerClubWebp,
+  },
 ];
 
 export async function getEkskulPublikCards(): Promise<EkskulPublikCard[]> {

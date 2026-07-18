@@ -1,14 +1,12 @@
-import Link from "next/link";
 import type { ReactElement } from "react";
 
 import {
   AkademikFramePlusMarks,
   akademikFrameShellClass,
-  akademikSecondaryBtnClass,
   akademikSoftPlateClass,
 } from "@/components/features/landing/AkademikBlueprintFrame";
+import { CenteredCtaStack } from "@/components/features/landing/CenteredCtaStack";
 import { PublicOptimizedImage } from "@/components/shared/PublicOptimizedImage";
-import { AkademikLearnMoreLink } from "@/components/features/landing/AkademikLearnMoreLink";
 import { PengajarCarousel } from "@/components/features/landing/PengajarCarousel";
 import { MotionInView } from "@/components/motion/MotionInView";
 import {
@@ -241,33 +239,14 @@ export async function AkademikPengajarSection({
           </div>
         ) : null}
 
-        <MotionInView as="article" className={akademikFrameShellClass} delay={0.26}>
-          <AkademikFramePlusMarks />
-          <div className="relative space-y-6 p-8 text-center sm:p-10">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">
-              {PENGAJAR_CTA_EYEBROW}
-            </p>
-            <h2 className="text-2xl font-bold tracking-tight text-heading sm:text-3xl">
-              {PENGAJAR_CTA_TITLE}
-            </h2>
-            <p
-              className={cn(
-                "mx-auto max-w-2xl text-sm leading-relaxed text-body",
-                publicFormalBodyClassName,
-              )}
-            >
-              {PENGAJAR_CTA_BODY}
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Link href={PENGAJAR_CTA_KONTAK_HREF} className={akademikSecondaryBtnClass}>
-                Hubungi sekolah
-              </Link>
-              <AkademikLearnMoreLink href={PENGAJAR_CTA_PORTAL_HREF}>
-                {PENGAJAR_CTA_PORTAL_LABEL}
-              </AkademikLearnMoreLink>
-            </div>
-          </div>
-        </MotionInView>
+        <CenteredCtaStack
+          delay={0.26}
+          eyebrow={PENGAJAR_CTA_EYEBROW}
+          title={PENGAJAR_CTA_TITLE}
+          body={PENGAJAR_CTA_BODY}
+          primary={{ href: PENGAJAR_CTA_KONTAK_HREF, label: "Hubungi sekolah" }}
+          secondary={{ href: PENGAJAR_CTA_PORTAL_HREF, label: PENGAJAR_CTA_PORTAL_LABEL }}
+        />
       </div>
     </MotionInView>
   );

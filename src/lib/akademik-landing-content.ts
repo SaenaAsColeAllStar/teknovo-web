@@ -196,7 +196,8 @@ export const AKADEMIK_KURIKULUM_CTA = {
 
 export const AKADEMIK_FOOTER_CTA_EYEBROW = "Program akademik" as const;
 
-export const AKADEMIK_FOOTER_CTA_TITLE = "Siap menelusuri program akademik?" as const;
+/** Multi-line (`\\n`) for {@link CenteredCtaStack}. */
+export const AKADEMIK_FOOTER_CTA_TITLE = "Siap menelusuri\nprogram akademik?" as const;
 
 export const AKADEMIK_FOOTER_CTA_BODY =
   "Daftar PPDB untuk tahun ajaran berikutnya, atau hubungi sekolah untuk konsultasi jurusan, kurikulum, dan jadwal kunjungan sekolah." as const;
@@ -258,7 +259,8 @@ export const PENGAJAR_FEATURED_INTRO =
 
 export const PENGAJAR_CTA_EYEBROW = "Komunitas pendidik" as const;
 
-export const PENGAJAR_CTA_TITLE = "Konsultasi kurikulum & pengajar" as const;
+/** Multi-line (`\\n`) for {@link CenteredCtaStack}. */
+export const PENGAJAR_CTA_TITLE = "Konsultasi kurikulum\n& pengajar" as const;
 
 export const PENGAJAR_CTA_BODY =
   "Hubungi sekolah untuk informasi struktur mapel, atau masuk portal untuk layanan akademik sesuai peran Anda." as const;
@@ -331,7 +333,8 @@ export const JURUSAN_PKL_BAND = {
 
 export const JURUSAN_CTA_EYEBROW = "Penjurusan" as const;
 
-export const JURUSAN_CTA_TITLE = "Siap memilih program kejuruan?" as const;
+/** Multi-line (`\\n`) for {@link CenteredCtaStack}. */
+export const JURUSAN_CTA_TITLE = "Siap memilih\nprogram kejuruan?" as const;
 
 export const JURUSAN_CTA_BODY =
   "Daftar PPDB untuk tahun ajaran berikutnya, atau telusuri ringkasan lengkap program pembinaan di halaman program sekolah." as const;

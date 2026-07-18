@@ -75,7 +75,7 @@ export default function RootLayout({
 }>): ReactElement {
   return (
     <ClerkProvider>
-      <html lang="id" data-scroll-behavior="smooth" className={`${poppins.variable} h-full scroll-smooth antialiased`}>
+      <html lang="id" className={`${poppins.variable} h-full antialiased`}>
         <head>
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

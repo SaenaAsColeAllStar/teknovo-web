@@ -30,6 +30,34 @@ export const KESISWAAN_HUB_HERO_CARD_TITLE =
 export const KESISWAAN_HUB_HERO_CARD_BODY =
   `Setiap unit kegiatan dan pencapaian siswa dikelola melalui sistem sekolah — orang tua dapat memantau perkembangan di luar kelas tanpa menunggu pengumuman manual.` as const;
 
+/** Four-band hub slice — nav, headline, showcase, features. */
+export const KESISWAAN_SLICE_NAV_LINKS = [
+  { href: "/kesiswaan/ekstrakurikuler#osis", label: "OSIS" },
+  { href: "/kesiswaan/ekstrakurikuler", label: "Ekstrakurikuler" },
+  { href: "/kesiswaan/prestasi", label: "Prestasi" },
+] as const;
+
+/** Multi-line hub headline (`\\n` → line breaks in FourBandPageSlice). */
+export const KESISWAAN_SLICE_HEADLINE =
+  "Ekstrakurikuler, OSIS,\ndan prestasi yang transparan" as const;
+
+export const KESISWAAN_SLICE_SUPPORT = KESISWAAN_HUB_PAGE_LEDE;
+
+export const KESISWAAN_SLICE_SHOWCASE_ALT = `Kegiatan kesiswaan ${BRAND_SHORT}` as const;
+
+export const KESISWAAN_SLICE_FEATURES = [
+  {
+    iconKey: "program" as const,
+    title: "Ekstrakurikuler terstruktur",
+    body: KESISWAAN_EKSTRA_VARIANT_LEDE,
+  },
+  {
+    iconKey: "prestasi" as const,
+    title: "Prestasi terverifikasi",
+    body: KESISWAAN_PRESTASI_VARIANT_LEDE,
+  },
+] as const;
+
 export const KESISWAAN_PRESTASI_HERO_EYEBROW = "Apresiasi pencapaian" as const;
 
 export const KESISWAAN_PRESTASI_PAGE_TITLE = "Prestasi Siswa" as const;
@@ -52,6 +80,43 @@ export const KESISWAAN_PRESTASI_PORTAL_HREF = "/siswa/sertifikat-prestasi" as co
 export const KESISWAAN_PRESTASI_PORTAL_LINK_LABEL = "Buka portal sertifikat prestasi" as const;
 
 export const KESISWAAN_PRESTASI_FILTER_ALL = "Semua tahun" as const;
+
+/** Blok prestasi blog-style di hub `/kesiswaan` (`#prestasi`). */
+export const KESISWAAN_HUB_PRESTASI_TITLE = "Prestasi siswa" as const;
+
+export const KESISWAAN_HUB_PRESTASI_LEDE =
+  "Berikut bukti prestasi yang telah terverifikasi oleh admin kesiswaan. Daftar diperbarui otomatis dari sistem. Untuk pengajuan prestasi baru, siswa dapat mengunggah bukti melalui portal." as const;
+
+export const KESISWAAN_HUB_PRESTASI_VIEW_ALL_LABEL = "Lihat semua" as const;
+
+export const KESISWAAN_HUB_PRESTASI_VIEW_ALL_HREF = "/kesiswaan/prestasi" as const;
+
+export const KESISWAAN_HUB_PRESTASI_READ_MORE_LABEL = "Baca selengkapnya" as const;
+
+export const KESISWAAN_HUB_PRESTASI_CATEGORY_FALLBACK = "Prestasi" as const;
+
+export const KESISWAAN_HUB_PRESTASI_AUTHOR_FALLBACK = BRAND_SHORT as const;
+
+export const KESISWAAN_HUB_NEWSLETTER_TITLE = "Daftar buletin sekolah" as const;
+
+export const KESISWAAN_HUB_NEWSLETTER_LEDE =
+  "Terima sorotan prestasi, kegiatan kesiswaan, dan pengumuman resmi lewat email — tanpa spam." as const;
+
+export const KESISWAAN_HUB_NEWSLETTER_EMAIL_PLACEHOLDER = "Alamat email Anda" as const;
+
+export const KESISWAAN_HUB_NEWSLETTER_SUBMIT_LABEL = "Berlangganan" as const;
+
+export const KESISWAAN_HUB_NEWSLETTER_PRIVACY_BEFORE =
+  "Dengan berlangganan, Anda menyetujui " as const;
+
+export const KESISWAAN_HUB_NEWSLETTER_PRIVACY_LINK_LABEL = "kebijakan privasi" as const;
+
+export const KESISWAAN_HUB_NEWSLETTER_PRIVACY_AFTER =
+  " sekolah. Kami hanya memakai email untuk buletin resmi." as const;
+
+export const KESISWAAN_HUB_NEWSLETTER_PRIVACY_HREF = "/kontak" as const;
+
+export const KESISWAAN_HUB_NEWSLETTER_MAIL_SUBJECT = "Daftar buletin sekolah" as const;
 
 export const KESISWAAN_PPDB_CTA = {
   href: PUBLIC_SITE_PPDB_HREF,

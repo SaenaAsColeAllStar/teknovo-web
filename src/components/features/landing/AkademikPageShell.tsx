@@ -1,6 +1,6 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { AkademikFeaturedFeed } from "@/components/features/landing/AkademikFeaturedFeed";
+import { AkademikPengajarBands } from "@/components/features/landing/AkademikPengajarBands";
 import { AkademikSubNav } from "@/components/features/landing/AkademikSubNav";
 import { MotionInView } from "@/components/motion/MotionInView";
 import {
@@ -17,8 +17,8 @@ export type AkademikPageShellProps = {
   title: string;
   lede: string;
   /**
-   * When set, replaces centered intro with featured + 3 compact articles
-   * for the given akademik tab key.
+   * When set, replaces centered intro with the four-band tenaga pengajar
+   * page slice (top bar → intro → showcase → features).
    */
   featuredFeedKey?: AkademikFeedKey;
   children: ReactNode;
@@ -30,7 +30,7 @@ export function AkademikPageShell({
   featuredFeedKey,
   children,
 }: AkademikPageShellProps): ReactElement {
-  const showFeaturedFeed = featuredFeedKey != null;
+  const showPengajarBands = featuredFeedKey != null;
 
   return (
     <MotionInView
@@ -38,12 +38,12 @@ export function AkademikPageShell({
       id="akademik"
       className={cn(
         publicPageSectionWhiteClassName,
-        showFeaturedFeed && "py-16 sm:py-20 lg:py-24",
+        showPengajarBands && "py-16 sm:py-20 lg:py-24",
       )}
     >
       <div className="public-site-container">
-        {showFeaturedFeed ? (
-          <AkademikFeaturedFeed feedKey={featuredFeedKey} />
+        {showPengajarBands ? (
+          <AkademikPengajarBands />
         ) : (
           <MotionInView as="header" className="mx-auto max-w-3xl text-center" delay={0.02}>
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-brand">

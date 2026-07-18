@@ -7,6 +7,7 @@ import {
   type PublicMarketingNavbarProps,
 } from "@/components/layout/PublicMarketingNavbar";
 import { PublicMotionProvider } from "@/components/motion/PublicMotionProvider";
+import { SmoothScrollProvider } from "@/components/motion/SmoothScrollProvider";
 
 /**
  * Chrome situs publik (navbar + footer) dipakai bersama `apps/web` dan `apps/admissions`.
@@ -23,11 +24,13 @@ export function PublicSiteLayout({
 }>): ReactElement {
   return (
     <PublicMotionProvider>
-      <AppShell variant="public">
-        <PublicMarketingNavbar hidden={hideNavbar} />
-        <AppShellMain>{children}</AppShellMain>
-        <PublicFooter />
-      </AppShell>
+      <SmoothScrollProvider>
+        <AppShell variant="public">
+          <PublicMarketingNavbar hidden={hideNavbar} />
+          <AppShellMain>{children}</AppShellMain>
+          <PublicFooter />
+        </AppShell>
+      </SmoothScrollProvider>
     </PublicMotionProvider>
   );
 }

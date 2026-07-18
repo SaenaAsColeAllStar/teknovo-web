@@ -43,7 +43,7 @@ export default defineConfig({
       "process.env.NEXT_PUBLIC_TEKNOVO_PUBLIC_APP": JSON.stringify("landing"),
     },
     ssr: {
-      noExternal: ["framer-motion", "@teknovo/shared"],
+      noExternal: ["framer-motion", "lenis", "@teknovo/shared"],
     },
   },
 });

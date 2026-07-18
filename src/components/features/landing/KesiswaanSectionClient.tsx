@@ -2,17 +2,24 @@
 
 import Link from "next/link";
 import { AnimatePresence, domAnimation, LazyMotion, m } from "framer-motion";
+import { Check } from "lucide-react";
 import type { ReactElement } from "react";
 
 import {
-  IcoKsLaurelFacet,
-  IcoReceipt,
   IcoUsers,
   IcoX,
 } from "@/components/icons/inline-glyphs";
 import { useEffect, useId, useMemo, useState } from "react";
 
+import { EkstrakurikulerIconGlyph } from "@/components/features/landing/kesiswaan/EkstrakurikulerIconGlyph";
+import { KesiswaanPrestasiBlogSection } from "@/components/features/landing/kesiswaan/KesiswaanPrestasiBlogSection";
 import { MotionInView } from "@/components/motion/MotionInView";
+import {
+  EKSTRA_HUB_FEATURE_COLUMNS,
+  EKSTRA_HUB_SECTION_BODY,
+  EKSTRA_HUB_SECTION_EYEBROW,
+  EKSTRA_HUB_SECTION_TITLE,
+} from "@/lib/ekstrakurikuler-landing-content";
 import { resolveOsisCoverSrc } from "@/lib/ekstrakurikuler-media";
 import {
   PublicOptimizedImage,
@@ -20,7 +27,7 @@ import {
 } from "@/components/shared/PublicOptimizedImage";
 import { publicFormalBodyClassName } from "@/lib/public-section-styles";
 import type { EkskulPublikCard, PrestasiPublikCard } from "@/services/kesiswaan-publik";
-import { cn, formatDateId } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 
 export type KesiswaanSectionClientProps = {
   ekskulItems: EkskulPublikCard[];
@@ -34,11 +41,18 @@ const OSIS_PREVIEW_SRC = resolveOsisCoverSrc();
 export function KesiswaanSectionClient({
   ekskulItems,
   prestasiItems,
-  ekskulAktifCount,
 }: KesiswaanSectionClientProps): ReactElement {
-  const ekskulCountLabel = ekskulAktifCount ?? ekskulItems.length;
   const modalTitleId = useId();
   const [activeEkstra, setActiveEkstra] = useState<EkskulPublikCard | null>(null);
+
+  const featureColumns = useMemo(() => {
+    return EKSTRA_HUB_FEATURE_COLUMNS.map((column) => ({
+      ...column,
+      items: ekskulItems.filter((item) =>
+        (column.kategoriKeys as readonly string[]).includes(item.kategori),
+      ),
+    }));
+  }, [ekskulItems]);
 
   const relatedPrestasiHref = useMemo(() => {
     if (!activeEkstra) {
@@ -80,113 +94,85 @@ export function KesiswaanSectionClient({
 
   return (
     <>
-      <div className="mt-12 grid gap-6 lg:grid-cols-2 lg:items-stretch">
-              <MotionInView
-                as="article"
-                id="ekstrakurikuler"
+      <MotionInView
+        as="article"
+        id="ekstrakurikuler"
+        className="mt-12 scroll-mt-24"
+        delay={0.05}
+      >
+        <header className="max-w-2xl text-left">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">
+            {EKSTRA_HUB_SECTION_EYEBROW}
+          </p>
+          <h2 className="mt-3 text-2xl font-bold tracking-tight text-heading sm:text-3xl lg:text-4xl">
+            {EKSTRA_HUB_SECTION_TITLE}
+          </h2>
+          <p
+            className={cn(
+              "mt-4 max-w-prose text-sm leading-relaxed text-body sm:text-[15px]",
+              publicFormalBodyClassName,
+            )}
+          >
+            {EKSTRA_HUB_SECTION_BODY}
+          </p>
+        </header>
+
+        {ekskulItems.length === 0 ? (
+          <p className="mt-10 border border-dashed border-border-default bg-neutral-soft px-4 py-8 text-center text-sm text-body">
+            Belum ada unit ekstrakurikuler aktif untuk ditampilkan.
+          </p>
+        ) : (
+          <div className="mt-10 grid gap-0 lg:grid-cols-3">
+            {featureColumns.map((column, idx) => (
+              <div
+                key={column.id}
                 className={cn(
-                  "scroll-mt-24 group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm",
-                  "transition hover:-translate-y-0.5 hover:border-amber-200 hover:shadow-md",
-                  "dark:border-slate-800 dark:bg-slate-950",
+                  "flex flex-col gap-4 py-8 lg:px-8 lg:py-2",
+                  idx === 0 && "pt-0 lg:pl-0",
+                  idx === featureColumns.length - 1 && "lg:pr-0",
+                  idx > 0 && "border-t border-border-default lg:border-t-0 lg:border-l",
                 )}
-                delay={0.05}
               >
-                <div
-                  className="absolute inset-0 bg-gradient-to-br from-amber-500/12 via-blue-500/8 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
-                  aria-hidden
-                />
-                <div className="relative flex h-full flex-col">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-amber-600/10 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-                        <IcoKsLaurelFacet className="size-5" aria-hidden />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">
-                          Program
-                        </p>
-                        <h3 className="truncate text-lg font-semibold text-slate-900 dark:text-white">
-                          Ekstrakurikuler
-                        </h3>
-                      </div>
-                    </div>
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-200">
-                      {ekskulCountLabel} kegiatan
-                    </span>
-                  </div>
-                  <p
-                    className={cn(
-                      "mt-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400",
-                      publicFormalBodyClassName,
-                    )}
-                  >
-                    Daftar unit di bawah disinkronkan dari data sekolah. Penambahan atau perubahan dilakukan
-                    melalui administrasi kesiswaan.
-                  </p>
-
-                  {ekskulItems.length === 0 ? (
-                    <p className="mt-6 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-8 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
-                      Belum ada unit ekstrakurikuler aktif untuk ditampilkan.
-                    </p>
-                  ) : (
-                    <ul className="mt-5 grid gap-3 sm:grid-cols-2">
-                      {ekskulItems.map((e, idx) => (
-                        <MotionInView
-                          as="li"
-                          key={e.slug}
-                          id={`ekstra-${e.slug}`}
-                          className={cn(
-                            "scroll-mt-28 group/item relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-50/70 p-4",
-                            "transition hover:border-amber-200 hover:bg-white",
-                            "dark:border-slate-800 dark:bg-slate-900/40 dark:hover:bg-slate-900/60",
-                          )}
-                          delay={0.06 + idx * 0.02}
+                <span className="flex size-10 items-center justify-center rounded-lg border border-border-default bg-neutral-soft text-brand">
+                  <EkstrakurikulerIconGlyph iconKey={column.iconKey} className="size-5" />
+                </span>
+                <h3 className="text-base font-medium tracking-tight text-heading sm:text-lg">
+                  {column.title}
+                </h3>
+                {column.items.length === 0 ? (
+                  <p className="text-sm text-body-subtle">Belum ada unit di kategori ini.</p>
+                ) : (
+                  <ul className="flex flex-col gap-3">
+                    {column.items.map((item) => (
+                      <li key={item.slug} id={`ekstra-${item.slug}`} className="scroll-mt-28">
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-3 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                          onClick={() => setActiveEkstra(item)}
+                          aria-haspopup="dialog"
                         >
-                          <div
-                            className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover/item:opacity-100"
-                            aria-hidden
-                          />
-                          <button
-                            type="button"
-                            className="relative w-full text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600"
-                            onClick={() => setActiveEkstra(e)}
-                            aria-haspopup="dialog"
-                          >
-                            <div
-                              className={cn(
-                                "relative mb-3 aspect-[16/10] w-full overflow-hidden rounded-xl border border-slate-200 shadow-sm dark:border-slate-800",
-                                publicOptimizedImageContainerClassName,
-                              )}
-                            >
-                              <PublicOptimizedImage
-                                src={e.previewSrc}
-                                alt={`Kegiatan ${e.name}`}
-                                fill
-                                sizes="(max-width: 640px) 100vw, 260px"
-                                className="object-cover transition-transform duration-500 ease-out group-hover/item:scale-[1.04]"
-                              />
-                              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/55 via-transparent to-transparent" />
-                            </div>
-                            <p className="font-semibold text-slate-900 dark:text-white">{e.name}</p>
-                            <p className="mt-1 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                              {e.detail}
-                            </p>
-                            <p className="mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-amber-700/80 dark:text-amber-300/80">
-                              Lihat detail
-                            </p>
-                          </button>
-                        </MotionInView>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              </MotionInView>
+                          <span className="inline-flex size-5 shrink-0 items-center justify-center rounded-full border border-border-default bg-brand/10 text-brand">
+                            <Check className="size-3" strokeWidth={2.5} aria-hidden />
+                          </span>
+                          <span className="truncate text-sm font-medium text-heading sm:text-[15px]">
+                            {item.name}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </MotionInView>
 
-              <MotionInView
+      <MotionInView
                 as="article"
                 id="osis"
                 className={cn(
-                  "scroll-mt-24 group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm",
+                  "mt-12 scroll-mt-24 group relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-sm",
                   "transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md",
                   "dark:border-slate-800 dark:bg-slate-950",
                 )}
@@ -273,100 +259,8 @@ export function KesiswaanSectionClient({
                   </p>
                 </div>
               </MotionInView>
-      </div>
 
-      <MotionInView as="article" id="prestasi" className="scroll-mt-24 mt-14 w-full min-w-0" delay={0.1}>
-              <div className="flex items-center gap-2">
-                <IcoKsLaurelFacet className="size-6 text-emerald-600 dark:text-emerald-400" />
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Prestasi siswa</h3>
-              </div>
-              <p
-                className={cn(
-                  "mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400",
-                  publicFormalBodyClassName,
-                )}
-              >
-                Berikut bukti prestasi yang telah <strong>terverifikasi</strong> oleh admin kesiswaan. Daftar
-                diperbarui otomatis dari sistem. Untuk pengajuan prestasi baru, siswa dapat mengunggah bukti
-                melalui portal; informasi tambahan juga diumumkan lewat berita sekolah.
-              </p>
-
-              {prestasiItems.length > 0 ? (
-                <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-                  {prestasiItems.map((p) => {
-                    const isPdf = p.fileUrl.toLowerCase().endsWith(".pdf");
-                    return (
-                      <li
-                        key={p.id}
-                        className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950"
-                      >
-                        <div
-                          className={cn(
-                            "relative aspect-[16/10] w-full",
-                            !isPdf && publicOptimizedImageContainerClassName,
-                          )}
-                        >
-                          {isPdf ? (
-                            <div className="flex size-full flex-col items-center justify-center gap-2 bg-slate-100 text-slate-500 dark:bg-slate-900 dark:text-slate-400">
-                              <IcoReceipt className="size-12 opacity-80" aria-hidden />
-                              <span className="text-xs font-medium">Bukti PDF</span>
-                            </div>
-                          ) : (
-                            <PublicOptimizedImage
-                              src={p.fileUrl}
-                              alt={`Ilustrasi prestasi: ${p.judul}`}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 640px) 100vw, 50vw"
-                            />
-                          )}
-                        </div>
-                        <div className="flex flex-1 flex-col p-4">
-                          <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-400">
-                            {formatDateId(new Date(p.tanggalIso))}
-                          </p>
-                          <h4 className="mt-1 text-base font-semibold text-slate-900 dark:text-white">{p.judul}</h4>
-                          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{p.penyelenggara}</p>
-                          <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">{p.siswaLabel}</p>
-                          {p.ringkasan ? (
-                            <p
-                              className={cn(
-                                "mt-2 line-clamp-3 text-sm leading-relaxed text-slate-600 dark:text-slate-400",
-                                publicFormalBodyClassName,
-                              )}
-                            >
-                              {p.ringkasan}
-                            </p>
-                          ) : null}
-                          <a
-                            href={p.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-4 inline-flex text-sm font-semibold text-emerald-600 hover:underline dark:text-emerald-400"
-                          >
-                            {isPdf ? "Buka dokumen PDF" : "Lihat bukti (gambar)"}
-                          </a>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <p className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-8 text-center text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400">
-                  Belum ada prestasi terverifikasi untuk ditampilkan. Setelah admin menyetujui unggahan siswa,
-                  entri akan muncul di sini.
-                </p>
-              )}
-
-              <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-                <Link
-                  href="/berita/berita-terbaru"
-                  className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 dark:bg-emerald-500 dark:hover:bg-emerald-400"
-                >
-                  Buka berita &amp; pengumuman
-                </Link>
-              </div>
-      </MotionInView>
+      <KesiswaanPrestasiBlogSection prestasiItems={prestasiItems} />
 
       <LazyMotion features={domAnimation} strict>
         <AnimatePresence>

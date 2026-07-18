@@ -12,7 +12,7 @@ import { getKesiswaanHubPublikStats } from "@/services/kesiswaan-publik-stats";
 export async function KesiswaanSection(): Promise<ReactElement> {
   const [ekskulItems, prestasiItems, hubStats] = await Promise.all([
     getEkskulPublikCards(),
-    getPrestasiPublikTerverifikasi(24),
+    getPrestasiPublikTerverifikasi(4),
     getKesiswaanHubPublikStats(),
   ]);
 

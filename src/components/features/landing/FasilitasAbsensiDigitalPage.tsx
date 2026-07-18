@@ -3,13 +3,10 @@ import { notFound } from "next/navigation";
 import type { ReactElement } from "react";
 
 import { PpdbCtaLink } from "@/components/brand/PpdbCtaLink";
-import { AkademikLearnMoreLink } from "@/components/features/landing/AkademikLearnMoreLink";
+import { DiamondSplitFeatureBands } from "@/components/features/landing/DiamondSplitFeatureBands";
 import { FasilitasIconGlyph } from "@/components/features/landing/FasilitasIconGlyph";
 import { FasilitasPageShell } from "@/components/features/landing/FasilitasPageShell";
-import {
-  PublicSplitContentCard,
-  publicSplitCardShellClassName,
-} from "@/components/features/landing/PublicSplitContentCard";
+import { publicSplitCardShellClassName } from "@/components/features/landing/PublicSplitContentCard";
 import { MotionInView } from "@/components/motion/MotionInView";
 import {
   PublicOptimizedImage,
@@ -28,6 +25,7 @@ import {
   ABSENSI_WORKFLOW_SECTION_TITLE,
   ABSENSI_WORKFLOW_STEPS,
 } from "@/lib/fasilitas-absensi-content";
+import { getFasilitasDiamondBands } from "@/lib/fasilitas-diamond-bands";
 import {
   FASILITAS_FOOTER_CTA_BODY,
   FASILITAS_FOOTER_CTA_KONTAK_HREF,
@@ -89,43 +87,12 @@ export async function FasilitasAbsensiDigitalPage(): Promise<ReactElement> {
   ]);
 
   const features = item.features ?? [];
+  const diamondBands = getFasilitasDiamondBands("absensi-digital");
 
   return (
     <FasilitasPageShell eyebrow="Fasilitas TEKNOVO" title={item.title} lede={item.description}>
-      <div className="space-y-14 sm:space-y-16">
-        <MotionInView as="article" className={cn(cardShellClass, "mt-10 min-h-[18rem] sm:min-h-[22rem]")} delay={0.04}>
-          <PublicSplitContentCard
-            tone="accent"
-            columnsAt="lg"
-            textPanelClassName="lg:p-10"
-            image={{
-              src: item.coverSrc,
-              alt: item.title,
-              quality: 70,
-              priority: true,
-            }}
-          >
-            <FasilitasIconGlyph iconKey="absensi-digital" className="size-9 text-blue-600 dark:text-blue-400" />
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600 dark:text-blue-400">
-              Kehadiran terpadu
-            </p>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
-              Dari tap masuk hingga portal orang tua
-            </h2>
-            <ul className="flex flex-wrap gap-2">
-              {item.highlights.map((highlight) => (
-                <li
-                  key={highlight}
-                  className="rounded-full border border-blue-200/80 bg-white/80 px-3 py-1 text-xs font-medium text-blue-900 dark:border-blue-500/30 dark:bg-slate-950/50 dark:text-blue-100"
-                >
-                  {highlight}
-                </li>
-              ))}
-            </ul>
-            <FormalParagraph>{item.paragraphs[0] ?? item.description}</FormalParagraph>
-            <AkademikLearnMoreLink href="/fasilitas">Kembali ke ringkasan</AkademikLearnMoreLink>
-          </PublicSplitContentCard>
-        </MotionInView>
+      <div className="mt-12 space-y-14 sm:mt-14 sm:space-y-16 lg:mt-16">
+        <DiamondSplitFeatureBands bands={diamondBands} />
 
         <MotionInView as="section" delay={0.06} aria-labelledby="absensi-stats">
           <h2 id="absensi-stats" className="sr-only">

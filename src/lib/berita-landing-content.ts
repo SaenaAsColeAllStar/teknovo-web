@@ -37,6 +37,17 @@ export const BERITA_HOME_ARCHIVE_LINK_LABEL = "Lihat semua berita" as const;
 
 export const BERITA_HOME_READ_MORE_LABEL = "Baca selengkapnya" as const;
 
+export const BERITA_BENTO_CTA_BACA = "Baca" as const;
+
+export const BERITA_BENTO_CTA_LIHAT = "Lihat" as const;
+
+export const BERITA_BLOG_SECTION_TITLE = "Berita kegiatan" as const;
+
+export const BERITA_BLOG_SECTION_LEDE =
+  "Sorotan kegiatan resmi sekolah—dari humas dan pimpinan—untuk orang tua dan masyarakat." as const;
+
+export const BERITA_BLOG_AUTHOR_FALLBACK = "Humas sekolah" as const;
+
 export const BERITA_EMPTY_TERBARU =
   "Belum ada berita yang dipublikasikan. Artikel siswa dan berita kegiatan akan tampil di sini setelah proses redaksi dan persetujuan selesai." as const;
 

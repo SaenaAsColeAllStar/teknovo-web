@@ -22,9 +22,9 @@ export function KontakPageView(): ReactElement {
           title={KONTAK_PAGE_TITLE}
           lede={KONTAK_PAGE_LEDE}
         />
-        <MotionInView as="div" className="mt-12" delay={0.06}>
+        <div className="mt-16 sm:mt-20">
           <PublicContactSection />
-        </MotionInView>
+        </div>
       </div>
     </MotionInView>
   );

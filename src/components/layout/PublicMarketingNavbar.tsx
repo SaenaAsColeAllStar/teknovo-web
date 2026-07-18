@@ -3,8 +3,9 @@
 /**
  * Three-tier marketing navbar — announcement + main (brand/actions) + bottom (nav/search).
  * Self-contained chrome for the public site layout.
+ * Dropdown/search primitives shared with HeroOverlayNav.
  */
-import { ChevronDown, Mail, Menu, Phone, Search, X } from "lucide-react";
+import { Mail, Menu, Phone, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   useEffect,
@@ -12,15 +13,21 @@ import {
   useRef,
   useState,
   type FormEvent,
-  type KeyboardEvent as ReactKeyboardEvent,
   type ReactElement,
 } from "react";
 
 import { BrandLogoMark } from "@/components/brand/BrandLogoMark";
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
+import {
+  PublicDesktopNavDropdown,
+  PublicMobileNavGroup,
+} from "@/components/layout/PublicSiteNavMenus";
+import {
+  buildPublicSiteSearchHref,
+  PublicSiteSearchForm,
+  type PublicSiteSearchCategoryId,
+} from "@/components/layout/PublicSiteSearchForm";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useHoverIntentOpen } from "@/hooks/use-hover-intent-open";
 import { usePublicSitePathname } from "@/hooks/use-public-site-pathname";
 import { BRAND_SHORT } from "@/lib/branding";
 import { CONTACT } from "@/lib/constants";
@@ -33,33 +40,15 @@ import {
 import { isPublicSiteNavEntryActive } from "@/lib/public-site-nav-active";
 import {
   PUBLIC_SITE_MAIN_NAV,
+  PUBLIC_SITE_NAV_PPDB_CTA_LABEL,
   PUBLIC_SITE_PPDB_HREF,
-  type PublicSiteNavGroup,
 } from "@/lib/public-site-nav";
-import {
-  filterPublicSiteSearchHits,
-  loadRecentBeritaSearchHits,
-  publicSiteSearchKindLabel,
-  type PublicSiteSearchHit,
-} from "@/lib/public-site-search";
 import { cn } from "@/lib/utils";
-
-const CMS_HREF = "https://cms.smkteknovo.sch.id" as const;
 
 const ANNOUNCEMENT_HREF = PUBLIC_SITE_PPDB_HREF;
 const ANNOUNCEMENT_TEXT =
   HOME_FLASH_MARQUEE_ITEMS[0] ??
   "PPDB Tahun Ajaran 2026/2027 telah dibuka — pantau halaman PPDB resmi sekolah.";
-
-const SEARCH_CATEGORIES = [
-  { id: "all", label: "Semua", href: "/berita/berita-terbaru" },
-  { id: "berita", label: "Berita", href: "/berita/berita-terbaru" },
-  { id: "akademik", label: "Akademik", href: "/akademik" },
-  { id: "jurusan", label: "Jurusan", href: "/akademik/jurusan" },
-  { id: "ppdb", label: "PPDB", href: PUBLIC_SITE_PPDB_HREF },
-] as const;
-
-type SearchCategoryId = (typeof SEARCH_CATEGORIES)[number]["id"];
 
 const contactPhoneDisplay =
   CONTACT.phone.includes("000000") || CONTACT.phone.trim() === ""
@@ -79,377 +68,6 @@ const navItemClassName =
 
 const navItemActiveClassName = "text-brand underline decoration-2 underline-offset-4";
 
-function buildSearchHref(categoryId: SearchCategoryId, query: string): string {
-  const category =
-    SEARCH_CATEGORIES.find((item) => item.id === categoryId) ?? SEARCH_CATEGORIES[0];
-  const trimmed = query.trim();
-  if (!trimmed) {
-    return category.href;
-  }
-  const params = new URLSearchParams({ q: trimmed });
-  return `${category.href}?${params.toString()}`;
-}
-
-function DesktopNavDropdown({
-  entry,
-  active,
-}: {
-  entry: PublicSiteNavGroup;
-  active: boolean;
-}): ReactElement {
-  const panelId = useId();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const {
-    open,
-    openMenu,
-    closeMenu,
-    onRootPointerEnter,
-    onRootPointerLeave,
-    toggleFromClick,
-  } = useHoverIntentOpen();
-
-  useEffect(() => {
-    if (!open) return;
-
-    const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        closeMenu();
-      }
-    };
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") closeMenu();
-    };
-
-    document.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, closeMenu]);
-
-  function onTriggerKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
-    if (event.key === "Enter" || event.key === " ") {
-      event.preventDefault();
-      toggleFromClick();
-      return;
-    }
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      openMenu();
-    }
-    if (event.key === "Escape") {
-      closeMenu();
-    }
-  }
-
-  return (
-    <div
-      ref={rootRef}
-      className="relative"
-      onPointerEnter={onRootPointerEnter}
-      onPointerLeave={onRootPointerLeave}
-    >
-      <button
-        type="button"
-        className={cn(navItemClassName, active && navItemActiveClassName)}
-        aria-expanded={open}
-        aria-controls={panelId}
-        aria-haspopup="menu"
-        onClick={toggleFromClick}
-        onKeyDown={onTriggerKeyDown}
-      >
-        {entry.label}
-        <ChevronDown
-          className={cn(
-            "size-3.5 shrink-0 text-body-subtle transition-transform duration-200",
-            open && "rotate-180 text-brand",
-          )}
-          aria-hidden
-        />
-      </button>
-      {open ? (
-        <div
-          id={panelId}
-          role="menu"
-          className="absolute top-full left-0 z-50 min-w-[14rem] pt-2"
-        >
-          <div className="border border-border-default bg-surface py-1 shadow-sm">
-            {entry.items.map((item) => (
-              <PublicSiteLink
-                key={item.href}
-                href={item.href}
-                role="menuitem"
-                className="block px-3 py-2 text-sm font-medium text-heading transition-colors hover:bg-neutral-soft hover:text-brand"
-                onClick={closeMenu}
-              >
-                {item.label}
-              </PublicSiteLink>
-            ))}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function MobileNavGroup({
-  entry,
-  onNavigate,
-}: {
-  entry: PublicSiteNavGroup;
-  onNavigate: () => void;
-}): ReactElement {
-  const groupId = useId();
-  const [open, setOpen] = useState(false);
-
-  return (
-    <div className="border-t border-border-default first:border-t-0">
-      <button
-        type="button"
-        id={`${groupId}-trigger`}
-        className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-sm font-medium text-heading"
-        aria-expanded={open}
-        aria-controls={`${groupId}-panel`}
-        onClick={() => setOpen((value) => !value)}
-      >
-        {entry.label}
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 text-body-subtle transition-transform duration-200",
-            open && "rotate-180 text-brand",
-          )}
-          aria-hidden
-        />
-      </button>
-      {open ? (
-        <div
-          id={`${groupId}-panel`}
-          role="region"
-          aria-labelledby={`${groupId}-trigger`}
-          className="space-y-0.5 pb-2"
-        >
-          {entry.items.map((item) => (
-            <PublicSiteLink
-              key={item.href}
-              href={item.href}
-              className="block px-3 py-2 pl-5 text-sm text-body hover:text-heading"
-              onClick={onNavigate}
-            >
-              {item.label}
-            </PublicSiteLink>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function JoinedSearchForm({
-  idPrefix,
-  searchQuery,
-  searchCategory,
-  onQueryChange,
-  onCategoryChange,
-  onSubmit,
-  onNavigateSuggestion,
-  className,
-}: {
-  idPrefix: string;
-  searchQuery: string;
-  searchCategory: SearchCategoryId;
-  onQueryChange: (value: string) => void;
-  onCategoryChange: (value: SearchCategoryId) => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-  onNavigateSuggestion: (href: string) => void;
-  className?: string;
-}): ReactElement {
-  const categoryId = `${idPrefix}-category`;
-  const inputId = `${idPrefix}-query`;
-  const listboxId = `${idPrefix}-suggestions`;
-  const rootRef = useRef<HTMLFormElement>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(-1);
-  const [beritaHits, setBeritaHits] = useState<PublicSiteSearchHit[]>([]);
-  const [beritaLoaded, setBeritaLoaded] = useState(false);
-  const [beritaLoading, setBeritaLoading] = useState(false);
-
-  const suggestions = filterPublicSiteSearchHits(searchQuery, beritaHits);
-  const showPanel = panelOpen && (suggestions.length > 0 || beritaLoading);
-
-  useEffect(() => {
-    if (!panelOpen) return;
-    const onPointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setPanelOpen(false);
-        setActiveIndex(-1);
-      }
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => document.removeEventListener("mousedown", onPointerDown);
-  }, [panelOpen]);
-
-  async function ensureBeritaIndex() {
-    if (beritaLoaded || beritaLoading) return;
-    setBeritaLoading(true);
-    try {
-      const hits = await loadRecentBeritaSearchHits(8);
-      setBeritaHits(hits);
-      setBeritaLoaded(true);
-    } finally {
-      setBeritaLoading(false);
-    }
-  }
-
-  async function onFocusSearch() {
-    setPanelOpen(true);
-    await ensureBeritaIndex();
-  }
-
-  function selectSuggestion(hit: PublicSiteSearchHit) {
-    setPanelOpen(false);
-    setActiveIndex(-1);
-    onNavigateSuggestion(hit.href);
-  }
-
-  function onInputKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
-    if (event.key === "Escape") {
-      setPanelOpen(false);
-      setActiveIndex(-1);
-      return;
-    }
-
-    if (!showPanel || suggestions.length === 0) return;
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setActiveIndex((index) => (index + 1) % suggestions.length);
-      return;
-    }
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      setActiveIndex((index) =>
-        index <= 0 ? suggestions.length - 1 : index - 1,
-      );
-      return;
-    }
-    if (event.key === "Enter" && activeIndex >= 0) {
-      event.preventDefault();
-      const hit = suggestions[activeIndex];
-      if (hit) selectSuggestion(hit);
-    }
-  }
-
-  return (
-    <form
-      ref={rootRef}
-      onSubmit={(event) => {
-        setPanelOpen(false);
-        onSubmit(event);
-      }}
-      className={cn("relative", className)}
-      role="search"
-      aria-label="Cari konten sekolah"
-    >
-      <div className="flex w-full min-w-0 max-w-[480px] items-stretch overflow-hidden border border-border-default">
-        <label className="sr-only" htmlFor={categoryId}>
-          Kategori pencarian
-        </label>
-        <select
-          id={categoryId}
-          value={searchCategory}
-          onChange={(event) => onCategoryChange(event.target.value as SearchCategoryId)}
-          className="h-10 shrink-0 border-0 border-r border-border-default bg-surface px-3 text-sm font-medium text-heading focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand/20"
-        >
-          {SEARCH_CATEGORIES.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.label}
-            </option>
-          ))}
-        </select>
-        <label className="sr-only" htmlFor={inputId}>
-          Kata kunci
-        </label>
-        <Input
-          id={inputId}
-          value={searchQuery}
-          onChange={(event) => {
-            onQueryChange(event.target.value);
-            setPanelOpen(true);
-            setActiveIndex(-1);
-            void ensureBeritaIndex();
-          }}
-          onFocus={() => {
-            void onFocusSearch();
-          }}
-          onKeyDown={onInputKeyDown}
-          placeholder="Cari berita, jurusan…"
-          role="combobox"
-          aria-expanded={showPanel}
-          aria-controls={listboxId}
-          aria-autocomplete="list"
-          aria-activedescendant={
-            activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
-          }
-          className="h-10 min-w-0 flex-1 rounded-none border-0 focus-visible:ring-0"
-        />
-        <Button
-          type="submit"
-          className="h-10 shrink-0 gap-2 rounded-none px-4 text-sm font-medium [&_svg]:size-[18px]"
-        >
-          <Search aria-hidden />
-          Cari
-        </Button>
-      </div>
-
-      {showPanel ? (
-        <div
-          id={listboxId}
-          role="listbox"
-          aria-label="Saran pencarian"
-          className="absolute top-full right-0 left-0 z-50 mt-1 max-h-72 overflow-y-auto border border-border-default bg-surface shadow-sm"
-        >
-          {!searchQuery.trim() && suggestions.length > 0 ? (
-            <p className="border-b border-border-default px-3 py-2 text-xs font-medium tracking-wide text-body-subtle uppercase">
-              Berita terbaru
-            </p>
-          ) : null}
-          {beritaLoading && suggestions.length === 0 ? (
-            <p className="px-3 py-2.5 text-sm text-body-subtle">Memuat saran…</p>
-          ) : null}
-          {suggestions.map((hit, index) => (
-            <button
-              key={hit.id}
-              id={`${listboxId}-option-${index}`}
-              type="button"
-              role="option"
-              aria-selected={index === activeIndex}
-              className={cn(
-                "flex w-full items-start justify-between gap-3 px-3 py-2.5 text-left text-sm transition-colors",
-                index === activeIndex
-                  ? "bg-brand text-white"
-                  : "text-heading hover:bg-neutral-soft hover:text-brand",
-              )}
-              onMouseEnter={() => setActiveIndex(index)}
-              onClick={() => selectSuggestion(hit)}
-            >
-              <span className="min-w-0 flex-1 font-medium">{hit.title}</span>
-              <span
-                className={cn(
-                  "shrink-0 text-xs font-medium",
-                  index === activeIndex ? "text-white/80" : "text-body-subtle",
-                )}
-              >
-                {publicSiteSearchKindLabel(hit.kind)}
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </form>
-  );
-}
-
 export type PublicMarketingNavbarProps = {
   /**
    * Sembunyikan chrome tiga tingkat (beranda memakai HeroOverlayNav di dalam hero).
@@ -468,7 +86,8 @@ export function PublicMarketingNavbar({
   const searchFormId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchCategory, setSearchCategory] = useState<SearchCategoryId>("all");
+  const [searchCategory, setSearchCategory] =
+    useState<PublicSiteSearchCategoryId>("all");
 
   const hideChrome = hidden ?? pathname === "/";
 
@@ -507,7 +126,7 @@ export function PublicMarketingNavbar({
 
   function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    router.push(buildSearchHref(searchCategory, searchQuery));
+    router.push(buildPublicSiteSearchHref(searchCategory, searchQuery));
     setMobileOpen(false);
   }
 
@@ -582,9 +201,9 @@ export function PublicMarketingNavbar({
               variant="secondary"
               className="h-auto px-5 py-2.5 text-sm font-medium text-heading"
             >
-              <a href={CMS_HREF} rel="noopener noreferrer">
-                CMS
-              </a>
+              <PublicSiteLink href={PUBLIC_SITE_PPDB_HREF}>
+                {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
+              </PublicSiteLink>
             </Button>
 
             <button
@@ -634,12 +253,17 @@ export function PublicMarketingNavbar({
               }
 
               return (
-                <DesktopNavDropdown key={entry.id} entry={entry} active={active} />
+                <PublicDesktopNavDropdown
+                  key={entry.id}
+                  entry={entry}
+                  active={active}
+                  appearance="surface"
+                />
               );
             })}
           </nav>
 
-          <JoinedSearchForm
+          <PublicSiteSearchForm
             idPrefix={searchFormId}
             searchQuery={searchQuery}
             searchCategory={searchCategory}
@@ -647,6 +271,7 @@ export function PublicMarketingNavbar({
             onCategoryChange={setSearchCategory}
             onSubmit={onSearchSubmit}
             onNavigateSuggestion={onNavigateSuggestion}
+            appearance="surface"
             className="ml-auto hidden w-full max-w-[480px] md:flex"
           />
         </div>
@@ -684,10 +309,11 @@ export function PublicMarketingNavbar({
               }
 
               return (
-                <MobileNavGroup
+                <PublicMobileNavGroup
                   key={entry.id}
                   entry={entry}
                   onNavigate={() => setMobileOpen(false)}
+                  appearance="surface"
                 />
               );
             })}
@@ -729,18 +355,17 @@ export function PublicMarketingNavbar({
                 variant="secondary"
                 className="h-auto w-full px-5 py-2.5 text-sm font-medium text-heading"
               >
-                <a
-                  href={CMS_HREF}
-                  rel="noopener noreferrer"
+                <PublicSiteLink
+                  href={PUBLIC_SITE_PPDB_HREF}
                   onClick={() => setMobileOpen(false)}
                 >
-                  CMS
-                </a>
+                  {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
+                </PublicSiteLink>
               </Button>
             </div>
 
             <div className="border-t border-border-default pt-3 md:hidden">
-              <JoinedSearchForm
+              <PublicSiteSearchForm
                 idPrefix={`${searchFormId}-mobile`}
                 searchQuery={searchQuery}
                 searchCategory={searchCategory}
@@ -748,6 +373,7 @@ export function PublicMarketingNavbar({
                 onCategoryChange={setSearchCategory}
                 onSubmit={onSearchSubmit}
                 onNavigateSuggestion={onNavigateSuggestion}
+                appearance="surface"
                 className="w-full"
               />
             </div>

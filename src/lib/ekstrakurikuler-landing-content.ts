@@ -79,6 +79,35 @@ export const EKSTRA_KATEGORI_LABELS: Record<
   SENI: "Seni & kreativitas",
 };
 
+/** Hub `#ekstrakurikuler` — three feature columns grouping live unit data. */
+export const EKSTRA_HUB_FEATURE_COLUMNS = [
+  {
+    id: "media-literasi",
+    title: "Media & Literasi",
+    iconKey: "teknologi" as const,
+    kategoriKeys: ["TEKNOLOGI"] as const,
+  },
+  {
+    id: "olahraga-seni",
+    title: "Olahraga & Seni",
+    iconKey: "olahraga" as const,
+    kategoriKeys: ["OLAHRAGA", "SENI"] as const,
+  },
+  {
+    id: "kepemimpinan",
+    title: "Kepemimpinan & Organisasi",
+    iconKey: "akademik" as const,
+    kategoriKeys: ["AKADEMIK"] as const,
+  },
+] as const;
+
+export const EKSTRA_HUB_SECTION_EYEBROW = "Program" as const;
+
+export const EKSTRA_HUB_SECTION_TITLE = "Ekstrakurikuler" as const;
+
+export const EKSTRA_HUB_SECTION_BODY =
+  "Daftar unit di bawah disinkronkan dari data sekolah. Penambahan atau perubahan dilakukan melalui administrasi kesiswaan." as const;
+
 export type EkstrakurikulerFilterKey = "SEMUA" | "TEKNOLOGI" | "OLAHRAGA" | "AKADEMIK" | "SENI";
 
 export type EkstrakurikulerFilterIconKey =

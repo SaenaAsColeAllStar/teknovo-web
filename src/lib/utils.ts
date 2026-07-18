@@ -40,3 +40,22 @@ export function formatDateId(date: Date): string {
     dateStyle: "long",
   }).format(date);
 }
+
+/** Label waktu relatif singkat (locale Indonesia). */
+export function formatRelativeTimeId(date: Date, now = new Date()): string {
+  const diffMs = date.getTime() - now.getTime();
+  const absSec = Math.round(Math.abs(diffMs) / 1000);
+  const sign = diffMs < 0 ? -1 : 1;
+  const rtf = new Intl.RelativeTimeFormat("id-ID", { numeric: "auto" });
+
+  if (absSec < 60) return rtf.format(sign * absSec, "second");
+  const absMin = Math.round(absSec / 60);
+  if (absMin < 60) return rtf.format(sign * absMin, "minute");
+  const absHour = Math.round(absMin / 60);
+  if (absHour < 24) return rtf.format(sign * absHour, "hour");
+  const absDay = Math.round(absHour / 24);
+  if (absDay < 30) return rtf.format(sign * absDay, "day");
+  const absMonth = Math.round(absDay / 30);
+  if (absMonth < 12) return rtf.format(sign * absMonth, "month");
+  return rtf.format(sign * Math.round(absMonth / 12), "year");
+}

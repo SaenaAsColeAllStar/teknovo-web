@@ -1,5 +1,9 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { buildBeritaBentoTiles } from "@/components/features/landing/berita/BeritaBentoHero";
+import { artikelSiswaToBeritaItem } from "@/components/features/landing/berita/artikel-siswa-to-berita-item";
+import { beritaKegiatanToBeritaItem } from "@/components/features/landing/berita/berita-kegiatan-to-berita-item";
+import { BERITA_TERBARU } from "@/components/features/landing/berita/berita-data";
 import { BeritaPageShell } from "@/components/features/landing/berita/BeritaPageShell";
 import { BeritaTerbaruSection } from "@/components/features/landing/berita/BeritaTerbaruSection";
 import {
@@ -13,6 +17,14 @@ const [artikelSiswa, beritaKegiatan] = await Promise.all([
   getPublishedArtikelSiswaCards(48),
   getPublishedBeritaKegiatanCards(48),
 ]);
+
+const gabungan = [
+  ...artikelSiswa.map(artikelSiswaToBeritaItem),
+  ...beritaKegiatan.map(beritaKegiatanToBeritaItem),
+  ...BERITA_TERBARU,
+].sort((x, y) => new Date(y.tanggal).getTime() - new Date(x.tanggal).getTime());
+
+const bentoTiles = buildBeritaBentoTiles(gabungan);
 ---
 
 <BaseLayout title={BERITA_TERBARU_PAGE_TITLE} description={BERITA_TERBARU_PAGE_LEDE}>
@@ -21,6 +33,7 @@ const [artikelSiswa, beritaKegiatan] = await Promise.all([
     title={BERITA_TERBARU_PAGE_TITLE}
     lede={BERITA_TERBARU_PAGE_LEDE}
     showArchiveHero
+    bentoTiles={bentoTiles}
   >
     <BeritaTerbaruSection
       artikelSiswa={artikelSiswa}
