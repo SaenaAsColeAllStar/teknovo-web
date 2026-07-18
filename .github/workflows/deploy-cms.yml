@@ -26,7 +26,7 @@ jobs:
         working-directory: apps/cms
         env:
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
-          VITE_API_URL: https://cf.smkteknovo.sch.id
+          VITE_API_URL: https://cf.smkteknovo.sch.id/api
         run: pnpm build
       - name: Deploy Pages
         working-directory: apps/cms

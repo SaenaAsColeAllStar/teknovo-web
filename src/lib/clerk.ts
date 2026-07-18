@@ -81,6 +81,16 @@ export function cmsRoleCanManageSettings(role: CmsRole): boolean {
   return role === "admin";
 }
 
+/** Super Admin + Admin — fasilitas / ekstrakurikuler / prestasi. */
+export function cmsRoleCanManageSiteContent(role: CmsRole): boolean {
+  return role === "admin" || role === "editor";
+}
+
+/** Super Admin only — landing / brand media registry. */
+export function cmsRoleCanManageSiteMedia(role: CmsRole): boolean {
+  return role === "admin";
+}
+
 /** Invite-only user management: Super Admin + Admin (`editor`). */
 export function cmsRoleCanManageUsers(role: CmsRole): boolean {
   return role === "admin" || role === "editor";

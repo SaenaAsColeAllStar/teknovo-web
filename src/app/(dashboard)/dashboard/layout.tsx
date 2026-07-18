@@ -22,6 +22,8 @@ export default async function DashboardLayout({
   const canAccessBeritaSekolah = session?.canAccessBeritaSekolah ?? true;
   const canManageSettings = session?.canManageSettings ?? false;
   const canManageUsers = session?.canManageUsers ?? false;
+  const canManageSiteContent = session?.canManageSiteContent ?? false;
+  const canManageSiteMedia = session?.canManageSiteMedia ?? false;
 
   return (
     <CmsRoleProvider
@@ -35,6 +37,8 @@ export default async function DashboardLayout({
       canAccessBeritaSekolah={canAccessBeritaSekolah}
       canManageSettings={canManageSettings}
       canManageUsers={canManageUsers}
+      canManageSiteContent={canManageSiteContent}
+      canManageSiteMedia={canManageSiteMedia}
     >
       <div className="flex min-h-screen bg-[color:var(--color-neutral-soft)]">
         <DashboardSidebar />

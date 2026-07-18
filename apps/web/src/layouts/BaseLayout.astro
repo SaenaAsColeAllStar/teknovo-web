@@ -1,6 +1,7 @@
 ---
 import { ClientRouter, fade } from "astro:transitions";
 import { PublicChrome } from "../components/PublicChrome";
+import { getPublicSiteMainNav } from "@/services/public-site-nav-publik";
 import "../styles/global.css";
 
 type Props = {
@@ -34,6 +35,8 @@ const apiOrigin = (
 )
   .replace(/\/$/, "")
   .replace(/\/api$/, "");
+
+const mainNav = await getPublicSiteMainNav();
 
 /** Subtle main-content crossfade; navbar uses view-transition-name (see global.css). */
 const pageFade = fade({ duration: "180ms" });
@@ -94,6 +97,7 @@ const pageFade = fade({ duration: "180ms" });
     <PublicChrome
       client:load
       hideNavbar={Astro.url.pathname === "/" || Astro.url.pathname === ""}
+      mainNav={mainNav}
     >
       <div class="public-page-main" transition:animate={pageFade} transition:name="public-page-main">
         <slot />

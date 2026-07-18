@@ -2,6 +2,10 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { beritaRoutes } from "./routes/berita";
 import { artikelRoutes } from "./routes/artikel";
+import { fasilitasRoutes } from "./routes/fasilitas";
+import { ekstrakurikulerRoutes } from "./routes/ekstrakurikuler";
+import { prestasiRoutes } from "./routes/prestasi";
+import { siteMediaRoutes } from "./routes/site-media";
 import {
   analyticsRoutes,
   hooksRoutes,
@@ -64,6 +68,10 @@ app.get("/api/health", (c) =>
 
 app.route("/api/v1/berita", beritaRoutes);
 app.route("/api/v1/artikel-siswa", artikelRoutes);
+app.route("/api/v1/fasilitas", fasilitasRoutes);
+app.route("/api/v1/ekstrakurikuler", ekstrakurikulerRoutes);
+app.route("/api/v1/prestasi", prestasiRoutes);
+app.route("/api/v1/site-media", siteMediaRoutes);
 app.route("/api/v1/kategori", kategoriRoutes);
 app.route("/api/v1/pengaturan", pengaturanRoutes);
 app.route("/api/v1/users", usersRoutes);

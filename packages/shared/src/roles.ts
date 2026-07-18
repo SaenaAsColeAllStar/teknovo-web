@@ -54,6 +54,21 @@ export function cmsRoleCanManageSettings(role: CmsRole): boolean {
 }
 
 /**
+ * Super Admin + Admin may CRUD fasilitas / ekstrakurikuler / prestasi.
+ * Same matrix as berita writers (`admin` | `editor`).
+ */
+export function cmsRoleCanManageSiteContent(role: CmsRole): boolean {
+  return role === "admin" || role === "editor";
+}
+
+/**
+ * Super Admin only — replace public landing / brand media used by `apps/web`.
+ */
+export function cmsRoleCanManageSiteMedia(role: CmsRole): boolean {
+  return role === "admin";
+}
+
+/**
  * Invite-only CMS: Super Admin (`admin`) and Admin (`editor`) may manage users.
  * Siswa / viewer / public cannot create accounts.
  */

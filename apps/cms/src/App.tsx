@@ -1,4 +1,4 @@
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider } from "@clerk/react";
 import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -29,8 +29,10 @@ export function App() {
       <div className="p-8">
         <h1 className="text-xl font-bold">CMS belum dikonfigurasi</h1>
         <p className="mt-2 text-sm text-[color:var(--color-body)]">
-          Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> dan <code>VITE_API_URL</code>{" "}
-          (default https://cf.smkteknovo.sch.id/api).
+          Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> dan{" "}
+          <code>VITE_API_URL</code> (atau <code>PUBLIC_API_URL</code> fallback)
+          di Pages project <code>teknovo-cms</code> — default{" "}
+          https://cf.smkteknovo.sch.id/api.
         </p>
       </div>
     );

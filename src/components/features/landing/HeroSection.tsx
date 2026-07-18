@@ -33,7 +33,11 @@ const SLIDES = LANDING_MEDIA.hero.slides;
  * does not apply here — this tree must carry its own `LazyMotion` or `m.*`
  * nodes stay at `initial` (opacity 0) after hydration.
  */
-export function HeroSection(): ReactElement {
+export function HeroSection({
+  mainNav,
+}: {
+  mainNav?: readonly import("@/lib/public-site-nav").PublicSiteNavEntry[];
+} = {}): ReactElement {
   const reduceMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -157,7 +161,7 @@ export function HeroSection(): ReactElement {
         </div>
 
         {/* Pinned hero overlay nav — three-tier chrome stays hidden on `/` */}
-        <HeroOverlayNav />
+        <HeroOverlayNav mainNav={mainNav} />
 
         {/* Oversized watermark between sky and subject — y-only enter (never opacity 0) */}
         <m.p

@@ -43,3 +43,7 @@ export function shouldRebuildForBeritaStatus(status: string): boolean {
 export function shouldRebuildForArtikelStatus(status: string): boolean {
   return status === "PUBLISHED" || status === "ARCHIVED";
 }
+
+export function shouldRebuildForSiteContentStatus(status: string): boolean {
+  return status === "PUBLISHED" || status === "ARCHIVED";
+}

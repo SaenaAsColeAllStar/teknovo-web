@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { PublicSiteLayout } from "@/components/layout/PublicSiteLayout";
+import type { PublicSiteNavEntry } from "@/lib/public-site-nav";
 
 /**
  * Public chrome — same as Next `(site)/layout`.
@@ -14,12 +15,16 @@ import { PublicSiteLayout } from "@/components/layout/PublicSiteLayout";
 export function PublicChrome({
   children,
   hideNavbar,
+  mainNav,
 }: {
   children: ReactNode;
   /** From Astro `url.pathname` — avoid SSR always-`/` pathname snap hiding chrome wrongly. */
   hideNavbar?: boolean;
+  mainNav?: PublicSiteNavEntry[];
 }) {
   return (
-    <PublicSiteLayout hideNavbar={hideNavbar}>{children}</PublicSiteLayout>
+    <PublicSiteLayout hideNavbar={hideNavbar} mainNav={mainNav}>
+      {children}
+    </PublicSiteLayout>
   );
 }

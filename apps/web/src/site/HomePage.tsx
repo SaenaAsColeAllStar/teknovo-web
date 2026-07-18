@@ -13,11 +13,13 @@ import { PublicMotionProvider } from "@/components/motion/PublicMotionProvider";
 import type { LandingPublicStatItem } from "@/services/landing-stats";
 import type { ArtikelSiswaPublikCard } from "@/services/artikel-berita-publik";
 import type { BeritaKegiatanPublikCard } from "@/services/berita-kegiatan-publik";
+import type { PublicSiteNavEntry } from "@/lib/public-site-nav";
 
 export type HomePageProps = {
   stats: LandingPublicStatItem[];
   artikelSiswa: ArtikelSiswaPublikCard[];
   beritaKegiatan: BeritaKegiatanPublikCard[];
+  mainNav?: readonly PublicSiteNavEntry[];
 };
 
 /**
@@ -29,11 +31,12 @@ export function HomePage({
   stats,
   artikelSiswa,
   beritaKegiatan,
+  mainNav,
 }: HomePageProps): ReactElement {
   return (
     <PublicMotionProvider>
       <LocalSeoJsonLd pageId="home" includeWebSite includeFaq useGraph />
-      <HeroSection />
+      <HeroSection mainNav={mainNav} />
       <FasilitasSection embedded />
       <SocialProofSectionView stats={stats} />
       <ActivitiesShowcaseSection />

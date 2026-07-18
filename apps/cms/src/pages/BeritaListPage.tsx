@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { useEffect, useState } from "react";

@@ -11,6 +11,25 @@ export type {
 } from "./types/artikel-siswa";
 export type { Kategori } from "./types/kategori";
 export type { CmsAnalyticsOverview } from "./types/analytics";
+export type {
+  SiteContentStatus,
+  Fasilitas,
+  FasilitasListItem,
+  FasilitasExtras,
+  FasilitasFeaturePillar,
+  FasilitasHoursRow,
+  FasilitasServiceBand,
+  FasilitasStatChip,
+  FasilitasPathwayStep,
+  FasilitasQuote,
+  FasilitasSplitNarrative,
+  EkskulKategori,
+  Ekstrakurikuler,
+  EkstrakurikulerListItem,
+  Prestasi,
+  PrestasiListItem,
+  SiteMediaItem,
+} from "./types/site-content";
 
 export * from "./roles";
 export * from "./schemas";

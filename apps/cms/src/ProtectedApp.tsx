@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { DashboardLayoutClient } from "./components/DashboardLayoutClient";
@@ -11,6 +11,14 @@ import { ModerasiPage } from "./pages/ModerasiPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PengaturanPage } from "./pages/PengaturanPage";
 import { PenggunaPage } from "./pages/PenggunaPage";
+import {
+  EkstrakurikulerFormPage,
+  EkstrakurikulerListPage,
+  FasilitasFormPage,
+  FasilitasListPage,
+  PrestasiFormPage,
+  PrestasiListPage,
+} from "./pages/SiteContentPages";
 
 /**
  * Authenticated CMS shell — lazy-loaded from `App` so `/sign-in` does not
@@ -43,6 +51,21 @@ export function ProtectedApp() {
         <Route path="artikel/:id/edit" element={<ArtikelFormPage mode="edit" />} />
         <Route path="moderasi" element={<ModerasiPage />} />
         <Route path="kategori" element={<KategoriPage />} />
+        <Route path="fasilitas" element={<FasilitasListPage />} />
+        <Route path="fasilitas/baru" element={<FasilitasFormPage mode="create" />} />
+        <Route path="fasilitas/:id/edit" element={<FasilitasFormPage mode="edit" />} />
+        <Route path="ekstrakurikuler" element={<EkstrakurikulerListPage />} />
+        <Route
+          path="ekstrakurikuler/baru"
+          element={<EkstrakurikulerFormPage mode="create" />}
+        />
+        <Route
+          path="ekstrakurikuler/:id/edit"
+          element={<EkstrakurikulerFormPage mode="edit" />}
+        />
+        <Route path="prestasi" element={<PrestasiListPage />} />
+        <Route path="prestasi/baru" element={<PrestasiFormPage mode="create" />} />
+        <Route path="prestasi/:id/edit" element={<PrestasiFormPage mode="edit" />} />
         <Route path="media" element={<MediaPage />} />
         <Route path="pengguna" element={<PenggunaPage />} />
         <Route path="pengaturan" element={<PengaturanPage />} />

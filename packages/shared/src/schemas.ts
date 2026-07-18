@@ -49,6 +49,135 @@ export const kategoriFormSchema = z.object({
 
 export type KategoriFormValues = z.infer<typeof kategoriFormSchema>;
 
+const siteContentStatus = z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]);
+
+const optionalUrl = z.string().url().optional().or(z.literal(""));
+
+export const fasilitasFormSchema = z.object({
+  title: z.string().min(2).max(160),
+  slug: z
+    .string()
+    .min(2)
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  navLabel: z.string().min(1).max(60),
+  description: z.string().min(1).max(800),
+  coverUrl: optionalUrl,
+  highlights: z.array(z.string().min(1).max(120)).max(12).default([]),
+  paragraphs: z.array(z.string().min(1).max(4000)).max(20).default([]),
+  extras: z
+    .object({
+      features: z
+        .array(
+          z.object({
+            id: z.string().min(1).max(60),
+            title: z.string().min(1).max(120),
+            description: z.string().min(1).max(500),
+          }),
+        )
+        .max(12)
+        .optional(),
+      hours: z
+        .array(
+          z.object({
+            label: z.string().min(1).max(80),
+            value: z.string().min(1).max(120),
+          }),
+        )
+        .max(12)
+        .optional(),
+      services: z
+        .array(
+          z.object({
+            audience: z.string().min(1).max(80),
+            items: z.array(z.string().min(1).max(200)).max(12),
+          }),
+        )
+        .max(8)
+        .optional(),
+      stats: z
+        .array(
+          z.object({
+            label: z.string().min(1).max(80),
+            value: z.string().min(1).max(120),
+          }),
+        )
+        .max(8)
+        .optional(),
+      pathwaySteps: z
+        .array(
+          z.object({
+            step: z.string().min(1).max(12),
+            title: z.string().min(1).max(120),
+            description: z.string().min(1).max(500),
+          }),
+        )
+        .max(12)
+        .optional(),
+      quote: z
+        .object({
+          text: z.string().min(1).max(800),
+          attribution: z.string().min(1).max(160),
+        })
+        .optional(),
+      splitNarrative: z
+        .object({
+          title: z.string().min(1).max(160),
+          paragraphs: z.array(z.string().min(1).max(4000)).max(12),
+        })
+        .optional(),
+    })
+    .default({}),
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+  showInNav: z.boolean().default(true),
+  status: siteContentStatus,
+});
+
+export type FasilitasFormValues = z.infer<typeof fasilitasFormSchema>;
+
+export const ekstrakurikulerFormSchema = z.object({
+  name: z.string().min(2).max(160),
+  slug: z
+    .string()
+    .min(2)
+    .max(120)
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/),
+  detail: z.string().min(1).max(400),
+  fullDescription: z.string().min(1).max(4000),
+  kategori: z.enum(["TEKNOLOGI", "OLAHRAGA", "AKADEMIK", "SENI"]),
+  previewUrl: optionalUrl,
+  relatedAchievements: z.array(z.string().min(1).max(200)).max(12).default([]),
+  jadwalRingkas: z.string().max(200).optional().or(z.literal("")),
+  lokasiLatihan: z.string().max(200).optional().or(z.literal("")),
+  pembinaNama: z.string().max(120).optional().or(z.literal("")),
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+  status: siteContentStatus,
+});
+
+export type EkstrakurikulerFormValues = z.infer<
+  typeof ekstrakurikulerFormSchema
+>;
+
+export const prestasiFormSchema = z.object({
+  judul: z.string().min(3).max(200),
+  penyelenggara: z.string().min(2).max(160),
+  tanggalIso: z.string().min(4).max(40),
+  siswaLabel: z.string().min(1).max(160),
+  ringkasan: z.string().min(1).max(800),
+  fileUrl: z.string().url(),
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+  status: siteContentStatus,
+});
+
+export type PrestasiFormValues = z.infer<typeof prestasiFormSchema>;
+
+export const siteMediaPatchSchema = z.object({
+  url: z.string().url(),
+  label: z.string().min(1).max(160).optional(),
+});
+
+export type SiteMediaPatchValues = z.infer<typeof siteMediaPatchSchema>;
+
 const marqueeItemSchema = z.object({
   label: z.string().trim().min(1).max(240),
   href: z.string().trim().max(500),

@@ -1,4 +1,4 @@
-import { useAuth, useClerk, useUser } from "@clerk/clerk-react";
+import { useAuth, useClerk, useUser } from "@clerk/react";
 import {
   Bell,
   ChevronDown,

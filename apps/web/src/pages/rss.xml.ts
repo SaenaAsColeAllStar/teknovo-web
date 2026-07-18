@@ -1,9 +1,12 @@
 import type { APIRoute } from "astro";
 import type { BeritaListItem } from "@teknovo/shared";
 
+/** Host origin only — this file appends `/api/v1/...`. Strip trailing `/api` if set. */
 const API_URL = (
   import.meta.env.PUBLIC_API_URL || "https://cf.smkteknovo.sch.id"
-).replace(/\/$/, "");
+)
+  .replace(/\/$/, "")
+  .replace(/\/api$/, "");
 
 export const GET: APIRoute = async () => {
   let items: BeritaListItem[] = [];

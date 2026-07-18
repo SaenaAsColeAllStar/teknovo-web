@@ -22,11 +22,13 @@ Atau Root `apps/web` + `pnpm install && pnpm build` + output `dist` (butuh works
 
 | Name | Value |
 |------|--------|
-| `PUBLIC_API_URL` | `https://cf.smkteknovo.sch.id` |
+| `PUBLIC_API_URL` | `https://cf.smkteknovo.sch.id` (**host only — no `/api`**) |
 | `PUBLIC_SITE_URL` | `https://smkteknovo.sch.id` |
 | `PUBLIC_R2_URL` | `https://r2.ctos.web.id` |
 | `PUBLIC_TURNSTILE_SITEKEY` | Turnstile sitekey (public) |
 | `PUBLIC_TURNSTILE_SITEVERIFY_URL` | `https://turnstile-siteverify-teknovo-web.fajarnugrahayusman-06.workers.dev` |
+
+CMS Pages (`teknovo-cms`) uses **`VITE_API_URL`** (`…/api`), not this name. If you paste `…/api` here by mistake, the web build strips the suffix so requests stay `…/api/v1/...` (not `/api/api`).
 
 Astro fetch berita **saat build**. Publish CMS → API `rebuild-web` → GitHub Action rebuild Pages.
 

@@ -15,6 +15,8 @@ type CmsRoleContextValue = {
   canAccessBeritaSekolah: boolean;
   canManageSettings: boolean;
   canManageUsers: boolean;
+  canManageSiteContent: boolean;
+  canManageSiteMedia: boolean;
 };
 
 const CmsRoleContext = createContext<CmsRoleContextValue>({
@@ -28,6 +30,8 @@ const CmsRoleContext = createContext<CmsRoleContextValue>({
   canAccessBeritaSekolah: true,
   canManageSettings: false,
   canManageUsers: false,
+  canManageSiteContent: false,
+  canManageSiteMedia: false,
 });
 
 export function CmsRoleProvider({
@@ -41,6 +45,8 @@ export function CmsRoleProvider({
   canAccessBeritaSekolah,
   canManageSettings,
   canManageUsers,
+  canManageSiteContent,
+  canManageSiteMedia,
   children,
 }: CmsRoleContextValue & { children: ReactNode }) {
   return (
@@ -56,6 +62,8 @@ export function CmsRoleProvider({
         canAccessBeritaSekolah,
         canManageSettings,
         canManageUsers,
+        canManageSiteContent,
+        canManageSiteMedia,
       }}
     >
       {children}

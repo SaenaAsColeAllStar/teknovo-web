@@ -4,31 +4,37 @@ import { FasilitasAbsensiDigitalPage } from "@/components/features/landing/Fasil
 import { FasilitasDetailPage } from "@/components/features/landing/FasilitasDetailPage";
 import { LmsJsonLd } from "@/components/features/lms/LmsJsonLd";
 import {
-  FASILITAS_SLUGS,
   type FasilitasSlug,
   getFasilitasItem,
   isFasilitasSlug,
 } from "@/lib/fasilitas-landing-content";
 import { LMS_PAGE_SEO } from "@/lib/lms-dashboard-seo";
 import { getLmsPublikStats } from "@/services/lms-publik-stats";
+import {
+  getPublishedFasilitasBySlug,
+  getPublishedFasilitasSlugs,
+} from "@/services/fasilitas-publik";
 
-export function getStaticPaths() {
-  return FASILITAS_SLUGS.map((slug) => ({
+export async function getStaticPaths() {
+  const slugs = await getPublishedFasilitasSlugs();
+  return slugs.map((slug) => ({
     params: { slug },
   }));
 }
 
 const slug = Astro.params.slug as string;
-if (!isFasilitasSlug(slug)) {
+const fromApi = await getPublishedFasilitasBySlug(slug);
+const typedOk = isFasilitasSlug(slug) || Boolean(fromApi);
+if (!typedOk) {
   return Astro.redirect("/fasilitas");
 }
 
 const typedSlug = slug as FasilitasSlug;
-const isAbsensi = typedSlug === "absensi-digital";
-const isLms = typedSlug === "lms-sekolah";
+const isAbsensi = slug === "absensi-digital";
+const isLms = slug === "lms-sekolah";
 const liveStats = isLms ? await getLmsPublikStats() : undefined;
 
-const item = getFasilitasItem(typedSlug);
+const item = fromApi ?? (isFasilitasSlug(slug) ? getFasilitasItem(typedSlug) : null);
 const lmsSeo = LMS_PAGE_SEO["fasilitas-lms"];
 const title = isLms ? lmsSeo.title : (item?.title ?? "Fasilitas");
 const description = isLms
@@ -43,7 +49,12 @@ const description = isLms
     ) : (
       <>
         {isLms ? <LmsJsonLd client:load pageId="fasilitas-lms" /> : null}
-        <FasilitasDetailPage client:load slug={typedSlug} liveStats={liveStats} />
+        <FasilitasDetailPage
+          client:load
+          slug={typedSlug}
+          liveStats={liveStats}
+          item={item}
+        />
       </>
     )
   }

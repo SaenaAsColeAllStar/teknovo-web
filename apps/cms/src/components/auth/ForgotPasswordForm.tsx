@@ -1,5 +1,4 @@
-import { useAuth } from "@clerk/clerk-react";
-import { useSignInSignal } from "@clerk/clerk-react/experimental";
+import { useAuth, useSignIn } from "@clerk/react";
 import { Mail } from "lucide-react";
 import {
   type FormEvent,
@@ -67,7 +66,7 @@ function clerkErrorMessage(error: unknown, fallback: string): string {
 export function ForgotPasswordForm({ className }: { className?: string }): ReactElement {
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
-  const { signIn, errors, fetchStatus } = useSignInSignal();
+  const { signIn, errors, fetchStatus } = useSignIn();
 
   const [step, setStep] = useState<Step>("request");
   const [email, setEmail] = useState("");

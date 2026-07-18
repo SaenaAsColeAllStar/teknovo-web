@@ -12,6 +12,7 @@ import {
   FASILITAS_PAGE_TITLE,
   getFasilitasDetailPath,
   getFasilitasItem,
+  type FasilitasLandingItem,
   type FasilitasSlug,
 } from "@/lib/fasilitas-landing-content";
 import { cn } from "@/lib/utils";
@@ -86,14 +87,21 @@ function FasilitasBentoMock({
   );
 }
 
-export function FasilitasHubPage(): ReactElement {
-  const cards = BENTO_ORDER.map((slug) => {
-    const item = getFasilitasItem(slug);
-    if (!item) {
-      throw new Error(`Missing fasilitas item: ${slug}`);
-    }
-    return item;
-  });
+export function FasilitasHubPage({
+  items,
+}: {
+  items?: readonly FasilitasLandingItem[];
+} = {}): ReactElement {
+  const cards =
+    items && items.length > 0
+      ? [...items]
+      : BENTO_ORDER.map((slug) => {
+          const item = getFasilitasItem(slug);
+          if (!item) {
+            throw new Error(`Missing fasilitas item: ${slug}`);
+          }
+          return item;
+        });
 
   return (
     <FasilitasPageShell title={FASILITAS_PAGE_TITLE} lede={FASILITAS_PAGE_LEDE} showHubHero>

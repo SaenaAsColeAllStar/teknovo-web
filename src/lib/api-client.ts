@@ -88,7 +88,7 @@ function apiErrorMessage(status: number, body: unknown): string {
   if (status === 401 || status === 403) return "Sesi tidak valid. Masuk ulang lalu coba lagi.";
   if (status === 404) {
     // Prefer Worker body ("Route tidak ditemukan.") so mis-prefixed URLs are obvious.
-    return "Data atau endpoint tidak ditemukan. Periksa VITE_API_URL (harus …/api).";
+    return "Data atau endpoint tidak ditemukan. Periksa VITE_API_URL / PUBLIC_API_URL (CMS: …/api).";
   }
   return `Permintaan API gagal (${status}).`;
 }
@@ -758,3 +758,338 @@ function emptyAnalytics(
     source,
   };
 }
+
+/* ─── Site content: fasilitas / ekstrakurikuler / prestasi / site-media ─ */
+
+export type {
+  Fasilitas,
+  FasilitasListItem,
+  FasilitasFormValues,
+  Ekstrakurikuler,
+  EkstrakurikulerListItem,
+  EkstrakurikulerFormValues,
+  Prestasi,
+  PrestasiListItem,
+  PrestasiFormValues,
+  SiteMediaItem,
+  SiteMediaPatchValues,
+} from "@teknovo/shared";
+
+export {
+  fasilitasFormSchema,
+  ekstrakurikulerFormSchema,
+  prestasiFormSchema,
+  siteMediaPatchSchema,
+} from "@teknovo/shared";
+
+import type {
+  Fasilitas,
+  FasilitasListItem,
+  FasilitasFormValues,
+  Ekstrakurikuler,
+  EkstrakurikulerListItem,
+  EkstrakurikulerFormValues,
+  Prestasi,
+  PrestasiListItem,
+  PrestasiFormValues,
+  SiteMediaPatchValues,
+} from "@teknovo/shared";
+
+export type SiteMediaCatalogItem = {
+  mediaKey: string;
+  label: string;
+  category: string;
+  url: string;
+  defaultPath: string;
+  isOverride: boolean;
+  updatedAt: string | null;
+  updatedBy: string | null;
+};
+
+export async function fetchFasilitasListOrNull(params?: {
+  status?: string;
+  limit?: number;
+}): Promise<FasilitasListItem[] | null> {
+  const qs = new URLSearchParams();
+  qs.set("status", params?.status ?? "PUBLISHED");
+  if (params?.limit) qs.set("limit", String(params.limit));
+  try {
+    const data = await request<ApiListResponse<FasilitasListItem>>(
+      `/v1/fasilitas?${qs}`,
+      { next: { revalidate: 60, tags: ["fasilitas"] } },
+    );
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchFasilitasBySlugOrNull(
+  slug: string,
+): Promise<Fasilitas | null | undefined> {
+  try {
+    const data = await request<ApiOk<Fasilitas>>(`/v1/fasilitas/${slug}`, {
+      next: { revalidate: 60, tags: [`fasilitas:${slug}`] },
+    });
+    return data.data;
+  } catch (err) {
+    if (err instanceof ApiClientError && err.status === 404) return null;
+    return undefined;
+  }
+}
+
+export async function fetchFasilitasListCms(
+  token: string,
+  params?: { page?: number; limit?: number; status?: string },
+): Promise<ApiListResponse<FasilitasListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return request<ApiListResponse<FasilitasListItem>>(
+    `/v1/fasilitas${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchFasilitasById(
+  id: string,
+  token: string,
+): Promise<Fasilitas> {
+  const data = await request<ApiOk<Fasilitas>>(`/v1/fasilitas/id/${id}`, {
+    token,
+    cache: "no-store",
+  });
+  return data.data;
+}
+
+export async function createFasilitas(
+  values: FasilitasFormValues,
+  token: string,
+): Promise<Fasilitas> {
+  const data = await request<ApiOk<Fasilitas>>("/v1/fasilitas", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updateFasilitas(
+  id: string,
+  values: FasilitasFormValues,
+  token: string,
+): Promise<Fasilitas> {
+  const data = await request<ApiOk<Fasilitas>>(`/v1/fasilitas/${id}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function deleteFasilitas(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/fasilitas/${id}`, { method: "DELETE", token });
+}
+
+export async function fetchEkstrakurikulerFullOrNull(): Promise<
+  Ekstrakurikuler[] | null
+> {
+  try {
+    const data = await request<ApiListResponse<Ekstrakurikuler>>(
+      "/v1/ekstrakurikuler?status=PUBLISHED&full=1",
+      { next: { revalidate: 60, tags: ["ekstrakurikuler"] } },
+    );
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchEkstrakurikulerListCms(
+  token: string,
+  params?: { page?: number; limit?: number; status?: string },
+): Promise<ApiListResponse<EkstrakurikulerListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return request<ApiListResponse<EkstrakurikulerListItem>>(
+    `/v1/ekstrakurikuler${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchEkstrakurikulerById(
+  id: string,
+  token: string,
+): Promise<Ekstrakurikuler> {
+  const data = await request<ApiOk<Ekstrakurikuler>>(
+    `/v1/ekstrakurikuler/id/${id}`,
+    { token, cache: "no-store" },
+  );
+  return data.data;
+}
+
+export async function createEkstrakurikuler(
+  values: EkstrakurikulerFormValues,
+  token: string,
+): Promise<Ekstrakurikuler> {
+  const data = await request<ApiOk<Ekstrakurikuler>>("/v1/ekstrakurikuler", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updateEkstrakurikuler(
+  id: string,
+  values: EkstrakurikulerFormValues,
+  token: string,
+): Promise<Ekstrakurikuler> {
+  const data = await request<ApiOk<Ekstrakurikuler>>(
+    `/v1/ekstrakurikuler/${id}`,
+    {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(values),
+    },
+  );
+  return data.data;
+}
+
+export async function deleteEkstrakurikuler(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/ekstrakurikuler/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+export async function fetchPrestasiListOrNull(params?: {
+  status?: string;
+  limit?: number;
+}): Promise<PrestasiListItem[] | null> {
+  const qs = new URLSearchParams();
+  qs.set("status", params?.status ?? "PUBLISHED");
+  if (params?.limit) qs.set("limit", String(params.limit));
+  try {
+    const data = await request<ApiListResponse<PrestasiListItem>>(
+      `/v1/prestasi?${qs}`,
+      { next: { revalidate: 60, tags: ["prestasi"] } },
+    );
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchPrestasiListCms(
+  token: string,
+  params?: { page?: number; limit?: number; status?: string },
+): Promise<ApiListResponse<PrestasiListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return request<ApiListResponse<PrestasiListItem>>(
+    `/v1/prestasi${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchPrestasiById(
+  id: string,
+  token: string,
+): Promise<Prestasi> {
+  const data = await request<ApiOk<Prestasi>>(`/v1/prestasi/${id}`, {
+    token,
+    cache: "no-store",
+  });
+  return data.data;
+}
+
+export async function createPrestasi(
+  values: PrestasiFormValues,
+  token: string,
+): Promise<Prestasi> {
+  const data = await request<ApiOk<Prestasi>>("/v1/prestasi", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updatePrestasi(
+  id: string,
+  values: PrestasiFormValues,
+  token: string,
+): Promise<Prestasi> {
+  const data = await request<ApiOk<Prestasi>>(`/v1/prestasi/${id}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function deletePrestasi(id: string, token: string): Promise<void> {
+  await request<void>(`/v1/prestasi/${id}`, { method: "DELETE", token });
+}
+
+export async function fetchSiteMediaCatalog(
+  token?: string,
+): Promise<SiteMediaCatalogItem[]> {
+  const data = await request<ApiOk<{ items: SiteMediaCatalogItem[] }>>(
+    "/v1/site-media",
+    token ? { token, cache: "no-store" } : { next: { revalidate: 120, tags: ["site-media"] } },
+  );
+  return data.data.items;
+}
+
+export async function fetchSiteMediaCatalogOrNull(): Promise<
+  SiteMediaCatalogItem[] | null
+> {
+  try {
+    return await fetchSiteMediaCatalog();
+  } catch {
+    return null;
+  }
+}
+
+export async function updateSiteMedia(
+  mediaKey: string,
+  values: SiteMediaPatchValues,
+  token: string,
+): Promise<SiteMediaCatalogItem> {
+  const data = await request<ApiOk<SiteMediaCatalogItem>>(
+    `/v1/site-media/${encodeURIComponent(mediaKey)}`,
+    {
+      method: "PUT",
+      token,
+      body: JSON.stringify(values),
+    },
+  );
+  return data.data;
+}
+
+export async function resetSiteMedia(
+  mediaKey: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/site-media/${encodeURIComponent(mediaKey)}`, {
+    method: "DELETE",
+    token,
+  });
+}
+

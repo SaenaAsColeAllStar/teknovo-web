@@ -1,5 +1,4 @@
-import { useAuth } from "@clerk/clerk-react";
-import { useSignInSignal } from "@clerk/clerk-react/experimental";
+import { useAuth, useSignIn } from "@clerk/react";
 import { Mail } from "lucide-react";
 import {
   type FormEvent,
@@ -18,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 import { AUTH_TERMS_HREF } from "./auth-terms";
+import { finalizeWithNavigate } from "./clerk-signin-future";
 
 const AFTER_RESET = "/";
 
@@ -85,7 +85,7 @@ export function ResetPasswordForm({ className }: { className?: string }): ReactE
   const navigate = useNavigate();
   const location = useLocation();
   const { isSignedIn } = useAuth();
-  const { signIn, errors, fetchStatus } = useSignInSignal();
+  const { signIn, errors, fetchStatus } = useSignIn();
 
   const locationEmail = (location.state as ResetLocationState | null)?.email?.trim() ?? "";
   const [email, setEmail] = useState(() => locationEmail || readSignInEmail(signIn));
@@ -120,12 +120,12 @@ export function ResetPasswordForm({ className }: { className?: string }): ReactE
   }, [fetchStatus, isSignedIn, navigate, signIn.status]);
 
   async function finalizeReset(): Promise<void> {
-    await signIn.finalize({
-      navigate: ({ session }) => {
-        if (session?.currentTask) return;
-        navigate(AFTER_RESET);
-      },
+    const { error } = await finalizeWithNavigate(signIn, AFTER_RESET, (url) => {
+      navigate(url);
     });
+    if (error) {
+      throw error;
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {

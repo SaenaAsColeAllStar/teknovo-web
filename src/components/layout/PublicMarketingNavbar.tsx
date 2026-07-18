@@ -42,6 +42,7 @@ import {
   PUBLIC_SITE_CMS_LOGIN_HREF,
   PUBLIC_SITE_MAIN_NAV,
   PUBLIC_SITE_PPDB_HREF,
+  type PublicSiteNavEntry,
 } from "@/lib/public-site-nav";
 import { cn } from "@/lib/utils";
 
@@ -77,16 +78,20 @@ export type PublicMarketingNavbarProps = {
    * Bila tidak di-set, otomatis true saat pathname situs publik adalah `/`.
    */
   hidden?: boolean;
+  /** Override main nav (fasilitas dari API saat SSG). */
+  mainNav?: readonly PublicSiteNavEntry[];
 };
 
 export function PublicMarketingNavbar({
   hidden,
+  mainNav = PUBLIC_SITE_MAIN_NAV,
 }: PublicMarketingNavbarProps = {}): ReactElement | null {
   const pathname = usePublicSitePathname();
   const router = useRouter();
   const headerRef = useRef<HTMLElement>(null);
   const mobileNavId = useId();
   const searchFormId = useId();
+  const navEntries = mainNav;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] =
@@ -260,7 +265,7 @@ export function PublicMarketingNavbar({
             className="hidden min-w-0 flex-1 items-center gap-6 lg:flex"
             aria-label="Menu utama"
           >
-            {PUBLIC_SITE_MAIN_NAV.map((entry) => {
+            {navEntries.map((entry) => {
               const active = isPublicSiteNavEntryActive(pathname, entry);
 
               if (entry.type === "link") {
@@ -314,7 +319,7 @@ export function PublicMarketingNavbar({
             )}
             aria-label="Menu situs"
           >
-            {PUBLIC_SITE_MAIN_NAV.map((entry) => {
+            {navEntries.map((entry) => {
               if (entry.type === "link") {
                 const active = isPublicSiteNavEntryActive(pathname, entry);
                 return (

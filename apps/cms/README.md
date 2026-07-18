@@ -42,6 +42,8 @@ uses.
 
 ### Environment variables (Pages → Settings → Environment variables)
 
+Project: **`teknovo-cms`** (bukan `teknovo-web`).
+
 | Name | Value |
 |------|--------|
 | `VITE_CLERK_PUBLISHABLE_KEY` | `pk_live_…` / `pk_test_…` |
@@ -50,9 +52,15 @@ uses.
 | `VITE_TURNSTILE_SITEKEY` | Turnstile sitekey (public) |
 | `VITE_TURNSTILE_SITEVERIFY_URL` | `https://turnstile-siteverify-teknovo-web.fajarnugrahayusman-06.workers.dev` |
 
-`VITE_API_URL` may be the Worker host with or without `/api`
-(`https://cf.smkteknovo.sch.id` or `https://cf.smkteknovo.sch.id/api`).
-Vite and `api-client` normalize to the `/api` prefix so calls hit `/api/v1/...`.
+**Preferred:** `VITE_API_URL`. Host with or without `/api` is fine
+(`https://cf.smkteknovo.sch.id` or `https://cf.smkteknovo.sch.id/api`) —
+Vite + `api-client` normalize once to `…/api` (no `/api/api`).
+
+**Fallback:** if Pages only has `PUBLIC_API_URL` (Astro naming), the CMS build
+also accepts it. Prefer renaming to `VITE_API_URL` for clarity.
+
+**Not for this project:** Astro’s `PUBLIC_API_URL` on **teknovo-web** must be
+host-only (`https://cf.smkteknovo.sch.id`, no `/api`).
 
 SPA fallback: `public/_redirects` → `/*` → `/index.html` (200).
 

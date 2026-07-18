@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "@clerk/react";
 import {
   FilePlus2,
   Image as ImageIcon,

@@ -18,13 +18,9 @@ declare global {
   }
 }
 
+// Baked at build time by vite.config (VITE_API_URL | PUBLIC_API_URL, normalized once).
 const apiBase = (
-  (() => {
-    const raw = (
-      import.meta.env.VITE_API_URL || "https://cf.smkteknovo.sch.id/api"
-    ).replace(/\/$/, "");
-    return raw.endsWith("/api") ? raw : `${raw}/api`;
-  })()
+  process.env.NEXT_PUBLIC_API_URL || "https://cf.smkteknovo.sch.id/api"
 ).replace(/\/$/, "");
 const apiOrigin = apiBase.replace(/\/api$/, "");
 

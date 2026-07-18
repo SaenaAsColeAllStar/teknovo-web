@@ -1,5 +1,4 @@
-import { useAuth, useClerk } from "@clerk/clerk-react";
-import { useSignInSignal } from "@clerk/clerk-react/experimental";
+import { useAuth, useClerk, useSignIn } from "@clerk/react";
 import {
   type FormEvent,
   type ReactElement,
@@ -13,6 +12,7 @@ import { toast } from "sonner";
 
 import {
   asSignInStatus,
+  finalizeWithNavigate,
   resetSignIn,
   sendMfaEmailCode,
   verifyMfaEmailCode,
@@ -110,9 +110,8 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
   const [searchParams] = useSearchParams();
   const clerk = useClerk();
   const { isSignedIn } = useAuth();
-  // clerk-react v5: Future custom-flow APIs (`sso`, `password`, `finalize`) live on
-  // useSignInSignal — not on legacy useSignIn() (that only has authenticateWithRedirect).
-  const { signIn, errors, fetchStatus } = useSignInSignal();
+  // @clerk/react v6: useSignIn() returns the Future/signal custom-flow API.
+  const { signIn, errors, fetchStatus } = useSignIn();
 
   const [mode, setMode] = useState<FormMode>("sign-in");
   const [mfaStrategy, setMfaStrategy] = useState<MfaStrategy>("totp");
@@ -200,12 +199,12 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
   }, [isSignedIn, navigate]);
 
   async function finalizeSignIn(): Promise<void> {
-    await signIn.finalize({
-      navigate: ({ session }) => {
-        if (session?.currentTask) return;
-        navigate(AFTER_SIGN_IN);
-      },
+    const { error } = await finalizeWithNavigate(signIn, AFTER_SIGN_IN, (url) => {
+      navigate(url);
     });
+    if (error) {
+      throw error;
+    }
   }
 
   async function handlePasswordSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -232,6 +231,12 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
     }
 
     try {
+      if (typeof signIn.password !== "function") {
+        throw new Error(
+          "API masuk Clerk belum siap. Muat ulang halaman dan coba lagi.",
+        );
+      }
+
       const { error } = await signIn.password({
         emailAddress: email.trim(),
         password,
@@ -252,7 +257,8 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
       }
 
       if (status === "needs_client_trust") {
-        const emailFactor = signIn.supportedSecondFactors.find(
+        const factors = signIn.supportedSecondFactors ?? [];
+        const emailFactor = factors.find(
           (factor) => factor.strategy === "email_code",
         );
         if (emailFactor) {
@@ -269,7 +275,7 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
           setCode("");
           return;
         }
-        const phoneFactor = signIn.supportedSecondFactors.find(
+        const phoneFactor = factors.find(
           (factor) => factor.strategy === "phone_code",
         );
         if (phoneFactor) {
@@ -665,6 +671,8 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
             onTokenChange={setTurnstileToken}
             resetSignal={turnstileReset}
           />
+          {/* Clerk bot-protection mount (Smart CAPTCHA). Required for custom flows. */}
+          <div id="clerk-captcha" />
         </div>
 
         {displayError ? <ErrorText>{displayError}</ErrorText> : null}

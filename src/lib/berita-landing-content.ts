@@ -19,7 +19,7 @@ export const BERITA_HERO_IMAGE_SRC = LANDING_MEDIA.kegiatan.ekstraBloggerClubWeb
 export const BERITA_TERBARU_PAGE_TITLE = "Berita terbaru" as const;
 
 export const BERITA_TERBARU_PAGE_LEDE =
-  "Gabungan tulisan siswa yang disetujui redaksi dan berita kegiatan resmi sekolah—diurutkan dari yang terbaru." as const;
+  "Informasi terkini sekolah: berita kegiatan resmi dan artikel siswa yang telah melalui redaksi—diurutkan dari yang terbaru." as const;
 
 export const BERITA_KEGIATAN_PAGE_TITLE = "Berita kegiatan sekolah" as const;
 
@@ -44,15 +44,15 @@ export const BERITA_BENTO_CTA_LIHAT = "Lihat" as const;
 export const BERITA_BLOG_SECTION_TITLE = "Berita kegiatan" as const;
 
 export const BERITA_BLOG_SECTION_LEDE =
-  "Sorotan kegiatan resmi sekolah—dari humas dan pimpinan—untuk orang tua dan masyarakat." as const;
+  "Pembaruan resmi kegiatan sekolah dari Humas dan pimpinan—dipublikasikan untuk orang tua dan masyarakat." as const;
 
 export const BERITA_BLOG_AUTHOR_FALLBACK = "Humas sekolah" as const;
 
 export const BERITA_EMPTY_TERBARU =
-  "Belum ada berita yang dipublikasikan. Artikel siswa dan berita kegiatan akan tampil di sini setelah proses redaksi dan persetujuan selesai." as const;
+  "Belum ada berita yang dipublikasikan. Artikel siswa dan berita kegiatan resmi akan tampil di sini setelah redaksi dan persetujuan publikasi selesai." as const;
 
 export const BERITA_EMPTY_KEGIATAN =
-  "Belum ada berita kegiatan yang terbit. Entri resmi sekolah akan muncul di sini setelah disetujui Kepala Sekolah." as const;
+  "Belum ada berita kegiatan yang dipublikasikan. Entri resmi sekolah akan tampil di sini setelah mendapat persetujuan Kepala Sekolah." as const;
 
 export const BERITA_EMPTY_KEGIATAN_CROSS =
   "Belum ada berita kegiatan yang terbit. Entri juga tampil di daftar berita terbaru setelah dipublikasikan." as const;

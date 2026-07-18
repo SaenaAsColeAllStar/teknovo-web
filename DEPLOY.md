@@ -38,9 +38,11 @@ Monorepo butuh `pnpm-workspace.yaml` di root — pakai filter build + output di 
 
 | Project | Variabel |
 |---------|----------|
-| **teknovo-web** | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id`, `PUBLIC_SITE_URL=https://smkteknovo.sch.id`, `PUBLIC_R2_URL=https://r2.ctos.web.id` |
-| **teknovo-cms** | `VITE_API_URL=https://cf.smkteknovo.sch.id/api` (host-only also OK — Vite/`api-client` append `/api`), `VITE_CLERK_PUBLISHABLE_KEY=pk_…` |
+| **teknovo-web** (Astro) | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id` (**host only — no `/api`**), `PUBLIC_SITE_URL=https://smkteknovo.sch.id`, `PUBLIC_R2_URL=https://r2.ctos.web.id` |
+| **teknovo-cms** (Vite) | **`VITE_API_URL=https://cf.smkteknovo.sch.id/api`** + `VITE_CLERK_PUBLISHABLE_KEY=pk_…`. Host-only `…sch.id` also OK (build appends `/api`). `PUBLIC_API_URL` is accepted as a fallback if you already set it on this project. |
 | **teknovo-cms-api** | Secrets via `wrangler secret put` (bukan Pages env): `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `GITHUB_REBUILD_TOKEN` |
+
+**Jangan** pakai nama `PUBLIC_API_URL` sebagai satu-satunya var di **teknovo-cms** — itu nama Astro (`teknovo-web`). CMS membaca `VITE_API_URL` (atau fallback `PUBLIC_API_URL` sejak perbaikan build). Nilai CMS boleh `…/api`; nilai web **tanpa** `/api` (kalau web dapat `…/api`, build sekarang strip suffix agar tidak jadi `/api/api`).
 
 Astro juga punya default produksi di `astro.config.mjs` + `apps/web/.env.production` bila env unset.
 

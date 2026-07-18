@@ -79,10 +79,16 @@ function resolveDisplayStats(
 export type FasilitasDetailPageProps = {
   slug: FasilitasSlug;
   liveStats?: LmsPublikStats | null;
+  /** Prefer API/CMS payload when provided (Astro SSG). */
+  item?: FasilitasLandingItem | null;
 };
 
-export function FasilitasDetailPage({ slug, liveStats }: FasilitasDetailPageProps): ReactElement {
-  const item = getFasilitasItem(slug);
+export function FasilitasDetailPage({
+  slug,
+  liveStats,
+  item: itemProp,
+}: FasilitasDetailPageProps): ReactElement {
+  const item = itemProp ?? getFasilitasItem(slug);
   if (!item) {
     notFound();
   }

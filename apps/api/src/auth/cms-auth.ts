@@ -10,6 +10,8 @@ import {
   cmsRoleCanAccessBeritaSekolah,
   cmsRoleCanManageSettings,
   cmsRoleCanManageUsers,
+  cmsRoleCanManageSiteContent,
+  cmsRoleCanManageSiteMedia,
   type CmsRole,
 } from "@teknovo/shared";
 
@@ -37,6 +39,8 @@ export type CmsSession = {
   canAccessBeritaSekolah: boolean;
   canManageSettings: boolean;
   canManageUsers: boolean;
+  canManageSiteContent: boolean;
+  canManageSiteMedia: boolean;
 };
 
 function sessionFromRole(
@@ -59,6 +63,8 @@ function sessionFromRole(
     canAccessBeritaSekolah: cmsRoleCanAccessBeritaSekolah(role),
     canManageSettings: cmsRoleCanManageSettings(role),
     canManageUsers: cmsRoleCanManageUsers(role),
+    canManageSiteContent: cmsRoleCanManageSiteContent(role),
+    canManageSiteMedia: cmsRoleCanManageSiteMedia(role),
   };
 }
 
@@ -153,6 +159,36 @@ export async function requireCmsUserManager(request: Request, env: Env) {
   if (!cms.canManageUsers) {
     throw new CmsAuthError(
       "Hanya Super Admin atau Admin yang dapat mengelola pengguna.",
+      403,
+    );
+  }
+  return cms;
+}
+
+/** Super Admin or Admin — fasilitas / ekstrakurikuler / prestasi. */
+export async function requireCmsSiteContentWriter(
+  request: Request,
+  env: Env,
+) {
+  const cms = await requireCmsSession(request, env);
+  if (!cms.canManageSiteContent) {
+    throw new CmsAuthError(
+      "Hanya Super Admin atau Admin yang dapat mengelola konten situs.",
+      403,
+    );
+  }
+  return cms;
+}
+
+/** Super Admin only — landing / brand media registry. */
+export async function requireCmsSiteMediaManager(
+  request: Request,
+  env: Env,
+) {
+  const cms = await requireCmsSession(request, env);
+  if (!cms.canManageSiteMedia) {
+    throw new CmsAuthError(
+      "Hanya Super Admin yang dapat mengubah media situs publik.",
       403,
     );
   }

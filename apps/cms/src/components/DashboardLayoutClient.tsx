@@ -1,4 +1,4 @@
-import { useUser } from "@clerk/clerk-react";
+import { useUser } from "@clerk/react";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import {
@@ -6,6 +6,8 @@ import {
   cmsRoleCanAccessBeritaSekolah,
   cmsRoleCanManageSettings,
   cmsRoleCanManageUsers,
+  cmsRoleCanManageSiteContent,
+  cmsRoleCanManageSiteMedia,
   cmsRoleCanModerate,
   cmsRoleCanUploadMedia,
   cmsRoleCanViewModerasi,
@@ -80,6 +82,8 @@ export function DashboardLayoutClient() {
   const canAccessBeritaSekolah = cmsRoleCanAccessBeritaSekolah(role);
   const canManageSettings = cmsRoleCanManageSettings(role);
   const canManageUsers = cmsRoleCanManageUsers(role);
+  const canManageSiteContent = cmsRoleCanManageSiteContent(role);
+  const canManageSiteMedia = cmsRoleCanManageSiteMedia(role);
 
   return (
     <CmsRoleProvider
@@ -93,6 +97,8 @@ export function DashboardLayoutClient() {
       canAccessBeritaSekolah={canAccessBeritaSekolah}
       canManageSettings={canManageSettings}
       canManageUsers={canManageUsers}
+      canManageSiteContent={canManageSiteContent}
+      canManageSiteMedia={canManageSiteMedia}
     >
       <div className="min-h-screen bg-[color:var(--color-neutral-soft)]">
         <CmsApplicationNavbar

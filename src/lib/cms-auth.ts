@@ -13,6 +13,8 @@ import {
   cmsRoleCanAccessBeritaSekolah,
   cmsRoleCanManageSettings,
   cmsRoleCanManageUsers,
+  cmsRoleCanManageSiteContent,
+  cmsRoleCanManageSiteMedia,
 } from "@/lib/clerk";
 
 export class CmsAuthError extends Error {
@@ -37,6 +39,8 @@ export type CmsSession = {
   canAccessBeritaSekolah: boolean;
   canManageSettings: boolean;
   canManageUsers: boolean;
+  canManageSiteContent: boolean;
+  canManageSiteMedia: boolean;
 };
 
 /** Resolve Clerk user + `publicMetadata.role` for dashboard/API guards. */
@@ -59,6 +63,8 @@ export async function getCmsSession(): Promise<CmsSession | null> {
     canAccessBeritaSekolah: cmsRoleCanAccessBeritaSekolah(role),
     canManageSettings: cmsRoleCanManageSettings(role),
     canManageUsers: cmsRoleCanManageUsers(role),
+    canManageSiteContent: cmsRoleCanManageSiteContent(role),
+    canManageSiteMedia: cmsRoleCanManageSiteMedia(role),
   };
 }
 

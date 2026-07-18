@@ -26,6 +26,7 @@ import {
   PUBLIC_SITE_MAIN_NAV,
   PUBLIC_SITE_NAV_PPDB_CTA_LABEL,
   PUBLIC_SITE_PPDB_HREF,
+  type PublicSiteNavEntry,
 } from "@/lib/public-site-nav";
 import { cn } from "@/lib/utils";
 
@@ -38,10 +39,15 @@ const navItemActiveClassName =
 const actionBtnClassName =
   "inline-flex items-center justify-center border border-white/35 bg-white/10 px-3 py-2 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white sm:px-4 sm:text-sm";
 
-export function HeroOverlayNav(): ReactElement {
+export function HeroOverlayNav({
+  mainNav = PUBLIC_SITE_MAIN_NAV,
+}: {
+  mainNav?: readonly PublicSiteNavEntry[];
+} = {}): ReactElement {
   const pathname = usePublicSitePathname();
   const mobileNavId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navEntries = mainNav;
 
   useEffect(() => {
     setMobileOpen(false);
@@ -83,7 +89,7 @@ export function HeroOverlayNav(): ReactElement {
             aria-label="Menu utama"
           >
             <div className="flex max-w-[min(100%,42rem)] items-center justify-center gap-5 xl:gap-6">
-              {PUBLIC_SITE_MAIN_NAV.map((entry) => {
+              {navEntries.map((entry) => {
                 const active = isPublicSiteNavEntryActive(pathname, entry);
 
                 if (entry.type === "link") {
@@ -155,7 +161,7 @@ export function HeroOverlayNav(): ReactElement {
             className="public-site-container flex max-h-[70vh] flex-col items-stretch gap-1 overflow-y-auto py-3"
             aria-label="Menu situs"
           >
-            {PUBLIC_SITE_MAIN_NAV.map((entry) => {
+            {navEntries.map((entry) => {
               if (entry.type === "link") {
                 const active = isPublicSiteNavEntryActive(pathname, entry);
                 return (

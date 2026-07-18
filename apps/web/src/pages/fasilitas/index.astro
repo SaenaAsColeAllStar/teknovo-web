@@ -3,11 +3,13 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import { FasilitasHubPage } from "@/components/features/landing/FasilitasHubPage";
 import { LmsJsonLd } from "@/components/features/lms/LmsJsonLd";
 import { LMS_PAGE_SEO } from "@/lib/lms-dashboard-seo";
+import { getPublishedFasilitasItems } from "@/services/fasilitas-publik";
 
 const seo = LMS_PAGE_SEO["fasilitas-hub"];
+const items = await getPublishedFasilitasItems();
 ---
 
 <BaseLayout title={seo.title} description={seo.description}>
   <LmsJsonLd client:load pageId="fasilitas-hub" />
-  <FasilitasHubPage client:load />
+  <FasilitasHubPage client:load items={items} />
 </BaseLayout>

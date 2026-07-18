@@ -1,4 +1,4 @@
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth } from "@clerk/react";
 import {
   BookOpen,
   ChevronDown,
@@ -98,6 +98,7 @@ export function CmsApplicationSidenav({
     canViewModerasi,
     canWrite,
     canWriteArtikel,
+    canManageSiteContent,
   } = useCmsRole();
 
   const [reviewBadge, setReviewBadge] = useState(0);
@@ -161,6 +162,14 @@ export function CmsApplicationSidenav({
     });
   }
   kontenChildren.push({ id: "kategori", label: "Kategori", href: "/kategori" });
+
+  if (canManageSiteContent) {
+    kontenChildren.push(
+      { id: "fasilitas", label: "Fasilitas", href: "/fasilitas" },
+      { id: "ekstrakurikuler", label: "Ekstrakurikuler", href: "/ekstrakurikuler" },
+      { id: "prestasi", label: "Prestasi", href: "/prestasi" },
+    );
+  }
 
   const primaryNav: NavEntry[] = [
     {
