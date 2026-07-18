@@ -9,8 +9,8 @@ const LABELS: Record<BeritaArticleKind, string> = {
 };
 
 const STYLES: Record<BeritaArticleKind, string> = {
-  siswa: "bg-violet-100 text-violet-800 dark:bg-violet-950/60 dark:text-violet-300",
-  kegiatan: "bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300",
+  siswa: "border-border-default bg-neutral-soft text-heading",
+  kegiatan: "border-brand/25 bg-brand/5 text-brand",
 };
 
 type BeritaCategoryBadgeProps = {
@@ -22,7 +22,7 @@ export function BeritaCategoryBadge({ kind, className }: BeritaCategoryBadgeProp
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide",
+        "inline-flex items-center border px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em]",
         STYLES[kind],
         className,
       )}

@@ -10,9 +10,19 @@ type BeritaShareButtonsProps = {
   url: string;
   title: string;
   className?: string;
+  /** `row` = inline meta; `stack` = sidebar vertikal. */
+  layout?: "row" | "stack";
+  /** Sembunyikan label “Bagikan” (mis. sudah ada heading di parent). */
+  hideLabel?: boolean;
 };
 
-export function BeritaShareButtons({ url, title, className }: BeritaShareButtonsProps): ReactElement {
+export function BeritaShareButtons({
+  url,
+  title,
+  className,
+  layout = "row",
+  hideLabel = false,
+}: BeritaShareButtonsProps): ReactElement {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(async () => {
@@ -26,17 +36,24 @@ export function BeritaShareButtons({ url, title, className }: BeritaShareButtons
   }, [url]);
 
   const whatsappHref = `https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`;
+  const isStack = layout === "stack";
+
+  const buttonClass =
+    "inline-flex items-center justify-center gap-1.5 border border-border-default bg-surface px-3 py-2 text-xs font-medium text-heading transition hover:bg-neutral-soft focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/30";
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-2", className)}>
-      <span className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
-        Bagikan
-      </span>
-      <button
-        type="button"
-        onClick={() => void handleCopy()}
-        className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
-      >
+    <div
+      className={cn(
+        isStack ? "flex flex-col gap-2" : "flex flex-wrap items-center gap-2",
+        className,
+      )}
+    >
+      {!hideLabel ? (
+        <span className="text-xs font-medium uppercase tracking-wide text-body-subtle">
+          Bagikan
+        </span>
+      ) : null}
+      <button type="button" onClick={() => void handleCopy()} className={cn(buttonClass, isStack && "w-full")}>
         {copied ? <Check className="size-3.5 text-emerald-600" aria-hidden /> : <Link2 className="size-3.5" aria-hidden />}
         {copied ? "Tersalin" : "Salin tautan"}
       </button>
@@ -44,7 +61,11 @@ export function BeritaShareButtons({ url, title, className }: BeritaShareButtons
         href={whatsappHref}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-800 transition hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/70"
+        className={cn(
+          buttonClass,
+          "border-emerald-200 bg-emerald-50 text-emerald-900 hover:bg-emerald-100",
+          isStack && "w-full",
+        )}
       >
         <MessageCircle className="size-3.5" aria-hidden />
         WhatsApp

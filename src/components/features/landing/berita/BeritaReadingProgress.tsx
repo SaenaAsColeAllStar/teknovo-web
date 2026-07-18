@@ -38,11 +38,11 @@ export function BeritaReadingProgress(): ReactElement {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 top-[var(--public-nav-bottom,10.5rem)] z-50 h-0.5 bg-slate-200/80 dark:bg-slate-800/80"
+      className="pointer-events-none fixed inset-x-0 top-[var(--public-nav-bottom,10.5rem)] z-50 h-0.5 bg-border-default"
       aria-hidden
     >
       <div
-        className="h-full bg-blue-600 transition-[width] duration-150 ease-out dark:bg-blue-500"
+        className="h-full bg-brand transition-[width] duration-150 ease-out"
         style={{ width: `${progress}%` }}
       />
     </div>

@@ -19,7 +19,12 @@ declare global {
 }
 
 const apiBase = (
-  import.meta.env.VITE_API_URL || "https://cf.smkteknovo.sch.id/api"
+  (() => {
+    const raw = (
+      import.meta.env.VITE_API_URL || "https://cf.smkteknovo.sch.id/api"
+    ).replace(/\/$/, "");
+    return raw.endsWith("/api") ? raw : `${raw}/api`;
+  })()
 ).replace(/\/$/, "");
 const apiOrigin = apiBase.replace(/\/api$/, "");
 

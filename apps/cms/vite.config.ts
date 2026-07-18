@@ -10,9 +10,11 @@ const shims = path.resolve(root, "src/shims");
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
-  const apiBase = (
+  const apiRaw = (
     env.VITE_API_URL || "https://cf.smkteknovo.sch.id/api"
   ).replace(/\/$/, "");
+  // Worker routes live under `/api` — normalize host-only env values.
+  const apiBase = apiRaw.endsWith("/api") ? apiRaw : `${apiRaw}/api`;
   const r2Url = env.VITE_R2_PUBLIC_URL || "https://r2.ctos.web.id";
   const appUrl = "https://cms.smkteknovo.sch.id";
 

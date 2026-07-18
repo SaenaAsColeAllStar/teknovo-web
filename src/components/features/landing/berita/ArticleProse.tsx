@@ -3,18 +3,17 @@ import type { ReactElement, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 export const articleProseClassName = cn(
-  "prose prose-slate max-w-none text-base leading-[1.75] dark:prose-invert",
-  "prose-headings:scroll-mt-28 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-slate-900 dark:prose-headings:text-white",
+  "prose prose-slate max-w-none text-base leading-[1.8] text-body dark:prose-invert sm:text-[1.0625rem] sm:leading-[1.85]",
+  "prose-headings:scroll-mt-28 prose-headings:font-semibold prose-headings:tracking-tight prose-headings:text-heading",
   "prose-h2:mt-10 prose-h2:text-2xl prose-h3:mt-8 prose-h3:text-xl",
-  "prose-p:my-4 prose-p:text-slate-700 dark:prose-p:text-slate-300",
+  "prose-p:my-4 prose-p:text-body",
   "prose-li:my-1.5 prose-ul:my-4 prose-ol:my-4",
-  "prose-blockquote:border-l-blue-500 prose-blockquote:bg-slate-50 prose-blockquote:py-1 prose-blockquote:not-italic",
-  "dark:prose-blockquote:border-l-blue-400 dark:prose-blockquote:bg-slate-900/50",
-  "prose-img:my-8 prose-img:rounded-2xl prose-img:shadow-sm",
-  "prose-a:font-medium prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline dark:prose-a:text-blue-400",
-  "prose-strong:font-semibold prose-strong:text-slate-900 dark:prose-strong:text-white",
-  "prose-hr:my-10 prose-hr:border-slate-200 dark:prose-hr:border-slate-800",
-  "prose-pre:rounded-xl prose-pre:bg-slate-900 prose-pre:text-slate-100",
+  "prose-blockquote:border-l-brand prose-blockquote:bg-neutral-soft prose-blockquote:py-1 prose-blockquote:not-italic",
+  "prose-img:my-8 prose-img:rounded-none prose-img:border prose-img:border-border-default",
+  "prose-a:font-medium prose-a:text-brand prose-a:no-underline hover:prose-a:underline",
+  "prose-strong:font-semibold prose-strong:text-heading",
+  "prose-hr:my-10 prose-hr:border-border-default",
+  "prose-pre:rounded-none prose-pre:border prose-pre:border-border-default prose-pre:bg-heading prose-pre:text-white",
 );
 
 type ArticleProseProps = {

@@ -12,6 +12,14 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import {
+  asSignInStatus,
+  resetSignIn,
+  sendMfaEmailCode,
+  verifyMfaEmailCode,
+  type SignInMfaEmailExtras,
+} from "./clerk-signin-future";
+import { MfaVerifyView } from "./MfaVerifyView";
+import {
   type OAuthStrategy,
   resolveOAuthProviders,
 } from "./oauth-providers";
@@ -27,7 +35,8 @@ const REMEMBER_KEY = "teknovo-cms-remember-me";
 const AFTER_SIGN_IN = "/";
 const SSO_CALLBACK = "/sso-callback";
 
-type FormMode = "sign-in" | "verify-trust";
+type FormMode = "sign-in" | "verify-trust" | "verify-mfa";
+type MfaStrategy = "totp" | "email_code" | "phone_code" | "backup_code";
 
 type ClerkEnv = {
   __unstable__environment?: {
@@ -38,6 +47,10 @@ type ClerkEnv = {
 };
 
 type SignInFieldKey = "identifier" | "password" | "code";
+
+type SecondFactorLike = {
+  strategy?: string;
+};
 
 function absoluteAppUrl(path: string): string {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
@@ -102,6 +115,7 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
   const { signIn, errors, fetchStatus } = useSignInSignal();
 
   const [mode, setMode] = useState<FormMode>("sign-in");
+  const [mfaStrategy, setMfaStrategy] = useState<MfaStrategy>("totp");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
@@ -115,6 +129,49 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
 
   const busy = fetchStatus === "fetching" || oauthBusy;
   const providers = useMemo(() => resolveOAuthProviders(oauthStrategies), [oauthStrategies]);
+
+  function pickSecondFactor(factors: SecondFactorLike[] | null | undefined): MfaStrategy | null {
+    if (!factors?.length) return null;
+    const strategies = factors.map((f) => f.strategy).filter(Boolean) as string[];
+    if (strategies.includes("totp")) return "totp";
+    if (strategies.includes("email_code")) return "email_code";
+    if (strategies.includes("phone_code")) return "phone_code";
+    if (strategies.includes("backup_code")) return "backup_code";
+    return null;
+  }
+
+  async function beginSecondFactor(): Promise<boolean> {
+    const factors = (signIn.supportedSecondFactors ?? []) as SecondFactorLike[];
+    const strategy = pickSecondFactor(factors);
+    if (!strategy) return false;
+
+    setMfaStrategy(strategy);
+    setCode("");
+    setLocalError(null);
+
+    if (strategy === "phone_code") {
+      const { error } = await signIn.mfa.sendPhoneCode();
+      if (error) {
+        setLocalError(error.message || "Gagal mengirim kode ke nomor telepon.");
+        return false;
+      }
+    }
+
+    if (strategy === "email_code") {
+      const { error } = await sendMfaEmailCode(
+        signIn.mfa as SignInMfaEmailExtras,
+        signIn.emailCode,
+        email.trim() || undefined,
+      );
+      if (error) {
+        setLocalError(error.message || "Gagal mengirim kode ke email.");
+        return false;
+      }
+    }
+
+    setMode("verify-mfa");
+    return true;
+  }
 
   useEffect(() => {
     try {
@@ -144,14 +201,9 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
 
   async function finalizeSignIn(): Promise<void> {
     await signIn.finalize({
-      navigate: ({ session, decorateUrl }) => {
+      navigate: ({ session }) => {
         if (session?.currentTask) return;
-        const url = decorateUrl(AFTER_SIGN_IN);
-        if (url.startsWith("http")) {
-          window.location.href = url;
-        } else {
-          navigate(url);
-        }
+        navigate(AFTER_SIGN_IN);
       },
     });
   }
@@ -192,25 +244,54 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
         return;
       }
 
-      if (signIn.status === "complete") {
+      const status = asSignInStatus(signIn.status);
+
+      if (status === "complete") {
         await finalizeSignIn();
         return;
       }
 
-      if (signIn.status === "needs_client_trust") {
+      if (status === "needs_client_trust") {
         const emailFactor = signIn.supportedSecondFactors.find(
           (factor) => factor.strategy === "email_code",
         );
         if (emailFactor) {
-          await signIn.mfa.sendEmailCode();
+          const { error: sendError } = await sendMfaEmailCode(
+            signIn.mfa as SignInMfaEmailExtras,
+            signIn.emailCode,
+            email.trim() || undefined,
+          );
+          if (sendError) {
+            setLocalError(sendError.message || "Gagal mengirim kode verifikasi.");
+            return;
+          }
           setMode("verify-trust");
+          setCode("");
+          return;
+        }
+        const phoneFactor = signIn.supportedSecondFactors.find(
+          (factor) => factor.strategy === "phone_code",
+        );
+        if (phoneFactor) {
+          const { error: sendError } = await signIn.mfa.sendPhoneCode();
+          if (sendError) {
+            setLocalError(sendError.message || "Gagal mengirim kode ke nomor telepon.");
+            return;
+          }
+          setMfaStrategy("phone_code");
+          setMode("verify-mfa");
           setCode("");
           return;
         }
       }
 
-      if (signIn.status === "needs_second_factor") {
-        setLocalError("Akun ini memerlukan verifikasi tambahan. Hubungi admin sekolah.");
+      if (status === "needs_second_factor") {
+        const started = await beginSecondFactor();
+        if (!started) {
+          setLocalError(
+            "Akun ini memerlukan verifikasi tambahan, tetapi metode MFA tidak dikenali. Hubungi Super Admin.",
+          );
+        }
         return;
       }
 
@@ -229,13 +310,17 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
     setLocalError(null);
 
     try {
-      const { error } = await signIn.mfa.verifyEmailCode({ code: code.trim() });
+      const { error } = await verifyMfaEmailCode(
+        signIn.mfa as SignInMfaEmailExtras,
+        signIn.emailCode,
+        code.trim(),
+      );
       if (error) {
         setLocalError(error.message || "Kode verifikasi tidak valid.");
         return;
       }
 
-      if (signIn.status === "complete") {
+      if (asSignInStatus(signIn.status) === "complete") {
         await finalizeSignIn();
         return;
       }
@@ -248,6 +333,101 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
     }
   }
 
+  async function handleMfaVerify(event: FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault();
+    setLocalError(null);
+
+    const trimmed = code.trim();
+    const otp = trimmed.replace(/\D/g, "");
+
+    if (mfaStrategy === "backup_code") {
+      if (trimmed.length < 6) {
+        setLocalError("Masukkan kode cadangan yang valid.");
+        return;
+      }
+    } else if (otp.length < 6) {
+      setLocalError("Masukkan keenam digit kode.");
+      return;
+    }
+
+    try {
+      let error: { message?: string } | null = null;
+
+      if (mfaStrategy === "totp") {
+        ({ error } = await signIn.mfa.verifyTOTP({ code: otp }));
+      } else if (mfaStrategy === "phone_code") {
+        ({ error } = await signIn.mfa.verifyPhoneCode({ code: otp }));
+      } else if (mfaStrategy === "backup_code") {
+        ({ error } = await signIn.mfa.verifyBackupCode({ code: trimmed }));
+      } else {
+        ({ error } = await verifyMfaEmailCode(
+          signIn.mfa as SignInMfaEmailExtras,
+          signIn.emailCode,
+          otp,
+        ));
+      }
+
+      if (error) {
+        setLocalError(error.message || "Kode verifikasi tidak valid.");
+        return;
+      }
+
+      if (asSignInStatus(signIn.status) === "complete") {
+        await finalizeSignIn();
+        return;
+      }
+
+      setLocalError("Verifikasi belum selesai. Periksa kode dan coba lagi.");
+    } catch (err) {
+      const message = clerkErrorMessage(err, "Kode verifikasi tidak valid.");
+      setLocalError(message);
+      toast.error(message);
+    }
+  }
+
+  async function handleMfaResend(): Promise<void> {
+    setLocalError(null);
+    try {
+      if (mfaStrategy === "phone_code") {
+        const { error } = await signIn.mfa.sendPhoneCode();
+        if (error) {
+          setLocalError(error.message || "Gagal mengirim ulang kode.");
+          return;
+        }
+        toast.message("Kode baru telah dikirim.");
+        return;
+      }
+      if (mfaStrategy === "email_code") {
+        const { error } = await sendMfaEmailCode(
+          signIn.mfa as SignInMfaEmailExtras,
+          signIn.emailCode,
+          email.trim() || undefined,
+        );
+        if (error) {
+          setLocalError(error.message || "Gagal mengirim ulang kode.");
+          return;
+        }
+        toast.message("Kode baru telah dikirim ke email Anda.");
+      }
+    } catch (err) {
+      const message = clerkErrorMessage(err, "Gagal mengirim ulang kode.");
+      setLocalError(message);
+      toast.error(message);
+    }
+  }
+
+  const mfaSubtitle =
+    mfaStrategy === "totp"
+      ? "Buka aplikasi autentikator Anda dan masukkan kode 6 digit untuk memverifikasi identitas."
+      : mfaStrategy === "phone_code"
+        ? "Masukkan kode 6 digit yang dikirim ke nomor telepon terdaftar pada akun Anda."
+        : mfaStrategy === "backup_code"
+          ? "Masukkan salah satu kode cadangan yang Anda simpan saat mengaktifkan MFA."
+          : "Masukkan kode 6 digit yang dikirim ke email akun Anda.";
+
+  const mfaHeading =
+    mfaStrategy === "backup_code" ? "Masukkan kode cadangan" : "Masukkan kode";
+
   async function handleOAuth(strategy: OAuthStrategy): Promise<void> {
     setLocalError(null);
     setOauthBusy(true);
@@ -258,7 +438,8 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
       }
 
       const { error } = await signIn.sso({
-        strategy,
+        // Local OAuthStrategy is wider than Clerk's branded oauth provider union.
+        strategy: strategy as Parameters<typeof signIn.sso>[0]["strategy"],
         redirectUrl: absoluteAppUrl(AFTER_SIGN_IN),
         redirectCallbackUrl: absoluteAppUrl(SSO_CALLBACK),
       });
@@ -290,6 +471,34 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
     errors?.global?.[0]?.message ||
     undefined;
 
+  if (mode === "verify-mfa") {
+    return (
+      <MfaVerifyView
+        code={code}
+        onCodeChange={setCode}
+        onSubmit={handleMfaVerify}
+        busy={busy}
+        error={displayError}
+        heading={mfaHeading}
+        subtitle={mfaSubtitle}
+        codeMode={mfaStrategy === "backup_code" ? "backup" : "otp"}
+        onResend={
+          mfaStrategy === "phone_code" || mfaStrategy === "email_code"
+            ? () => {
+                void handleMfaResend();
+              }
+            : undefined
+        }
+        onBack={() => {
+          void resetSignIn(signIn);
+          setMode("sign-in");
+          setCode("");
+          setLocalError(null);
+        }}
+      />
+    );
+  }
+
   if (mode === "verify-trust") {
     return (
       <FormShell className={className} title="Verifikasi perangkat">
@@ -317,7 +526,17 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
             className="w-full"
             disabled={busy}
             onClick={() => {
-              void signIn.mfa.sendEmailCode();
+              void sendMfaEmailCode(
+                signIn.mfa as SignInMfaEmailExtras,
+                signIn.emailCode,
+                email.trim() || undefined,
+              ).then(({ error: sendError }) => {
+                if (sendError) {
+                  setLocalError(sendError.message || "Gagal mengirim ulang kode.");
+                  return;
+                }
+                toast.message("Kode baru telah dikirim ke email Anda.");
+              });
             }}
           >
             Kirim ulang kode
@@ -328,7 +547,7 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
             className="w-full"
             disabled={busy}
             onClick={() => {
-              void signIn.reset();
+              void resetSignIn(signIn);
               setMode("sign-in");
               setLocalError(null);
             }}

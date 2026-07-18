@@ -12,14 +12,25 @@ import type {
 import type { Berita, BeritaListItem, BeritaStatus } from "@/types/berita";
 import type { Kategori } from "@/types/kategori";
 
-const EXTERNAL_API_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  process.env.API_URL?.replace(/\/$/, "") ||
-  "";
+/**
+ * Worker mounts at `/api/v1/...`. Accept either
+ * `https://cf…` or `https://cf…/api` from env so CMS Pages misconfig
+ * (`VITE_API_URL` without `/api`) does not 404 with "Route tidak ditemukan."
+ */
+function normalizeExternalApiBase(raw: string): string {
+  const trimmed = raw.replace(/\/$/, "");
+  if (!trimmed) return "";
+  if (trimmed.endsWith("/api")) return trimmed;
+  return `${trimmed}/api`;
+}
+
+const EXTERNAL_API_URL = normalizeExternalApiBase(
+  process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "",
+);
 
 /**
  * Base URL for CMS content API.
- * - If `API_URL` / `NEXT_PUBLIC_API_URL` set → external api-web
+ * - If `API_URL` / `NEXT_PUBLIC_API_URL` set → external Worker (`…/api`)
  * - Else → same-origin D1 routes under `/api/v1/...`
  */
 export function getApiBaseUrl(): string {
@@ -75,7 +86,10 @@ function apiErrorMessage(status: number, body: unknown): string {
   }
   if (status === 503) return "D1/API tidak tersedia. Deploy Workers + jalankan migrasi D1.";
   if (status === 401 || status === 403) return "Sesi tidak valid. Masuk ulang lalu coba lagi.";
-  if (status === 404) return "Data tidak ditemukan.";
+  if (status === 404) {
+    // Prefer Worker body ("Route tidak ditemukan.") so mis-prefixed URLs are obvious.
+    return "Data atau endpoint tidak ditemukan. Periksa VITE_API_URL (harus …/api).";
+  }
   return `Permintaan API gagal (${status}).`;
 }
 

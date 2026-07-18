@@ -50,9 +50,9 @@ uses.
 | `VITE_TURNSTILE_SITEKEY` | Turnstile sitekey (public) |
 | `VITE_TURNSTILE_SITEVERIFY_URL` | `https://turnstile-siteverify-teknovo-web.fajarnugrahayusman-06.workers.dev` |
 
-`VITE_API_URL` must include the `/api` prefix — the Cloudflare Worker mounts routes at
-`/api/v1/...` (see `apps/api/src/index.ts`), matching the Next.js `api-client`'s
-`${EXTERNAL_API_URL}/v1/...` request shape.
+`VITE_API_URL` may be the Worker host with or without `/api`
+(`https://cf.smkteknovo.sch.id` or `https://cf.smkteknovo.sch.id/api`).
+Vite and `api-client` normalize to the `/api` prefix so calls hit `/api/v1/...`.
 
 SPA fallback: `public/_redirects` → `/*` → `/index.html` (200).
 

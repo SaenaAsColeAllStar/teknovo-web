@@ -88,14 +88,9 @@ export function ForgotPasswordForm({ className }: { className?: string }): React
 
   async function finalizeReset(): Promise<void> {
     await signIn.finalize({
-      navigate: ({ session, decorateUrl }) => {
+      navigate: ({ session }) => {
         if (session?.currentTask) return;
-        const url = decorateUrl(AFTER_RESET);
-        if (url.startsWith("http")) {
-          window.location.href = url;
-        } else {
-          navigate(url);
-        }
+        navigate(AFTER_RESET);
       },
     });
   }

@@ -110,21 +110,30 @@ export function DashboardLayoutClient() {
           />
         ) : null}
 
+        {/*
+          Sidebar is always `position: fixed` with locked `w-60` so it never
+          stretches with main content or scrolls with the page shell.
+          Main column offsets with padding-left on lg when the drawer is open.
+        */}
         <div
-          className="flex min-h-screen"
+          className={cn(
+            "min-h-screen",
+            sidebarOpen && "lg:pl-60",
+          )}
           style={{ paddingTop: "var(--cms-nav-height, 8.5rem)" }}
         >
           <div
             className={cn(
               "z-40 w-60 shrink-0 transition-transform duration-200",
-              "fixed left-0 top-[var(--cms-nav-height,8.5rem)] h-[calc(100vh-var(--cms-nav-height,8.5rem))]",
+              "fixed left-0 top-[var(--cms-nav-height,8.5rem)]",
+              "h-[calc(100dvh-var(--cms-nav-height,8.5rem))] h-[calc(100vh-var(--cms-nav-height,8.5rem))]",
               sidebarOpen
-                ? "translate-x-0 lg:static lg:top-auto lg:h-auto lg:self-stretch"
+                ? "translate-x-0"
                 : "-translate-x-full pointer-events-none lg:hidden",
             )}
           >
             <CmsApplicationSidenav
-              className="h-full lg:min-h-full"
+              className="h-full max-h-full w-60"
               onNavigate={() => {
                 if (
                   typeof window !== "undefined" &&
@@ -136,8 +145,8 @@ export function DashboardLayoutClient() {
             />
           </div>
 
-          <div className="flex min-w-0 flex-1 flex-col">
-            <main className="flex-1 space-y-4 p-6">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <main className="flex-1 space-y-4 overflow-x-clip p-6">
               <p className="sr-only">
                 Peran: {CMS_ROLE_LABEL[role]}
               </p>

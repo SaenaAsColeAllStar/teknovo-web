@@ -32,7 +32,8 @@ export type BeritaArticleDetailShellProps = {
 };
 
 /**
- * Layout detail berita: breadcrumb, hero gambar, meta artikel, konten prose, bagikan & terkait.
+ * Layout detail berita — lebar penuh `public-site-container` (selaras navbar),
+ * kolom baca + rail terkait di layar besar.
  */
 export function BeritaArticleDetailShell({
   seo,
@@ -52,6 +53,9 @@ export function BeritaArticleDetailShell({
   const readMinutes = estimateReadTimeMinutes(`${ringkasan} ${kontenHtml}`);
   const readLabel = formatReadTimeId(readMinutes);
   const canonicalUrl = buildLandingAbsoluteUrl(seo.path);
+  const sectionHref = seo.kind === "siswa" ? "/berita/berita-terbaru" : "/berita/kegiatan-sekolah";
+  const sectionCtaLabel =
+    seo.kind === "siswa" ? "Semua berita terbaru" : "Semua berita kegiatan";
 
   return (
     <section className={publicPageSectionWhiteClassName}>
@@ -79,73 +83,119 @@ export function BeritaArticleDetailShell({
           ]}
         />
 
-        <article
-          data-berita-article
-          itemScope
-          itemType="https://schema.org/NewsArticle"
-          className="mx-auto max-w-3xl"
-        >
-          <header>
-            <div className="flex flex-wrap items-center gap-2">
-              <BeritaCategoryBadge kind={seo.kind} />
-              <time
-                dateTime={publishedIso}
-                itemProp="datePublished"
-                className="text-sm text-slate-600 dark:text-slate-400"
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(16.5rem,20rem)] lg:gap-12 xl:grid-cols-[minmax(0,1fr)_minmax(17.5rem,22rem)] xl:gap-14">
+          <article
+            data-berita-article
+            itemScope
+            itemType="https://schema.org/NewsArticle"
+            className="min-w-0"
+          >
+            <header className="border-b border-border-default pb-8">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+                <BeritaCategoryBadge kind={seo.kind} />
+                <time
+                  dateTime={publishedIso}
+                  itemProp="datePublished"
+                  className="text-sm text-body"
+                >
+                  {formatDateId(publishedAt)}
+                </time>
+                <span className="text-sm text-body-subtle" aria-hidden>
+                  ·
+                </span>
+                <span className="text-sm text-body">{readLabel}</span>
+              </div>
+
+              <h1
+                itemProp="headline"
+                className="mt-4 text-balance text-3xl font-bold tracking-tight text-heading sm:text-4xl sm:leading-[1.15] lg:text-[2.5rem]"
               >
-                {formatDateId(publishedAt)}
-              </time>
-              <span className="text-sm text-slate-400 dark:text-slate-500" aria-hidden>
-                ·
-              </span>
-              <span className="text-sm text-slate-600 dark:text-slate-400">{readLabel}</span>
-            </div>
+                {judul}
+              </h1>
 
-            <h1
-              itemProp="headline"
-              className="mt-4 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl sm:leading-tight"
+              <div className="mt-5 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <p className="text-sm text-body">
+                  <span className="text-body-subtle">Oleh </span>
+                  <span itemProp="author" itemScope itemType="https://schema.org/Person">
+                    <span itemProp="name" className="font-medium text-heading">
+                      {authorLabel}
+                    </span>
+                  </span>
+                </p>
+                <BeritaShareButtons url={canonicalUrl} title={judul} className="lg:hidden" />
+              </div>
+            </header>
+
+            {cover ? (
+              <figure className="relative -mx-4 mt-8 aspect-[16/9] overflow-hidden border border-border-default bg-neutral-soft sm:mx-0">
+                <PublicOptimizedImage
+                  src={cover.src}
+                  alt={cover.alt}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 1024px) 100vw, (max-width: 1280px) 70vw, 880px"
+                  priority
+                  itemProp="image"
+                />
+              </figure>
+            ) : null}
+
+            <p
+              itemProp="description"
+              className="mt-8 border-l-2 border-brand pl-4 text-lg font-medium leading-relaxed text-body sm:text-xl sm:leading-relaxed"
             >
-              {judul}
-            </h1>
-
-            <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
-              <span itemProp="author" itemScope itemType="https://schema.org/Person">
-                <span itemProp="name">{authorLabel}</span>
-              </span>
+              {ringkasan}
             </p>
 
-            <BeritaShareButtons url={canonicalUrl} title={judul} className="mt-5" />
-          </header>
+            {children}
 
-          {cover ? (
-            <figure className="relative -mx-4 mt-8 aspect-[16/9] overflow-hidden rounded-2xl border border-slate-200 bg-slate-200/90 sm:mx-0 dark:border-slate-800 dark:bg-slate-800/90">
-              <PublicOptimizedImage
-                src={cover.src}
-                alt={cover.alt}
-                fill
-                className="object-cover"
-                sizes="(max-width: 768px) 100vw, 768px"
-                priority
-                itemProp="image"
-              />
-            </figure>
-          ) : null}
+            <div className="mt-10 border-t border-border-default pt-10">
+              <ArtikelKontenHtml html={kontenHtml} />
+            </div>
+          </article>
 
-          <p
-            itemProp="description"
-            className="mt-8 text-lg font-medium leading-relaxed text-slate-700 dark:text-slate-300"
+          <aside
+            className="min-w-0 space-y-6 lg:sticky lg:top-[calc(var(--public-nav-bottom,10.5rem)+1rem)]"
+            aria-label="Panel berita"
           >
-            {ringkasan}
-          </p>
+            <div className="hidden border border-border-default bg-surface p-5 lg:block">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand">
+                Bagikan artikel
+              </p>
+              <BeritaShareButtons
+                url={canonicalUrl}
+                title={judul}
+                className="mt-3"
+                layout="stack"
+                hideLabel
+              />
+            </div>
 
-          {children}
+            <BeritaRelatedArticles items={related} variant="rail" className="hidden lg:block" />
 
-          <div className="mt-10 border-t border-slate-200 pt-10 dark:border-slate-800">
-            <ArtikelKontenHtml html={kontenHtml} />
-          </div>
-        </article>
+            <div className="border border-border-default bg-neutral-soft p-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-brand">
+                Arsip berita
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-body">
+                Jelajahi pengumuman dan liputan kegiatan SMK TEKNOVO.
+              </p>
+              <a
+                href={sectionHref}
+                className="mt-4 inline-flex items-center text-sm font-semibold text-brand underline-offset-4 transition hover:text-brand-strong hover:underline"
+              >
+                {sectionCtaLabel}
+                <span aria-hidden className="ms-1">
+                  →
+                </span>
+              </a>
+            </div>
+          </aside>
+        </div>
 
-        <BeritaRelatedArticles items={related} />
+        <div className="mt-12 lg:hidden">
+          <BeritaRelatedArticles items={related} variant="stack" />
+        </div>
       </div>
     </section>
   );

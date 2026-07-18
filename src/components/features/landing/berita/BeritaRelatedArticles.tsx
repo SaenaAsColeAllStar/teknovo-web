@@ -2,45 +2,83 @@ import Link from "next/link";
 import type { ReactElement } from "react";
 
 import type { BeritaRelatedItem } from "@/lib/berita-seo";
-import { formatDateId } from "@/lib/utils";
+import { cn, formatDateId } from "@/lib/utils";
 
 import { BeritaCategoryBadge } from "./BeritaCategoryBadge";
 
 type BeritaRelatedArticlesProps = {
   items: BeritaRelatedItem[];
+  /** `stack` = daftar penuh di bawah artikel (mobile); `rail` = sidebar desktop. */
+  variant?: "stack" | "rail";
+  className?: string;
 };
 
-export function BeritaRelatedArticles({ items }: BeritaRelatedArticlesProps): ReactElement | null {
+export function BeritaRelatedArticles({
+  items,
+  variant = "stack",
+  className,
+}: BeritaRelatedArticlesProps): ReactElement | null {
   if (items.length === 0) {
     return null;
   }
 
+  const isRail = variant === "rail";
+
   return (
     <aside
-      className="mx-auto mt-14 max-w-3xl border-t border-slate-200 pt-10 dark:border-slate-800"
-      aria-labelledby="berita-terkait-heading"
+      className={cn(
+        isRail
+          ? "border border-border-default bg-surface p-5"
+          : "border-t border-border-default pt-10",
+        className,
+      )}
+      aria-labelledby={isRail ? "berita-terkait-rail-heading" : "berita-terkait-heading"}
     >
-      <h2 id="berita-terkait-heading" className="text-lg font-semibold text-slate-900 dark:text-white">
+      <h2
+        id={isRail ? "berita-terkait-rail-heading" : "berita-terkait-heading"}
+        className={cn(
+          "font-semibold",
+          isRail
+            ? "text-[11px] uppercase tracking-[0.18em] text-brand"
+            : "text-lg tracking-tight text-heading",
+        )}
+      >
         Berita terkait
       </h2>
-      <ul className="mt-5 space-y-4">
+      <ul className={cn(isRail ? "mt-4 divide-y divide-border-default" : "mt-5 space-y-0")}>
         {items.map((item) => (
           <li
             key={item.href}
-            className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/40"
+            className={cn(
+              isRail
+                ? "py-3.5 first:pt-0 last:pb-0"
+                : "border-b border-border-default py-5 first:pt-0 last:border-b-0 last:pb-0",
+            )}
           >
             <div className="flex flex-wrap items-center gap-2">
               <BeritaCategoryBadge kind={item.kind} />
-              <time dateTime={item.tanggalIso} className="text-xs text-slate-500 dark:text-slate-400">
+              <time dateTime={item.tanggalIso} className="text-xs text-body-subtle">
                 {formatDateId(new Date(item.tanggalIso))}
               </time>
             </div>
-            <h3 className="mt-2 text-base font-semibold text-slate-900 dark:text-white">
-              <Link href={item.href} className="hover:text-blue-700 hover:underline dark:hover:text-blue-400">
+            <h3
+              className={cn(
+                "mt-2 font-semibold leading-snug text-heading",
+                isRail ? "text-sm" : "text-base",
+              )}
+            >
+              <Link
+                href={item.href}
+                className="transition hover:text-brand-strong hover:underline"
+              >
                 {item.judul}
               </Link>
             </h3>
-            <p className="mt-1 line-clamp-2 text-sm text-slate-600 dark:text-slate-400">{item.ringkasan}</p>
+            {!isRail ? (
+              <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-body">{item.ringkasan}</p>
+            ) : (
+              <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-body">{item.ringkasan}</p>
+            )}
           </li>
         ))}
       </ul>

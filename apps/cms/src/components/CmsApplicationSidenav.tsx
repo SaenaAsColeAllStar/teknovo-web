@@ -207,7 +207,7 @@ export function CmsApplicationSidenav({
 
   const rowClass = (active: boolean) =>
     cn(
-      "flex w-full items-center gap-2 px-3 py-2 text-sm font-medium transition-colors",
+      "flex w-full items-center gap-2 px-3 py-2 text-sm font-medium transition-colors [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-current",
       active
         ? "bg-[color:var(--color-brand)] text-white"
         : "text-[color:var(--color-body)] hover:bg-[color:var(--color-neutral-soft)] hover:text-[color:var(--color-heading)]",
@@ -224,7 +224,7 @@ export function CmsApplicationSidenav({
   return (
     <aside
       className={cn(
-        "flex h-[100vh] w-60 shrink-0 flex-col border-r border-[color:var(--color-border)] bg-[color:var(--color-surface)]",
+        "flex h-full w-60 max-w-60 shrink-0 flex-col overflow-hidden border-r border-[color:var(--color-border)] bg-[color:var(--color-surface)]",
         className,
       )}
       aria-label="Navigasi CMS"
