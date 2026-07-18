@@ -318,7 +318,7 @@ export function FasilitasFeatureSection({
       className={cn(
         "scroll-mt-20",
         embedded
-          ? "col-span-full w-full border-t border-border-default pt-10 sm:pt-14"
+          ? "col-span-full w-full border-t border-border-default pt-10 pb-12 sm:pt-14 sm:pb-16"
           : "border-b border-border-default bg-surface py-16 sm:py-20",
       )}
     >

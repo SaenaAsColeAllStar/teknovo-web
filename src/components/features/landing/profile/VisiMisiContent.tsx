@@ -66,7 +66,7 @@ export function VisiMisiContent(): ReactElement {
         aria-labelledby="visi-misi-heading"
       >
         <div className="public-site-container">
-          <MotionInView as="header" className="max-w-2xl" delay={0.03}>
+          <MotionInView as="header" delay={0.03}>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-brand">
               {VISI_MISI_HERO_EYEBROW}
             </p>

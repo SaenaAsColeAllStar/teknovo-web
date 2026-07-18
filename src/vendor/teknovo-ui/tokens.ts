@@ -31,8 +31,7 @@ export const TEKNOVO_UI_CSS_VARS = {
 /** Kelas layout shell — dipakai console + landing secara bertahap. */
 export const teknovoShellClasses = {
   root: "flex min-h-screen min-h-dvh w-full overflow-x-clip bg-surface text-foreground",
-  publicRoot:
-    "flex min-h-screen flex-col bg-surface text-foreground pb-[calc(6.75rem+env(safe-area-inset-bottom,0px))] md:pb-0",
+  publicRoot: "flex min-h-screen flex-col bg-surface text-foreground",
   dashboardRoot: "flex min-h-screen min-h-dvh w-full overflow-x-clip bg-surface",
   bodyRow: "flex min-h-screen min-h-dvh min-w-0 flex-1 flex-col",
   main: "min-w-0 flex-1 overflow-x-clip",

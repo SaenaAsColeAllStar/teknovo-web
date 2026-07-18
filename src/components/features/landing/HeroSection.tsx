@@ -5,6 +5,7 @@ import { ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 
+import { HeroOverlayNav } from "@/components/features/landing/HeroOverlayNav";
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
 import {
   HOME_HERO_CTA_LABEL,
@@ -19,8 +20,8 @@ import { cn } from "@/lib/utils";
 const SLIDES = LANDING_MEDIA.hero.slides;
 
 /**
- * Hero beranda full-bleed: foto/video edge-to-edge, tipografi watermark,
- * anchor kiri (judul + lede + CTA), dan carousel thumb kanan-bawah.
+ * Hero beranda full-bleed: foto/video edge-to-edge di bawah overlay nav,
+ * tipografi watermark, anchor kiri (judul + lede + CTA), carousel thumb kanan-bawah.
  */
 export function HeroSection(): ReactElement {
   const reduceMotion = useReducedMotion();
@@ -50,7 +51,7 @@ export function HeroSection(): ReactElement {
   return (
     <section
       id="beranda"
-      className="relative isolate min-h-[100svh] w-full overflow-hidden bg-brand-strong text-white"
+      className="relative isolate flex min-h-[100svh] w-full flex-col overflow-hidden bg-brand-strong text-white"
       aria-label="Beranda SMK TEKNOVO"
     >
       {/* Full-bleed media */}
@@ -92,27 +93,31 @@ export function HeroSection(): ReactElement {
           </m.div>
         </AnimatePresence>
 
-        {/* Soft readability wash — not a card/badge overlay */}
+        {/* Soft readability wash — sky stays brighter, ground darker for type */}
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-strong/80 via-brand-strong/30 to-brand-strong/40"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand-strong/85 via-brand-strong/25 to-brand-strong/45"
           aria-hidden
         />
       </div>
 
-      {/* Oversized watermark */}
+      {/* Overlay top bar — mirrors primary nav; global three-tier is hidden on `/` */}
+      <HeroOverlayNav />
+
+      {/* Oversized watermark between sky and building */}
       <m.p
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-[18%] z-[1] w-[140%] -translate-x-1/2 select-none text-center text-[18vw] font-bold leading-none tracking-[-0.04em] text-white/15 sm:top-[16%] sm:text-[15vw] lg:text-[12vw]"
-        initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1], delay: 0.15 }}
+        className="pointer-events-none absolute left-1/2 top-[22%] z-[1] w-[150%] -translate-x-1/2 select-none text-center text-[22vw] font-bold leading-none tracking-[-0.05em] text-white mix-blend-soft-light sm:top-[20%] sm:text-[16vw] lg:top-[18%] lg:text-[13vw]"
+        initial={reduceMotion ? false : { opacity: 0, y: 28 }}
+        animate={{ opacity: 0.55, y: 0 }}
+        transition={{ duration: 1.15, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
       >
         {HOME_HERO_WATERMARK}
       </m.p>
 
       {/* Bottom anchors */}
-      <div className="relative z-[2] flex min-h-[100svh] flex-col justify-end">
-        <div className="public-site-container flex w-full flex-col gap-10 pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] pt-10 sm:pb-12 sm:pt-12 md:pb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-12 lg:pb-14">
+      <div className="relative z-[2] mt-auto flex flex-1 flex-col justify-end">
+        <div className="public-site-container flex w-full flex-col gap-10 pb-8 pt-8 sm:pb-12 sm:pt-10 md:pb-14 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
+          {/* Story — above thumbs on narrow */}
           <m.div
             className="max-w-xl space-y-4 lg:pb-1"
             initial={reduceMotion ? false : { opacity: 0, y: 28 }}
@@ -122,10 +127,12 @@ export function HeroSection(): ReactElement {
             <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl lg:leading-[1.08]">
               {HOME_HERO_TITLE}
             </h1>
-            <p className="max-w-md text-base leading-relaxed text-white/85 sm:text-lg">{HOME_HERO_LEDE}</p>
+            <p className="max-w-md text-base leading-relaxed text-white/85 sm:text-lg">
+              {HOME_HERO_LEDE}
+            </p>
             <PublicSiteLink
               href={PUBLIC_SITE_PPDB_HREF}
-              className="group inline-flex items-center gap-2 border border-border-default/40 bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
+              className="group inline-flex items-center gap-2 border border-transparent bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-strong focus:outline-none focus-visible:ring-2 focus-visible:ring-white/80"
             >
               {HOME_HERO_CTA_LABEL}
               <ArrowRight
@@ -166,7 +173,7 @@ export function HeroSection(): ReactElement {
                         className={cn(
                           "relative block size-14 overflow-hidden rounded-md border-2 transition sm:size-16",
                           selected
-                            ? "border-white ring-2 ring-brand"
+                            ? "scale-105 border-white ring-2 ring-brand"
                             : "border-white/30 opacity-80 hover:opacity-100",
                         )}
                       >

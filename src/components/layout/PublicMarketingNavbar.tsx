@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Three-tier marketing navbar — announcement + main (contact/brand/actions) + bottom (nav/search).
+ * Three-tier marketing navbar — announcement + main (brand/actions) + bottom (nav/search).
  * Self-contained chrome for the public site layout.
  */
 import { ChevronDown, Mail, Menu, Phone, Search, X } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactElement,
 } from "react";
 
@@ -19,6 +20,7 @@ import { BrandLogoMark } from "@/components/brand/BrandLogoMark";
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useHoverIntentOpen } from "@/hooks/use-hover-intent-open";
 import { usePublicSitePathname } from "@/hooks/use-public-site-pathname";
 import { BRAND_SHORT } from "@/lib/branding";
 import { CONTACT } from "@/lib/constants";
@@ -34,6 +36,12 @@ import {
   PUBLIC_SITE_PPDB_HREF,
   type PublicSiteNavGroup,
 } from "@/lib/public-site-nav";
+import {
+  filterPublicSiteSearchHits,
+  loadRecentBeritaSearchHits,
+  publicSiteSearchKindLabel,
+  type PublicSiteSearchHit,
+} from "@/lib/public-site-search";
 import { cn } from "@/lib/utils";
 
 const CMS_HREF = "https://cms.smkteknovo.sch.id" as const;
@@ -91,18 +99,25 @@ function DesktopNavDropdown({
 }): ReactElement {
   const panelId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
+  const {
+    open,
+    openMenu,
+    closeMenu,
+    onRootPointerEnter,
+    onRootPointerLeave,
+    toggleFromClick,
+  } = useHoverIntentOpen();
 
   useEffect(() => {
     if (!open) return;
 
     const onPointerDown = (event: MouseEvent) => {
       if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
+        closeMenu();
       }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") closeMenu();
     };
 
     document.addEventListener("mousedown", onPointerDown);
@@ -111,17 +126,38 @@ function DesktopNavDropdown({
       document.removeEventListener("mousedown", onPointerDown);
       window.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [open, closeMenu]);
+
+  function onTriggerKeyDown(event: ReactKeyboardEvent<HTMLButtonElement>) {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      toggleFromClick();
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      openMenu();
+    }
+    if (event.key === "Escape") {
+      closeMenu();
+    }
+  }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div
+      ref={rootRef}
+      className="relative"
+      onPointerEnter={onRootPointerEnter}
+      onPointerLeave={onRootPointerLeave}
+    >
       <button
         type="button"
         className={cn(navItemClassName, active && navItemActiveClassName)}
         aria-expanded={open}
         aria-controls={panelId}
         aria-haspopup="menu"
-        onClick={() => setOpen((value) => !value)}
+        onClick={toggleFromClick}
+        onKeyDown={onTriggerKeyDown}
       >
         {entry.label}
         <ChevronDown
@@ -136,19 +172,21 @@ function DesktopNavDropdown({
         <div
           id={panelId}
           role="menu"
-          className="absolute top-full left-0 z-50 mt-2 min-w-[14rem] border border-border-default bg-surface py-1 shadow-sm"
+          className="absolute top-full left-0 z-50 min-w-[14rem] pt-2"
         >
-          {entry.items.map((item) => (
-            <PublicSiteLink
-              key={item.href}
-              href={item.href}
-              role="menuitem"
-              className="block px-3 py-2 text-sm font-medium text-heading transition-colors hover:bg-neutral-soft hover:text-brand"
-              onClick={() => setOpen(false)}
-            >
-              {item.label}
-            </PublicSiteLink>
-          ))}
+          <div className="border border-border-default bg-surface py-1 shadow-sm">
+            {entry.items.map((item) => (
+              <PublicSiteLink
+                key={item.href}
+                href={item.href}
+                role="menuitem"
+                className="block px-3 py-2 text-sm font-medium text-heading transition-colors hover:bg-neutral-soft hover:text-brand"
+                onClick={closeMenu}
+              >
+                {item.label}
+              </PublicSiteLink>
+            ))}
+          </div>
         </div>
       ) : null}
     </div>
@@ -214,6 +252,7 @@ function JoinedSearchForm({
   onQueryChange,
   onCategoryChange,
   onSubmit,
+  onNavigateSuggestion,
   className,
 }: {
   idPrefix: string;
@@ -222,15 +261,93 @@ function JoinedSearchForm({
   onQueryChange: (value: string) => void;
   onCategoryChange: (value: SearchCategoryId) => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onNavigateSuggestion: (href: string) => void;
   className?: string;
 }): ReactElement {
   const categoryId = `${idPrefix}-category`;
   const inputId = `${idPrefix}-query`;
+  const listboxId = `${idPrefix}-suggestions`;
+  const rootRef = useRef<HTMLFormElement>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [beritaHits, setBeritaHits] = useState<PublicSiteSearchHit[]>([]);
+  const [beritaLoaded, setBeritaLoaded] = useState(false);
+  const [beritaLoading, setBeritaLoading] = useState(false);
+
+  const suggestions = filterPublicSiteSearchHits(searchQuery, beritaHits);
+  const showPanel = panelOpen && (suggestions.length > 0 || beritaLoading);
+
+  useEffect(() => {
+    if (!panelOpen) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) {
+        setPanelOpen(false);
+        setActiveIndex(-1);
+      }
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    return () => document.removeEventListener("mousedown", onPointerDown);
+  }, [panelOpen]);
+
+  async function ensureBeritaIndex() {
+    if (beritaLoaded || beritaLoading) return;
+    setBeritaLoading(true);
+    try {
+      const hits = await loadRecentBeritaSearchHits(8);
+      setBeritaHits(hits);
+      setBeritaLoaded(true);
+    } finally {
+      setBeritaLoading(false);
+    }
+  }
+
+  async function onFocusSearch() {
+    setPanelOpen(true);
+    await ensureBeritaIndex();
+  }
+
+  function selectSuggestion(hit: PublicSiteSearchHit) {
+    setPanelOpen(false);
+    setActiveIndex(-1);
+    onNavigateSuggestion(hit.href);
+  }
+
+  function onInputKeyDown(event: ReactKeyboardEvent<HTMLInputElement>) {
+    if (event.key === "Escape") {
+      setPanelOpen(false);
+      setActiveIndex(-1);
+      return;
+    }
+
+    if (!showPanel || suggestions.length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setActiveIndex((index) => (index + 1) % suggestions.length);
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((index) =>
+        index <= 0 ? suggestions.length - 1 : index - 1,
+      );
+      return;
+    }
+    if (event.key === "Enter" && activeIndex >= 0) {
+      event.preventDefault();
+      const hit = suggestions[activeIndex];
+      if (hit) selectSuggestion(hit);
+    }
+  }
 
   return (
     <form
-      onSubmit={onSubmit}
-      className={className}
+      ref={rootRef}
+      onSubmit={(event) => {
+        setPanelOpen(false);
+        onSubmit(event);
+      }}
+      className={cn("relative", className)}
       role="search"
       aria-label="Cari konten sekolah"
     >
@@ -256,8 +373,24 @@ function JoinedSearchForm({
         <Input
           id={inputId}
           value={searchQuery}
-          onChange={(event) => onQueryChange(event.target.value)}
+          onChange={(event) => {
+            onQueryChange(event.target.value);
+            setPanelOpen(true);
+            setActiveIndex(-1);
+            void ensureBeritaIndex();
+          }}
+          onFocus={() => {
+            void onFocusSearch();
+          }}
+          onKeyDown={onInputKeyDown}
           placeholder="Cari berita, jurusan…"
+          role="combobox"
+          aria-expanded={showPanel}
+          aria-controls={listboxId}
+          aria-autocomplete="list"
+          aria-activedescendant={
+            activeIndex >= 0 ? `${listboxId}-option-${activeIndex}` : undefined
+          }
           className="h-10 min-w-0 flex-1 rounded-none border-0 focus-visible:ring-0"
         />
         <Button
@@ -268,11 +401,66 @@ function JoinedSearchForm({
           Cari
         </Button>
       </div>
+
+      {showPanel ? (
+        <div
+          id={listboxId}
+          role="listbox"
+          aria-label="Saran pencarian"
+          className="absolute top-full right-0 left-0 z-50 mt-1 max-h-72 overflow-y-auto border border-border-default bg-surface shadow-sm"
+        >
+          {!searchQuery.trim() && suggestions.length > 0 ? (
+            <p className="border-b border-border-default px-3 py-2 text-xs font-medium tracking-wide text-body-subtle uppercase">
+              Berita terbaru
+            </p>
+          ) : null}
+          {beritaLoading && suggestions.length === 0 ? (
+            <p className="px-3 py-2.5 text-sm text-body-subtle">Memuat saran…</p>
+          ) : null}
+          {suggestions.map((hit, index) => (
+            <button
+              key={hit.id}
+              id={`${listboxId}-option-${index}`}
+              type="button"
+              role="option"
+              aria-selected={index === activeIndex}
+              className={cn(
+                "flex w-full items-start justify-between gap-3 px-3 py-2.5 text-left text-sm transition-colors",
+                index === activeIndex
+                  ? "bg-brand text-white"
+                  : "text-heading hover:bg-neutral-soft hover:text-brand",
+              )}
+              onMouseEnter={() => setActiveIndex(index)}
+              onClick={() => selectSuggestion(hit)}
+            >
+              <span className="min-w-0 flex-1 font-medium">{hit.title}</span>
+              <span
+                className={cn(
+                  "shrink-0 text-xs font-medium",
+                  index === activeIndex ? "text-white/80" : "text-body-subtle",
+                )}
+              >
+                {publicSiteSearchKindLabel(hit.kind)}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : null}
     </form>
   );
 }
 
-export function PublicMarketingNavbar(): ReactElement {
+export type PublicMarketingNavbarProps = {
+  /**
+   * Sembunyikan chrome tiga tingkat (beranda memakai HeroOverlayNav di dalam hero).
+   * Bila tidak di-set, otomatis true saat pathname situs publik adalah `/`.
+   */
+  hidden?: boolean;
+};
+
+export function PublicMarketingNavbar({
+  hidden,
+}: PublicMarketingNavbarProps = {}): ReactElement | null {
   const pathname = usePublicSitePathname();
   const router = useRouter();
   const headerRef = useRef<HTMLElement>(null);
@@ -281,6 +469,8 @@ export function PublicMarketingNavbar(): ReactElement {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState<SearchCategoryId>("all");
+
+  const hideChrome = hidden ?? pathname === "/";
 
   useEffect(() => {
     setMobileOpen(false);
@@ -297,6 +487,11 @@ export function PublicMarketingNavbar(): ReactElement {
 
   /** Keep sticky offset tokens in sync with real three-tier (+ mobile) height. */
   useEffect(() => {
+    if (hideChrome) {
+      document.documentElement.style.setProperty("--public-nav-bottom", "0px");
+      return;
+    }
+
     const header = headerRef.current;
     if (!header || typeof ResizeObserver === "undefined") return;
 
@@ -308,12 +503,21 @@ export function PublicMarketingNavbar(): ReactElement {
     const observer = new ResizeObserver(syncNavBottom);
     observer.observe(header);
     return () => observer.disconnect();
-  }, [mobileOpen]);
+  }, [mobileOpen, hideChrome]);
 
   function onSearchSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     router.push(buildSearchHref(searchCategory, searchQuery));
     setMobileOpen(false);
+  }
+
+  function onNavigateSuggestion(href: string) {
+    router.push(href);
+    setMobileOpen(false);
+  }
+
+  if (hideChrome) {
+    return null;
   }
 
   return (
@@ -344,30 +548,10 @@ export function PublicMarketingNavbar(): ReactElement {
             "relative grid grid-cols-[1fr_auto_1fr] items-center gap-3",
           )}
         >
-          {/* Contact — start */}
-          <div className="hidden min-w-0 items-center gap-4 sm:flex">
-            <a
-              href={contactPhoneHref}
-              className="inline-flex items-center gap-2 text-sm font-medium text-body transition-colors hover:text-heading"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              <Phone className="size-[18px] shrink-0" aria-hidden />
-              <span className="truncate">{contactPhoneDisplay}</span>
-            </a>
-            <a
-              href={contactEmailHref}
-              className="inline-flex min-w-0 items-center gap-2 text-sm font-medium text-body transition-colors hover:text-heading"
-            >
-              <Mail className="size-[18px] shrink-0" aria-hidden />
-              <span className="truncate">{contactEmailDisplay}</span>
-            </a>
-          </div>
-
-          {/* Brand — center */}
+          {/* Brand — center (logo + school name) */}
           <PublicSiteLink
             href="/"
-            className="col-start-2 inline-flex shrink-0 items-center justify-self-center focus:outline-none focus-visible:ring-4 focus-visible:ring-brand/20"
+            className="col-start-2 inline-flex shrink-0 flex-col items-center justify-self-center gap-1 focus:outline-none focus-visible:ring-4 focus-visible:ring-brand/20"
             aria-label={`Beranda ${BRAND_SHORT}`}
           >
             <BrandLogoMark
@@ -376,6 +560,9 @@ export function PublicMarketingNavbar(): ReactElement {
               priority
               roundedClassName="rounded-none"
             />
+            <span className="text-[11px] font-bold tracking-[0.08em] text-brand sm:text-xs">
+              SMK {BRAND_SHORT}
+            </span>
           </PublicSiteLink>
 
           {/* Actions — end */}
@@ -459,6 +646,7 @@ export function PublicMarketingNavbar(): ReactElement {
             onQueryChange={setSearchQuery}
             onCategoryChange={setSearchCategory}
             onSubmit={onSearchSubmit}
+            onNavigateSuggestion={onNavigateSuggestion}
             className="ml-auto hidden w-full max-w-[480px] md:flex"
           />
         </div>
@@ -559,6 +747,7 @@ export function PublicMarketingNavbar(): ReactElement {
                 onQueryChange={setSearchQuery}
                 onCategoryChange={setSearchCategory}
                 onSubmit={onSearchSubmit}
+                onNavigateSuggestion={onNavigateSuggestion}
                 className="w-full"
               />
             </div>
