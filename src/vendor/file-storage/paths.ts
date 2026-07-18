@@ -103,7 +103,6 @@ export const LANDING_MEDIA = {
     kesiswaanWebp: asset("/media/landing/navbar/kesiswaan.webp"),
     fasilitasWebp: asset("/media/landing/navbar/fasilitas.webp"),
     beritaWebp: asset("/media/landing/navbar/berita.webp"),
-    kontakWebp: asset("/media/landing/navbar/kontak.webp"),
   },
 } as const;
 
