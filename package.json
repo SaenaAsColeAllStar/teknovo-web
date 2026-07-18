@@ -47,7 +47,6 @@
     "schema-dts": "^2.0.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
-    "tippy.js": "^6.3.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {

@@ -5,6 +5,13 @@
 #   Build command:  pnpm run build:cf
 #   Deploy command: npx wrangler deploy
 # Wrong: `pnpm run build` (plain next build) → "Could not find compiled Open Next config"
+#
+# Plan: OpenNext Next.js apps need Workers Paid (gzip upload ≤ 10 MiB).
+#   Free plan = 3 MiB gzip → deploy fails with code 10027 even when build succeeds.
+#   Upgrade: https://dash.cloudflare.com/?to=/:account/workers/plans
+#
+# Config source of truth: this file overrides dashboard settings on `wrangler deploy`
+# (routes, bindings, observability). Keep production domains and binding names here.
 
 name = "teknovo-web"
 main = ".open-next/worker.js"
@@ -15,12 +22,24 @@ compatibility_flags = ["nodejs_compat", "global_fetch_strictly_public"]
 directory = ".open-next/assets"
 binding = "ASSETS"
 
+# Custom Domains — must stay in wrangler or deploy removes dashboard-only routes
+[[routes]]
+pattern = "smkteknovo.sch.id"
+custom_domain = true
+
+[[routes]]
+pattern = "www.smkteknovo.sch.id"
+custom_domain = true
+
 # Self-reference for ISR / cache revalidation (match `name` above)
 [[services]]
 binding = "WORKER_SELF_REFERENCE"
 service = "teknovo-web"
 
 # CMS structured content (berita, artikel, kategori, pengaturan)
+# Binding name MUST be `DB` (code / CloudflareEnv). Dashboard display names like
+# `D1Teknovo` are irrelevant — rename the binding in the dashboard to match, or
+# local wrangler wins on deploy and the dashboard name is replaced.
 [[d1_databases]]
 binding = "DB"
 database_name = "teknovo-article"
@@ -28,6 +47,7 @@ database_id = "3defaaff-95fd-44f2-a85f-c40a1ce85c6e"
 migrations_dir = "migrations"
 
 # CMS media uploads + landing assets
+# Binding name MUST be `CMS_BUCKET` (not dashboard aliases like `r2teknovo`).
 [[r2_buckets]]
 binding = "CMS_BUCKET"
 bucket_name = "teknovo"
@@ -40,6 +60,9 @@ bucket_name = "teknovo"
 # Optional: Cloudflare Images binding
 # [images]
 # binding = "IMAGES"
+
+[observability]
+enabled = true
 
 [vars]
 NEXT_PUBLIC_APP_URL = "https://www.smkteknovo.sch.id"

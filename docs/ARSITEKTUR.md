@@ -41,6 +41,8 @@ Homelab (masa depan)
 
 Plain `pnpm run build` (`next build`) tidak cukup — OpenNext butuh `.open-next/` sebelum `wrangler deploy`. Detail: README → *Workers Builds*.
 
+**Workers Paid** wajib (Free = 3 MiB gzip; OpenNext handler biasanya ~10–16 MiB raw / masih di bawah 10 MiB gzip Paid). Upgrade: dashboard → Workers → Plans. Custom domain + binding names (`CMS_BUCKET`, `DB`) harus ada di `wrangler.toml` supaya deploy tidak menghapus route produksi.
+
 ## Relasi ke monorepo `rtek`
 
 `apps/web` di monorepo tetap ada (nginx path `/`). Repo ini adalah **split** untuk Cloudflare Pages/Workers: marketing + CMS ringan, API konten di homelab.

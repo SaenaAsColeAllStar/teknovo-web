@@ -11,6 +11,11 @@ const nextConfig: NextConfig = {
     root: path.join(__dirname),
   },
   transpilePackages: [],
+  // Tree-shake heavy client UI libs when imported from barrel entrypoints.
+  // OpenNext still needs Workers Paid for typical app size; this is best-effort.
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "framer-motion"],
+  },
   images: {
     remotePatterns: [
       {
