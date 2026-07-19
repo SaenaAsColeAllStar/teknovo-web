@@ -4,7 +4,6 @@ import {
   Building2,
   ChevronDown,
   CircleHelp,
-  Download,
   FileText,
   Image as ImageIcon,
   Info,
@@ -34,9 +33,8 @@ import { fetchCmsAnalytics, isApiConfigured } from "@/lib/api-client";
 import { BRAND_LOGO_SRC, BRAND_SHORT } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
-const DOCS_HREF =
-  "https://github.com/SaenaAsColeAllStar/teknovo-web/blob/main/docs/API.md";
-const HELP_HREF = "mailto:info@smkteknovo.sch.id?subject=Bantuan%20CMS%20TEKNOVO";
+const DOCS_HREF = "/dokumentasi";
+const HELP_HREF = "/bantuan";
 
 type NavChild = {
   id: string;
@@ -132,6 +130,7 @@ export function CmsApplicationSidenav({
   const pathname = location.pathname;
   const { getToken } = useAuth();
   const {
+    role,
     canManageSettings,
     canManageUsers,
     canAccessBeritaSekolah,
@@ -140,6 +139,7 @@ export function CmsApplicationSidenav({
     canWriteArtikel,
     canManageSiteContent,
   } = useCmsRole();
+  const isSiswa = role === "siswa";
 
   const [reviewBadge, setReviewBadge] = useState(0);
   const [alertVisible, setAlertVisible] = useState(true);
@@ -397,19 +397,28 @@ export function CmsApplicationSidenav({
         <hr className="mx-3 border-0 border-t border-[color:var(--color-border)]" />
 
         <nav className="flex flex-col gap-0.5 p-3" aria-label="Utilitas">
-          <a
-            href={DOCS_HREF}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={rowClass(false)}
+          <Link
+            to={DOCS_HREF}
+            onClick={handleNav}
+            className={rowClass(pathActive(pathname, DOCS_HREF))}
+            aria-current={
+              pathActive(pathname, DOCS_HREF) ? "page" : undefined
+            }
           >
             <BookOpen className="size-4 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1 truncate">Dokumentasi</span>
-          </a>
-          <a href={HELP_HREF} className={rowClass(false)}>
+          </Link>
+          <Link
+            to={HELP_HREF}
+            onClick={handleNav}
+            className={rowClass(pathActive(pathname, HELP_HREF))}
+            aria-current={
+              pathActive(pathname, HELP_HREF) ? "page" : undefined
+            }
+          >
             <CircleHelp className="size-4 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1 truncate">Bantuan</span>
-          </a>
+          </Link>
         </nav>
 
         {alertVisible ? (
@@ -429,7 +438,7 @@ export function CmsApplicationSidenav({
                     id={alertTitleId}
                     className="text-sm font-bold text-[color:var(--color-heading)]"
                   >
-                    Tip publikasi
+                    {isSiswa ? "Tip untuk siswa" : "Tip memakai CMS"}
                   </p>
                 </div>
                 <button
@@ -442,14 +451,18 @@ export function CmsApplicationSidenav({
                 </button>
               </div>
               <p className="mt-2 text-xs leading-relaxed text-[color:var(--color-body)]">
-                Setelah berita atau artikel diterbitkan, API memicu rebuild situs
-                publik agar konten muncul di smkteknovo.sch.id.
+                {isSiswa
+                  ? "Tulis artikel di Artikel baru, simpan draft, lalu kirim ke REVIEW. Redaksi akan menyetujui sebelum tampil di situs. Cover dan gambar lewat Media."
+                  : "Buat berita sekolah atau artikel siswa dari Buat konten. Artikel siswa butuh REVIEW → approve Super Admin. Cover lewat Media; konten terbit memicu rebuild situs publik."}
               </p>
               <Button asChild className="mt-3 w-full justify-center text-xs" size="sm">
-                <a href={DOCS_HREF} target="_blank" rel="noopener noreferrer">
-                  <Download className="size-3.5" aria-hidden />
-                  Buka panduan API
-                </a>
+                <Link
+                  to={isSiswa ? HELP_HREF : `${DOCS_HREF}#publikasi`}
+                  onClick={handleNav}
+                >
+                  <BookOpen className="size-3.5" aria-hidden />
+                  {isSiswa ? "Buka bantuan" : "Baca panduan publikasi"}
+                </Link>
               </Button>
             </div>
           </div>
@@ -472,13 +485,20 @@ export function CmsApplicationSidenav({
               <span className="min-w-0 flex-1 truncate">Pengaturan</span>
             </Link>
           ) : null}
-          <a href={HELP_HREF} className={rowClass(false)}>
+          <Link
+            to={HELP_HREF}
+            onClick={handleNav}
+            className={rowClass(pathActive(pathname, HELP_HREF))}
+            aria-current={
+              pathActive(pathname, HELP_HREF) ? "page" : undefined
+            }
+          >
             <CircleHelp className="size-4 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1 truncate">Bantuan & ketentuan</span>
-          </a>
+          </Link>
           {canManageUsers ? (
             <Link
-              to="/pengguna"
+              to="/pengguna?invite=1"
               onClick={handleNav}
               className={rowClass(pathActive(pathname, "/pengguna"))}
               aria-current={

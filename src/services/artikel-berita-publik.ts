@@ -4,7 +4,7 @@ import {
   fetchArtikelSiswaBySlugOrNull,
   fetchArtikelSiswaListOrNull,
 } from "@/lib/api-client";
-import { LANDING_MEDIA } from "@/lib/public-media-paths";
+import { publicAssetUrl } from "@/lib/r2";
 import type {
   ArtikelSiswa,
   ArtikelSiswaListItem,
@@ -44,7 +44,11 @@ export type BeritaSitemapEntry = {
   lastModified: Date;
 };
 
-const FALLBACK_COVER = LANDING_MEDIA.berita.ekstrakurikulerWebp;
+function resolveCoverSrc(coverUrl: string | null | undefined): string {
+  const raw = coverUrl?.trim();
+  if (!raw) return "";
+  return publicAssetUrl(raw);
+}
 
 function listItemToCard(item: ArtikelSiswaListItem): ArtikelSiswaPublikCard {
   const tanggalIso = item.publishedAt ?? new Date().toISOString();
@@ -56,7 +60,7 @@ function listItemToCard(item: ArtikelSiswaListItem): ArtikelSiswaPublikCard {
     tanggalIso,
     penulisNama: item.penulis?.nama?.trim() || "Siswa",
     penulisKelas: item.penulis?.kelas?.trim() || "—",
-    coverSrc: item.coverUrl?.trim() || FALLBACK_COVER,
+    coverSrc: resolveCoverSrc(item.coverUrl),
   };
 }
 
@@ -64,6 +68,7 @@ function artikelToDetail(row: ArtikelSiswa): ArtikelSiswaPublikDetail {
   const publishedAt = row.publishedAt
     ? new Date(row.publishedAt)
     : new Date(row.updatedAt || row.createdAt);
+  const coverSrc = resolveCoverSrc(row.coverUrl);
   return {
     slugPublik: row.slug,
     judul: row.judul,
@@ -72,12 +77,12 @@ function artikelToDetail(row: ArtikelSiswa): ArtikelSiswaPublikDetail {
     publishedAt,
     penulisNama: row.penulis?.nama?.trim() || "Siswa",
     penulisKelas: row.penulis?.kelas?.trim() || "—",
-    coverSrc: row.coverUrl?.trim() || FALLBACK_COVER,
+    coverSrc,
     coverAlt: null,
     metaTitle: row.metaTitle?.trim() || null,
     metaDescription: row.metaDescription?.trim() || row.ringkasan,
     metaKeywords: row.metaKeywords?.trim() || null,
-    ogImageOverride: row.ogImageUrl?.trim() || row.coverUrl,
+    ogImageOverride: resolveCoverSrc(row.ogImageUrl) || coverSrc || null,
     kategori: row.kategori?.nama ?? null,
     canonicalUrl: row.canonicalUrl?.trim() || null,
   };

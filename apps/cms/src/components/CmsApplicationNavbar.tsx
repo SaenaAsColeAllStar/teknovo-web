@@ -9,10 +9,10 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Moon,
+  Newspaper,
+  PenLine,
   Plus,
   Search,
-  Sun,
   X,
 } from "lucide-react";
 import {
@@ -52,6 +52,13 @@ const DEMO_METRICS = [
 
 type MetricPair = { label: string; value: string };
 
+type NotifItem = {
+  id: string;
+  title: string;
+  detail: string;
+  href: string;
+};
+
 function metricsFromAnalytics(data: CmsAnalyticsOverview): MetricPair[] {
   return [
     { label: "Draft", value: String(data.beritaDraft) },
@@ -67,6 +74,11 @@ type BreadcrumbSegment = {
   icon?: ReactElement;
 };
 
+const STATIC_CRUMBS: Record<string, string> = {
+  dokumentasi: "Dokumentasi",
+  bantuan: "Bantuan & ketentuan",
+};
+
 function buildBreadcrumbs(pathname: string): BreadcrumbSegment[] {
   const home: BreadcrumbSegment = {
     label: "Ringkasan",
@@ -80,6 +92,12 @@ function buildBreadcrumbs(pathname: string): BreadcrumbSegment[] {
 
   const segments = pathname.split("/").filter(Boolean);
   const crumbs: BreadcrumbSegment[] = [home];
+
+  const staticLabel = STATIC_CRUMBS[segments[0] ?? ""];
+  if (staticLabel) {
+    crumbs.push({ label: staticLabel });
+    return crumbs;
+  }
 
   const navMatch = DASHBOARD_NAV.find((item) => {
     const real = toRealPath(item.href);
@@ -120,29 +138,85 @@ export function CmsApplicationNavbar({
   const { getToken } = useAuth();
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
-  const { role, canWrite, canWriteArtikel, canAccessBeritaSekolah } = useCmsRole();
+  const { role, canWrite, canWriteArtikel, canAccessBeritaSekolah, canViewModerasi } =
+    useCmsRole();
   const location = useLocation();
   const navigate = useNavigate();
 
   const [metrics, setMetrics] = useState<MetricPair[]>([...DEMO_METRICS]);
+  const [analytics, setAnalytics] = useState<CmsAnalyticsOverview | null>(null);
   const [metricsOpen, setMetricsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
-  const [dark, setDark] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const createRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   const breadcrumbs = useMemo(
     () => buildBreadcrumbs(location.pathname),
     [location.pathname],
   );
 
-  const createHref = canAccessBeritaSekolah && canWrite
-    ? "/berita/baru"
-    : canWriteArtikel
-      ? "/artikel/baru"
-      : null;
+  const canCreateBerita = canAccessBeritaSekolah && canWrite;
+  const canCreateArtikel = canWriteArtikel;
+  const createChoices = useMemo(() => {
+    const items: { href: string; label: string; detail: string; icon: ReactElement }[] =
+      [];
+    if (canCreateBerita) {
+      items.push({
+        href: "/berita/baru",
+        label: "Berita sekolah",
+        detail: "Pengumuman & kegiatan resmi",
+        icon: <Newspaper className="size-3.5" aria-hidden />,
+      });
+    }
+    if (canCreateArtikel) {
+      items.push({
+        href: "/artikel/baru",
+        label: "Artikel siswa",
+        detail: canCreateBerita
+          ? "Channel ekskul · alur REVIEW"
+          : "Kirim untuk moderasi redaksi",
+        icon: <PenLine className="size-3.5" aria-hidden />,
+      });
+    }
+    return items;
+  }, [canCreateBerita, canCreateArtikel]);
+
+  const singleCreateHref =
+    createChoices.length === 1 ? createChoices[0]!.href : null;
+
+  const notifications = useMemo((): NotifItem[] => {
+    if (!analytics || analytics.source === "unavailable") return [];
+    const items: NotifItem[] = [];
+    if (canViewModerasi && analytics.artikelReview > 0) {
+      items.push({
+        id: "review",
+        title: `${analytics.artikelReview} artikel menunggu REVIEW`,
+        detail: "Buka antrian moderasi untuk menyetujui atau menolak.",
+        href: "/moderasi",
+      });
+    }
+    if (canCreateBerita && analytics.beritaDraft > 0) {
+      items.push({
+        id: "draft",
+        title: `${analytics.beritaDraft} berita masih draft`,
+        detail: "Lanjutkan atau publikasikan dari daftar Berita.",
+        href: "/berita",
+      });
+    }
+    return items;
+  }, [analytics, canViewModerasi, canCreateBerita]);
+
+  const badgeCount = notifications.reduce((sum, n) => {
+    if (n.id === "review") return sum + (analytics?.artikelReview ?? 0);
+    if (n.id === "draft") return sum + (analytics?.beritaDraft ?? 0);
+    return sum;
+  }, 0);
 
   const avatarUrl = user?.imageUrl;
   const displayName =
@@ -173,10 +247,6 @@ export function CmsApplicationNavbar({
   }, [metricsOpen, searchOpen]);
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
-  }, []);
-
-  useEffect(() => {
     let cancelled = false;
     async function load() {
       if (!isApiConfigured()) return;
@@ -184,7 +254,9 @@ export function CmsApplicationNavbar({
         const token = await getToken();
         if (!token || cancelled) return;
         const data = await fetchCmsAnalytics(token);
-        if (!cancelled && data.source !== "unavailable") {
+        if (cancelled) return;
+        setAnalytics(data);
+        if (data.source !== "unavailable") {
           setMetrics(metricsFromAnalytics(data));
         }
       } catch {
@@ -198,17 +270,25 @@ export function CmsApplicationNavbar({
   }, [getToken]);
 
   useEffect(() => {
-    if (!profileOpen) return;
+    if (!profileOpen && !createOpen && !notifOpen) return;
     const onPointer = (event: MouseEvent) => {
-      if (
-        profileRef.current &&
-        !profileRef.current.contains(event.target as Node)
-      ) {
+      const t = event.target as Node;
+      if (profileRef.current && !profileRef.current.contains(t)) {
         setProfileOpen(false);
+      }
+      if (createRef.current && !createRef.current.contains(t)) {
+        setCreateOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(t)) {
+        setNotifOpen(false);
       }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setProfileOpen(false);
+      if (event.key === "Escape") {
+        setProfileOpen(false);
+        setCreateOpen(false);
+        setNotifOpen(false);
+      }
     };
     document.addEventListener("mousedown", onPointer);
     document.addEventListener("keydown", onKey);
@@ -216,20 +296,26 @@ export function CmsApplicationNavbar({
       document.removeEventListener("mousedown", onPointer);
       document.removeEventListener("keydown", onKey);
     };
-  }, [profileOpen]);
+  }, [profileOpen, createOpen, notifOpen]);
 
   useEffect(() => {
     setSearchOpen(false);
     setActionsOpen(false);
     setProfileOpen(false);
+    setCreateOpen(false);
+    setNotifOpen(false);
   }, [location.pathname]);
 
   const searchHits = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     if (!q) return [];
-    return DASHBOARD_NAV.filter((item) =>
-      item.label.toLowerCase().includes(q),
-    ).slice(0, 6);
+    const extras = [
+      { href: "/dokumentasi", label: "Dokumentasi" },
+      { href: "/bantuan", label: "Bantuan & ketentuan" },
+    ];
+    return [...DASHBOARD_NAV, ...extras]
+      .filter((item) => item.label.toLowerCase().includes(q))
+      .slice(0, 6);
   }, [searchQuery]);
 
   function onSearchSubmit(event: FormEvent) {
@@ -240,12 +326,6 @@ export function CmsApplicationNavbar({
       setSearchQuery("");
       setSearchOpen(false);
     }
-  }
-
-  function toggleTheme() {
-    const next = !document.documentElement.classList.contains("dark");
-    document.documentElement.classList.toggle("dark", next);
-    setDark(next);
   }
 
   async function handleSignOut() {
@@ -415,50 +495,131 @@ export function CmsApplicationNavbar({
               <Search className="size-4" aria-hidden />
             </button>
 
-            {createHref ? (
-              <Button
-                asChild
-                className={cn(actionBtnClassName, "hidden sm:inline-flex")}
-              >
-                <Link to={createHref}>
+            {createChoices.length === 1 && singleCreateHref ? (
+              <>
+                <Button
+                  asChild
+                  className={cn(actionBtnClassName, "hidden sm:inline-flex")}
+                >
+                  <Link to={singleCreateHref}>
+                    <Plus aria-hidden />
+                    Buat konten
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="icon"
+                  className="size-9 sm:hidden"
+                  aria-label="Buat konten"
+                >
+                  <Link to={singleCreateHref}>
+                    <Plus className="size-4" aria-hidden />
+                  </Link>
+                </Button>
+              </>
+            ) : null}
+            {createChoices.length > 1 ? (
+              <div ref={createRef} className="relative">
+                <Button
+                  type="button"
+                  className={cn(actionBtnClassName, "hidden sm:inline-flex")}
+                  aria-expanded={createOpen}
+                  aria-haspopup="menu"
+                  onClick={() => setCreateOpen((v) => !v)}
+                >
                   <Plus aria-hidden />
                   Buat konten
-                </Link>
-              </Button>
-            ) : null}
-            {createHref ? (
-              <Button
-                asChild
-                size="icon"
-                className="size-9 sm:hidden"
-                aria-label="Buat konten"
-              >
-                <Link to={createHref}>
+                  <ChevronDown className="size-3 opacity-70" aria-hidden />
+                </Button>
+                <Button
+                  type="button"
+                  size="icon"
+                  className="size-9 sm:hidden"
+                  aria-label="Buat konten"
+                  aria-expanded={createOpen}
+                  onClick={() => setCreateOpen((v) => !v)}
+                >
                   <Plus className="size-4" aria-hidden />
-                </Link>
-              </Button>
+                </Button>
+                {createOpen ? (
+                  <div
+                    role="menu"
+                    className="absolute right-0 top-full z-20 mt-1 min-w-[14rem] border border-[color:var(--color-border)] bg-white py-1 shadow-sm"
+                  >
+                    {createChoices.map((choice) => (
+                      <Link
+                        key={choice.href}
+                        role="menuitem"
+                        to={choice.href}
+                        className="flex items-start gap-2 px-3 py-2 text-left hover:bg-[color:var(--color-neutral-soft)]"
+                        onClick={() => setCreateOpen(false)}
+                      >
+                        <span className="mt-0.5 text-[color:var(--color-brand)]">
+                          {choice.icon}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-xs font-semibold text-[color:var(--color-heading)]">
+                            {choice.label}
+                          </span>
+                          <span className="block text-[10px] text-[color:var(--color-body-subtle)]">
+                            {choice.detail}
+                          </span>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             ) : null}
 
-            <button
-              type="button"
-              className="inline-flex size-9 items-center justify-center text-[color:var(--color-heading)] hover:bg-[color:var(--color-neutral-soft)]"
-              aria-label={dark ? "Mode terang" : "Mode gelap"}
-              onClick={toggleTheme}
-            >
-              {dark ? (
-                <Sun className="size-4" aria-hidden />
-              ) : (
-                <Moon className="size-4" aria-hidden />
-              )}
-            </button>
-
-            <button
-              type="button"
-              className="relative inline-flex size-9 items-center justify-center text-[color:var(--color-heading)] hover:bg-[color:var(--color-neutral-soft)]"
-              aria-label="Notifikasi"
-            >
-              <Bell className="size-4" aria-hidden />
-            </button>
+            <div ref={notifRef} className="relative">
+              <button
+                type="button"
+                className="relative inline-flex size-9 items-center justify-center text-[color:var(--color-heading)] hover:bg-[color:var(--color-neutral-soft)]"
+                aria-label="Notifikasi"
+                aria-expanded={notifOpen}
+                onClick={() => setNotifOpen((v) => !v)}
+              >
+                <Bell className="size-4" aria-hidden />
+                {badgeCount > 0 ? (
+                  <span className="absolute right-1.5 top-1.5 flex size-4 items-center justify-center bg-[color:var(--color-brand)] text-[9px] font-semibold text-white">
+                    {badgeCount > 99 ? "99+" : badgeCount}
+                  </span>
+                ) : null}
+              </button>
+              {notifOpen ? (
+                <div className="absolute right-0 top-full z-20 mt-1 w-[min(100vw-2rem,18rem)] border border-[color:var(--color-border)] bg-white shadow-sm">
+                  <p className="border-b border-[color:var(--color-border)] px-3 py-2 text-xs font-semibold text-[color:var(--color-heading)]">
+                    Notifikasi
+                  </p>
+                  {notifications.length === 0 ? (
+                    <p className="px-3 py-4 text-xs text-[color:var(--color-body-subtle)]">
+                      Tidak ada notifikasi. Antrian REVIEW dan draft berita akan
+                      muncul di sini.
+                    </p>
+                  ) : (
+                    <ul className="max-h-64 overflow-y-auto py-1">
+                      {notifications.map((item) => (
+                        <li key={item.id}>
+                          <Link
+                            to={item.href}
+                            className="block px-3 py-2 hover:bg-[color:var(--color-neutral-soft)]"
+                            onClick={() => setNotifOpen(false)}
+                          >
+                            <span className="block text-xs font-semibold text-[color:var(--color-heading)]">
+                              {item.title}
+                            </span>
+                            <span className="mt-0.5 block text-[10px] text-[color:var(--color-body-subtle)]">
+                              {item.detail}
+                            </span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              ) : null}
+            </div>
 
             <div ref={profileRef} className="relative">
               <button
@@ -642,12 +803,22 @@ export function CmsApplicationNavbar({
                 <Filter aria-hidden />
                 Filter
               </Button>
-              {createHref ? (
+              {createChoices.length === 1 && singleCreateHref ? (
                 <Button asChild className={actionBtnClassName}>
-                  <Link to={createHref}>
+                  <Link to={singleCreateHref}>
                     Tambah
                     <Plus aria-hidden />
                   </Link>
+                </Button>
+              ) : createChoices.length > 1 ? (
+                <Button
+                  type="button"
+                  className={actionBtnClassName}
+                  aria-expanded={createOpen}
+                  onClick={() => setCreateOpen((v) => !v)}
+                >
+                  Tambah
+                  <Plus aria-hidden />
                 </Button>
               ) : (
                 <Button type="button" className={actionBtnClassName} disabled>
@@ -678,17 +849,37 @@ export function CmsApplicationNavbar({
                   <Filter aria-hidden />
                   Filter
                 </Button>
-                {createHref ? (
+                {createChoices.length === 1 && singleCreateHref ? (
                   <Button
                     asChild
                     className={cn(actionBtnClassName, "w-full justify-start")}
                   >
-                    <Link to={createHref} onClick={() => setActionsOpen(false)}>
+                    <Link
+                      to={singleCreateHref}
+                      onClick={() => setActionsOpen(false)}
+                    >
                       Tambah
                       <Plus aria-hidden />
                     </Link>
                   </Button>
                 ) : null}
+                {createChoices.length > 1
+                  ? createChoices.map((choice) => (
+                      <Button
+                        key={choice.href}
+                        asChild
+                        className={cn(actionBtnClassName, "w-full justify-start")}
+                      >
+                        <Link
+                          to={choice.href}
+                          onClick={() => setActionsOpen(false)}
+                        >
+                          {choice.label}
+                          <Plus aria-hidden />
+                        </Link>
+                      </Button>
+                    ))
+                  : null}
               </div>
             ) : null}
           </div>

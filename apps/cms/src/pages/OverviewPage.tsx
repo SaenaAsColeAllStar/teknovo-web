@@ -100,11 +100,22 @@ export function OverviewPage() {
           </CardHeader>
           <CardContent>
             {canWriteArtikel ? (
-              <Button asChild size="sm">
-                <Link to={isSiswa || !canWrite ? "/artikel/baru" : "/berita/baru"}>
-                  {isSiswa || !canWrite ? "Buat artikel" : "Buat berita"}
-                </Link>
-              </Button>
+              canWrite && canAccessBeritaSekolah ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild size="sm">
+                    <Link to="/berita/baru">Buat berita</Link>
+                  </Button>
+                  <Button asChild size="sm" variant="secondary">
+                    <Link to="/artikel/baru">Buat artikel</Link>
+                  </Button>
+                </div>
+              ) : (
+                <Button asChild size="sm">
+                  <Link to="/artikel/baru">
+                    {isSiswa || !canWrite ? "Buat artikel" : "Buat berita"}
+                  </Link>
+                </Button>
+              )
             ) : (
               <Button size="sm" disabled>
                 Buat konten
@@ -163,7 +174,14 @@ export function OverviewPage() {
           <CardTitle>Status integrasi</CardTitle>
           <CardDescription>
             CMS memakai Cloudflare D1 (`teknovo-article`) via `/api/v1`, media di R2
-            (`CMS_BUCKET`). Lihat docs/API.md.
+            (`CMS_BUCKET`). Lihat{" "}
+            <Link
+              to="/dokumentasi#api"
+              className="font-medium text-[color:var(--color-brand)] underline-offset-2 hover:underline"
+            >
+              dokumentasi API
+            </Link>
+            .
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-[color:var(--color-body)]">

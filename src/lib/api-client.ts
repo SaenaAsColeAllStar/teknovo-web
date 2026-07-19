@@ -652,6 +652,10 @@ export type CmsUserListItem = {
   role: "admin" | "editor" | "viewer" | "siswa";
   createdAt: string;
   invited?: boolean;
+  status?: string;
+  expiresAt?: string | null;
+  expiresInDays?: number | null;
+  url?: string | null;
 };
 
 export type CmsUserCreateInput = {
@@ -659,12 +663,26 @@ export type CmsUserCreateInput = {
   nama?: string;
   role: "admin" | "editor" | "siswa" | "viewer";
   password?: string;
+  expiresInDays?: number;
 };
 
 export type CmsUserPatchInput = {
   role?: "admin" | "editor" | "viewer" | "siswa";
   nama?: string;
 };
+
+export type CmsInvitationListItem = {
+  id: string;
+  email: string;
+  role: "admin" | "editor" | "viewer" | "siswa";
+  status: "pending" | "accepted" | "revoked" | "expired";
+  createdAt: string;
+  expiresAt: string | null;
+  expiresInDays: number | null;
+  url: string | null;
+  revoked: boolean;
+};
+
 export async function fetchCmsUsers(
   token: string,
   opts?: { limit?: number; offset?: number },
@@ -679,6 +697,25 @@ export async function fetchCmsUsers(
   );
 }
 
+export async function fetchCmsInvitations(
+  token: string,
+  opts?: {
+    limit?: number;
+    offset?: number;
+    status?: "pending" | "accepted" | "revoked" | "expired";
+  },
+): Promise<ApiListResponse<CmsInvitationListItem>> {
+  const params = new URLSearchParams();
+  if (opts?.limit) params.set("limit", String(opts.limit));
+  if (opts?.offset) params.set("offset", String(opts.offset));
+  if (opts?.status) params.set("status", opts.status);
+  const qs = params.toString();
+  return request<ApiListResponse<CmsInvitationListItem>>(
+    `/v1/users/invitations${qs ? `?${qs}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
 export async function createCmsUser(
   values: CmsUserCreateInput,
   token: string,
@@ -688,6 +725,17 @@ export async function createCmsUser(
     token,
     body: JSON.stringify(values),
   });
+  return data.data;
+}
+
+export async function revokeCmsInvitation(
+  id: string,
+  token: string,
+): Promise<CmsInvitationListItem> {
+  const data = await request<ApiOk<CmsInvitationListItem>>(
+    `/v1/users/invitations/${id}/revoke`,
+    { method: "POST", token },
+  );
   return data.data;
 }
 

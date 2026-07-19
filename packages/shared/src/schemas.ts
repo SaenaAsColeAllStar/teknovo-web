@@ -240,9 +240,38 @@ export const cmsUserCreateSchema = z.object({
   password: z
     .union([z.literal(""), z.string().min(8).max(128)])
     .optional(),
+  /**
+   * Invitation lifetime in days (Clerk `expiresInDays`).
+   * Default 7 when omitted; only applies when sending an invitation (no password).
+   * Clerk default is 30; we prefer a shorter CMS default.
+   */
+  expiresInDays: z.number().int().min(1).max(30).optional(),
 });
 
 export type CmsUserCreateInput = z.infer<typeof cmsUserCreateSchema>;
+
+export const CMS_INVITE_EXPIRY_PRESETS = [1, 3, 7, 14, 30] as const;
+export type CmsInviteExpiryDays = (typeof CMS_INVITE_EXPIRY_PRESETS)[number];
+export const CMS_INVITE_EXPIRY_DEFAULT: CmsInviteExpiryDays = 7;
+
+export type CmsInvitationStatus =
+  | "pending"
+  | "accepted"
+  | "revoked"
+  | "expired";
+
+export type CmsInvitationListItem = {
+  id: string;
+  email: string;
+  role: "admin" | "editor" | "viewer" | "siswa";
+  status: CmsInvitationStatus;
+  createdAt: string;
+  /** Approximate expiry from create-time `expiresInDays` (stored in metadata). */
+  expiresAt: string | null;
+  expiresInDays: number | null;
+  url: string | null;
+  revoked: boolean;
+};
 
 export const cmsUserPatchSchema = z
   .object({

@@ -45,6 +45,8 @@ export default function Image({
       }
     : style;
 
+  const { onError, ...imgRest } = rest;
+
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
@@ -57,7 +59,12 @@ export default function Image({
       sizes={sizes}
       loading={loading ?? (priority ? "eager" : "lazy")}
       decoding="async"
-      {...rest}
+      onError={(event) => {
+        // Soft-hide broken covers before/without React hydration (Astro islands).
+        event.currentTarget.style.visibility = "hidden";
+        onError?.(event);
+      }}
+      {...imgRest}
     />
   );
 }

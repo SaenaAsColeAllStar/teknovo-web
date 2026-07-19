@@ -17,6 +17,6 @@ const beritaKegiatan = await getPublishedBeritaKegiatanCards(48);
     title={BERITA_KEGIATAN_PAGE_TITLE}
     lede={BERITA_KEGIATAN_PAGE_LEDE}
   >
-    <BeritaKegiatanSekolahSection beritaKegiatan={beritaKegiatan} />
+    <BeritaKegiatanSekolahSection client:load beritaKegiatan={beritaKegiatan} />
   </BeritaPageShell>
 </BaseLayout>

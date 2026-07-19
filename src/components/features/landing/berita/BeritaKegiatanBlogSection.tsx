@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, ImageIcon } from "lucide-react";
+import { ArrowRight, CalendarDays } from "lucide-react";
 import type { ReactElement } from "react";
 
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
@@ -13,6 +13,7 @@ import { publicFormalBodyClassName } from "@/lib/public-section-styles";
 import { cn, formatDateId } from "@/lib/utils";
 
 import type { BeritaItem } from "./berita-data";
+import { BeritaCoverMedia } from "./BeritaCoverMedia";
 
 const FEATURED_PLUS_CARDS = 4;
 
@@ -41,20 +42,6 @@ function authorInitials(label: string): string {
     .slice(0, 2);
   if (parts.length === 0) return "HS";
   return parts.map((p) => p[0]?.toUpperCase() ?? "").join("");
-}
-
-function ImagePlaceholder({ className }: { className?: string }): ReactElement {
-  return (
-    <div
-      className={cn(
-        "flex aspect-[4/3] w-full items-center justify-center rounded-2xl bg-[#1313BA]/10 text-[#1313BA]",
-        className,
-      )}
-      aria-hidden
-    >
-      <ImageIcon className="size-12 stroke-[1.25] sm:size-14" />
-    </div>
-  );
 }
 
 function BacaSelengkapnyaLink({ href }: { href: string }): ReactElement {
@@ -95,7 +82,12 @@ function FeaturedArticle({ item }: { item: BeritaItem }): ReactElement {
 
   return (
     <article className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-10 lg:items-center">
-      <ImagePlaceholder className="lg:aspect-[5/4]" />
+      <BeritaCoverMedia
+        src={item.coverSrc}
+        alt=""
+        className="rounded-2xl lg:aspect-[5/4]"
+        sizes="(max-width: 1024px) 100vw, 50vw"
+      />
       <div className="min-w-0">
         <h3 className="text-2xl font-bold leading-snug tracking-tight text-heading sm:text-3xl">
           <PublicSiteLink
@@ -127,7 +119,12 @@ function BlogCard({ item }: { item: BeritaItem }): ReactElement {
 
   return (
     <article className="flex h-full min-w-0 flex-col">
-      <ImagePlaceholder className="aspect-[16/10]" />
+      <BeritaCoverMedia
+        src={item.coverSrc}
+        alt=""
+        className="rounded-2xl aspect-[16/10]"
+        sizes="(max-width: 768px) 100vw, 33vw"
+      />
       <h3 className="mt-4 text-base font-bold leading-snug tracking-tight text-heading sm:text-lg">
         <PublicSiteLink
           href={href}

@@ -2,14 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   CMS_ROLE_LABEL,
   cmsAssignableRoles,
-  deriveClerkUsername,
   type CmsRole,
 } from "@teknovo/shared";
 
+import { InviteTeamModal } from "@/components/dashboard/pengguna/InviteTeamModal";
 import { useCmsRole } from "@/components/dashboard/CmsRoleProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -19,19 +20,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   ApiClientError,
-  createCmsUser,
   deleteCmsUser,
+  fetchCmsInvitations,
   fetchCmsUsers,
+  revokeCmsInvitation,
   updateCmsUser,
+  type CmsInvitationListItem,
   type CmsUserListItem,
 } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
 
 const selectClass =
   "flex h-10 w-full rounded-none border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 disabled:opacity-50";
+
+const INVITE_STATUS_LABEL: Record<CmsInvitationListItem["status"], string> = {
+  pending: "Menunggu",
+  accepted: "Diterima",
+  revoked: "Dibatalkan",
+  expired: "Kedaluwarsa",
+};
+
+type TabId = "pengguna" | "undangan";
+
+type Props = {
+  /** Current Clerk user id — used to disable self-delete. */
+  currentUserId: string | null;
+};
 
 function formatDate(iso: string): string {
   try {
@@ -44,50 +60,64 @@ function formatDate(iso: string): string {
   }
 }
 
-type Props = {
-  /** Current Clerk user id — used to disable self-delete. */
-  currentUserId: string | null;
-};
-
 export function PenggunaManager({ currentUserId }: Props) {
   const { getToken } = useAuth();
   const { role: actorRole } = useCmsRole();
-  const createOptions = useMemo(
-    () =>
-      cmsAssignableRoles(actorRole).map((value) => ({
-        value,
-        label: CMS_ROLE_LABEL[value],
-      })),
-    [actorRole],
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const tabFromQuery = searchParams.get("tab");
+  const inviteFromQuery = searchParams.get("invite");
+
+  const [tab, setTab] = useState<TabId>(
+    tabFromQuery === "undangan" ? "undangan" : "pengguna",
   );
-  const defaultCreateRole = (createOptions[0]?.value ?? "siswa") as CmsRole;
+  const [inviteOpen, setInviteOpen] = useState(inviteFromQuery === "1");
 
   const [users, setUsers] = useState<CmsUserListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [invitations, setInvitations] = useState<CmsInvitationListItem[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
+  const [loadingInvites, setLoadingInvites] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [showForm, setShowForm] = useState(false);
 
-  const [email, setEmail] = useState("");
-  const [nama, setNama] = useState("");
-  const [role, setRole] = useState<CmsRole>(defaultCreateRole);
-  const [password, setPassword] = useState("");
+  const createOptions = useMemo(
+    () => cmsAssignableRoles(actorRole),
+    [actorRole],
+  );
 
-  const previewUsername = useMemo(() => {
-    const trimmed = email.trim();
-    if (!trimmed.includes("@")) return null;
-    try {
-      return deriveClerkUsername(trimmed);
-    } catch {
-      return null;
-    }
-  }, [email]);
+  const stripInviteParam = useCallback(() => {
+    const next = new URLSearchParams(searchParams.toString());
+    if (!next.has("invite")) return;
+    next.delete("invite");
+    const qs = next.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname);
+  }, [pathname, router, searchParams]);
+
+  const setTabAndUrl = useCallback(
+    (nextTab: TabId) => {
+      setTab(nextTab);
+      const next = new URLSearchParams(searchParams.toString());
+      if (nextTab === "pengguna") next.delete("tab");
+      else next.set("tab", "undangan");
+      next.delete("invite");
+      const qs = next.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname);
+    },
+    [pathname, router, searchParams],
+  );
 
   useEffect(() => {
-    setRole(defaultCreateRole);
-  }, [defaultCreateRole]);
+    if (tabFromQuery === "undangan") setTab("undangan");
+    else if (tabFromQuery === "pengguna" || !tabFromQuery) setTab("pengguna");
+  }, [tabFromQuery]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (inviteFromQuery === "1") setInviteOpen(true);
+  }, [inviteFromQuery]);
+
+  const loadUsers = useCallback(async () => {
+    setLoadingUsers(true);
     try {
       const token = await getToken();
       if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
@@ -100,25 +130,38 @@ export function PenggunaManager({ currentUserId }: Props) {
           : "Gagal memuat daftar pengguna.",
       );
     } finally {
-      setLoading(false);
+      setLoadingUsers(false);
+    }
+  }, [getToken]);
+
+  const loadInvitations = useCallback(async () => {
+    setLoadingInvites(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
+      const res = await fetchCmsInvitations(token, { limit: 100 });
+      setInvitations(res.data);
+    } catch (err) {
+      toast.error(
+        err instanceof ApiClientError
+          ? err.message
+          : "Gagal memuat daftar undangan.",
+      );
+    } finally {
+      setLoadingInvites(false);
     }
   }, [getToken]);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    void loadUsers();
+  }, [loadUsers]);
 
-  function resetForm() {
-    setEmail("");
-    setNama("");
-    setRole(defaultCreateRole);
-    setPassword("");
-    setShowForm(false);
-  }
+  useEffect(() => {
+    if (tab === "undangan") void loadInvitations();
+  }, [tab, loadInvitations]);
 
   function roleOptionsForRow(user: CmsUserListItem): CmsRole[] {
     const assignable = cmsAssignableRoles(actorRole);
-    // Keep current role visible even if actor cannot re-assign it (e.g. viewing admin).
     if (!(assignable as readonly string[]).includes(user.role)) {
       return [user.role, ...assignable];
     }
@@ -132,85 +175,14 @@ export function PenggunaManager({ currentUserId }: Props) {
     return false;
   }
 
-  async function onCreate(e: React.FormEvent) {
-    e.preventDefault();
-    const emailTrim = email.trim();
-    const passwordTrim = password.trim();
-
-    if (!emailTrim || !emailTrim.includes("@")) {
-      toast.error("Email tidak valid.");
-      return;
-    }
-    if (passwordTrim && passwordTrim.length < 8) {
-      toast.error(
-        "Password minimal 8 karakter, atau kosongkan untuk undangan email.",
-      );
-      return;
-    }
-    if (passwordTrim && /^\d+$/.test(passwordTrim)) {
-      toast.error(
-        "Password tidak boleh hanya angka. Gunakan kombinasi huruf dan angka.",
-      );
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const token = await getToken();
-      if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
-      if (
-        role !== "admin" &&
-        role !== "editor" &&
-        role !== "siswa" &&
-        role !== "viewer"
-      ) {
-        throw new ApiClientError("Peran tidak valid untuk undangan.", 400);
-      }
-      const created = await createCmsUser(
-        {
-          email: emailTrim,
-          nama: nama.trim() || undefined,
-          role,
-          password: passwordTrim || undefined,
-        },
-        token,
-      );
-      if (created.invited) {
-        toast.success("Undangan dikirim", {
-          description: `Email undangan Clerk dikirim ke ${created.email}.`,
-        });
-      } else {
-        toast.success("Akun dibuat", {
-          description: created.email
-            ? `${created.email} (username Clerk: ${deriveClerkUsername(emailTrim)})`
-            : undefined,
-        });
-      }
-      resetForm();
-      await load();
-    } catch (err) {
-      toast.error(
-        err instanceof ApiClientError ? err.message : "Gagal membuat akun.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function onChangeRole(user: CmsUserListItem, nextRole: CmsRole) {
     if (nextRole === user.role) return;
     setBusy(true);
     try {
       const token = await getToken();
       if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
-      const updated = await updateCmsUser(
-        user.id,
-        { role: nextRole },
-        token,
-      );
-      setUsers((prev) =>
-        prev.map((u) => (u.id === updated.id ? updated : u)),
-      );
+      const updated = await updateCmsUser(user.id, { role: nextRole }, token);
+      setUsers((prev) => prev.map((u) => (u.id === updated.id ? updated : u)));
       toast.success("Peran diperbarui", {
         description: `${updated.email ?? updated.id} → ${CMS_ROLE_LABEL[updated.role]}`,
       });
@@ -256,9 +228,47 @@ export function PenggunaManager({ currentUserId }: Props) {
     }
   }
 
+  async function onRevoke(invite: CmsInvitationListItem) {
+    if (invite.status !== "pending") return;
+    if (
+      !window.confirm(
+        `Batalkan undangan ke ${invite.email}? Tautan undangan tidak akan bisa dipakai.`,
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
+      const revoked = await revokeCmsInvitation(invite.id, token);
+      setInvitations((prev) =>
+        prev.map((item) => (item.id === revoked.id ? revoked : item)),
+      );
+      toast.success("Undangan dibatalkan");
+    } catch (err) {
+      toast.error(
+        err instanceof ApiClientError
+          ? err.message
+          : "Gagal membatalkan undangan.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copyInviteUrl(url: string) {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Tautan undangan disalin");
+    } catch {
+      toast.error("Gagal menyalin tautan.");
+    }
+  }
+
   const actorLabel =
     actorRole === "admin"
-      ? "Super Admin dapat mengundang Super Admin, Admin, Siswa, dan Viewer. Super Admin terakhir tidak dapat diturunkan/dihapus."
+      ? "Super Admin dapat mengundang Super Admin, Admin, Siswa, dan Viewer. Setelah diterima, sesuaikan peran di daftar pengguna."
       : "Admin hanya dapat mengundang akun Siswa.";
 
   return (
@@ -274,209 +284,254 @@ export function PenggunaManager({ currentUserId }: Props) {
         </div>
         <Button
           type="button"
-          onClick={() => setShowForm((v) => !v)}
+          onClick={() => setInviteOpen(true)}
           disabled={busy || createOptions.length === 0}
         >
-          {showForm ? "Tutup form" : "Tambah akun"}
+          Undang tim
         </Button>
       </div>
 
-      {showForm ? (
+      <div
+        className="flex gap-0 border-b border-[color:var(--color-border)]"
+        role="tablist"
+        aria-label="Bag pengguna"
+      >
+        {(
+          [
+            { id: "pengguna", label: "Pengguna" },
+            { id: "undangan", label: "Undangan" },
+          ] as const
+        ).map((item) => {
+          const active = tab === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              role="tab"
+              aria-selected={active}
+              className={cn(
+                "border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
+                active
+                  ? "border-[color:var(--color-brand)] text-[color:var(--color-brand)]"
+                  : "border-transparent text-[color:var(--color-body)] hover:text-[color:var(--color-heading)]",
+              )}
+              onClick={() => setTabAndUrl(item.id)}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {tab === "pengguna" ? (
         <Card>
           <CardHeader>
-            <CardTitle>Tambah akun</CardTitle>
+            <CardTitle>Daftar pengguna</CardTitle>
             <CardDescription>
-              Isi password untuk membuat akun langsung, atau kosongkan agar
-              Clerk mengirim undangan email (user set password sendiri).
-              Username Clerk digenerate otomatis dari email — bukan password
-              database/D1.
+              Akun yang sudah aktif di Clerk. Undangan yang belum diterima ada di
+              tab Undangan.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form
-              className="grid max-w-xl gap-4"
-              onSubmit={(e) => void onCreate(e)}
-              autoComplete="off"
-            >
-              <div className="space-y-2">
-                <Label htmlFor="user-email">Email</Label>
-                <Input
-                  id="user-email"
-                  name="cms-new-user-email"
-                  type="email"
-                  required
-                  autoComplete="off"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="nama@sekolah.id"
-                  disabled={busy}
-                />
-                {previewUsername ? (
-                  <p className="text-xs text-[color:var(--color-body-subtle)]">
-                    Username Clerk (otomatis):{" "}
-                    <code className="font-mono">{previewUsername}</code>
-                  </p>
-                ) : null}
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="user-nama">Nama (opsional)</Label>
-                <Input
-                  id="user-nama"
-                  name="cms-new-user-nama"
-                  type="text"
-                  autoComplete="off"
-                  value={nama}
-                  onChange={(e) => setNama(e.target.value)}
-                  placeholder="Nama lengkap"
-                  disabled={busy}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="user-role">Peran</Label>
-                <select
-                  id="user-role"
-                  className={selectClass}
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as CmsRole)}
-                  disabled={busy}
-                >
-                  {createOptions.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="user-password">Password login (opsional)</Label>
-                <Input
-                  id="user-password"
-                  name="cms-new-user-password"
-                  type="password"
-                  autoComplete="new-password"
-                  minLength={8}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min. 8 karakter unik — kosong = undangan email"
-                  disabled={busy}
-                />
-                <p className="text-xs text-[color:var(--color-body-subtle)]">
-                  Password ini untuk login CMS user baru. Jangan pakai password
-                  database/server atau kata sandi yang sering bocor (Clerk
-                  menolak password dari Have I Been Pwned).
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button type="submit" disabled={busy || !email.trim()}>
-                  {busy ? "Menyimpan…" : "Buat akun"}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={resetForm}
-                  disabled={busy}
-                >
-                  Batal
-                </Button>
-              </div>
-            </form>
+          <CardContent className="overflow-x-auto p-0">
+            {loadingUsers ? (
+              <p className="p-6 text-sm text-[color:var(--color-body)]">
+                Memuat…
+              </p>
+            ) : users.length === 0 ? (
+              <p className="p-6 text-sm text-[color:var(--color-body)]">
+                Belum ada pengguna. Undang anggota tim untuk memulai.
+              </p>
+            ) : (
+              <table className="w-full min-w-[640px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)] text-[color:var(--color-heading)]">
+                    <th className="px-6 py-3 font-medium">Email</th>
+                    <th className="px-4 py-3 font-medium">Nama</th>
+                    <th className="px-4 py-3 font-medium">Peran</th>
+                    <th className="px-4 py-3 font-medium">Dibuat</th>
+                    <th className="px-6 py-3 font-medium">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => {
+                    const isSelf = user.id === currentUserId;
+                    const editable = canEditUser(user);
+                    const options = roleOptionsForRow(user);
+                    return (
+                      <tr
+                        key={user.id}
+                        className="border-b border-[color:var(--color-border)] last:border-0"
+                      >
+                        <td className="px-6 py-3 text-[color:var(--color-heading)]">
+                          {user.email ?? "—"}
+                          {isSelf ? (
+                            <span className="ml-2 text-xs text-[color:var(--color-body-subtle)]">
+                              (Anda)
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="px-4 py-3">{user.name ?? "—"}</td>
+                        <td className="px-4 py-3">
+                          {editable ? (
+                            <select
+                              className={selectClass}
+                              value={user.role}
+                              disabled={busy}
+                              onChange={(e) =>
+                                void onChangeRole(
+                                  user,
+                                  e.target.value as CmsRole,
+                                )
+                              }
+                              aria-label={`Peran ${user.email ?? user.id}`}
+                            >
+                              {options.map((value) => (
+                                <option key={value} value={value}>
+                                  {CMS_ROLE_LABEL[value]}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span>{CMS_ROLE_LABEL[user.role]}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-[color:var(--color-body-subtle)]">
+                          {formatDate(user.createdAt)}
+                        </td>
+                        <td className="px-6 py-3">
+                          <Button
+                            type="button"
+                            variant="danger"
+                            size="sm"
+                            disabled={busy || !editable}
+                            onClick={() => void onDelete(user)}
+                          >
+                            Hapus
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </CardContent>
         </Card>
-      ) : null}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar pengguna</CardTitle>
-          <CardDescription>
-            Data dari Clerk Backend API. Undangan yang belum diterima tidak
-            muncul di sini.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="overflow-x-auto p-0">
-          {loading ? (
-            <p className="p-6 text-sm text-[color:var(--color-body)]">
-              Memuat…
-            </p>
-          ) : users.length === 0 ? (
-            <p className="p-6 text-sm text-[color:var(--color-body)]">
-              Belum ada pengguna.
-            </p>
-          ) : (
-            <table className="w-full min-w-[640px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)] text-[color:var(--color-heading)]">
-                  <th className="px-6 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Nama</th>
-                  <th className="px-4 py-3 font-medium">Peran</th>
-                  <th className="px-4 py-3 font-medium">Dibuat</th>
-                  <th className="px-6 py-3 font-medium">Aksi</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => {
-                  const isSelf = user.id === currentUserId;
-                  const editable = canEditUser(user);
-                  const options = roleOptionsForRow(user);
-                  return (
-                    <tr
-                      key={user.id}
-                      className="border-b border-[color:var(--color-border)] last:border-0"
-                    >
-                      <td className="px-6 py-3 text-[color:var(--color-heading)]">
-                        {user.email ?? "—"}
-                        {isSelf ? (
-                          <span className="ml-2 text-xs text-[color:var(--color-body-subtle)]">
-                            (Anda)
-                          </span>
-                        ) : null}
-                      </td>
-                      <td className="px-4 py-3">{user.name ?? "—"}</td>
-                      <td className="px-4 py-3">
-                        {editable ? (
-                          <select
-                            className={selectClass}
-                            value={user.role}
-                            disabled={busy}
-                            onChange={(e) =>
-                              void onChangeRole(
-                                user,
-                                e.target.value as CmsRole,
-                              )
-                            }
-                            aria-label={`Peran ${user.email ?? user.id}`}
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>Undangan</CardTitle>
+            <CardDescription>
+              Undangan Clerk yang masih aktif atau sudah diproses. Admin hanya
+              melihat undangan Siswa.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="overflow-x-auto p-0">
+            {loadingInvites ? (
+              <p className="p-6 text-sm text-[color:var(--color-body)]">
+                Memuat…
+              </p>
+            ) : invitations.length === 0 ? (
+              <p className="p-6 text-sm text-[color:var(--color-body)]">
+                Belum ada undangan. Klik Undang tim untuk mengirim undangan.
+              </p>
+            ) : (
+              <table className="w-full min-w-[720px] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)] text-[color:var(--color-heading)]">
+                    <th className="px-6 py-3 font-medium">Email</th>
+                    <th className="px-4 py-3 font-medium">Peran</th>
+                    <th className="px-4 py-3 font-medium">Status</th>
+                    <th className="px-4 py-3 font-medium">Kedaluwarsa</th>
+                    <th className="px-4 py-3 font-medium">Dibuat</th>
+                    <th className="px-6 py-3 font-medium">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invitations.map((invite) => {
+                    const canRevoke = invite.status === "pending";
+                    return (
+                      <tr
+                        key={invite.id}
+                        className="border-b border-[color:var(--color-border)] last:border-0"
+                      >
+                        <td className="px-6 py-3 text-[color:var(--color-heading)]">
+                          {invite.email}
+                        </td>
+                        <td className="px-4 py-3">
+                          {CMS_ROLE_LABEL[invite.role]}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={cn(
+                              invite.status === "pending" &&
+                                "text-[color:var(--color-brand)]",
+                              invite.status === "accepted" &&
+                                "text-[color:var(--color-success)]",
+                              (invite.status === "revoked" ||
+                                invite.status === "expired") &&
+                                "text-[color:var(--color-body-subtle)]",
+                            )}
                           >
-                            {options.map((value) => (
-                              <option key={value} value={value}>
-                                {CMS_ROLE_LABEL[value]}
-                              </option>
-                            ))}
-                          </select>
-                        ) : (
-                          <span>{CMS_ROLE_LABEL[user.role]}</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-[color:var(--color-body-subtle)]">
-                        {formatDate(user.createdAt)}
-                      </td>
-                      <td className="px-6 py-3">
-                        <Button
-                          type="button"
-                          variant="danger"
-                          size="sm"
-                          disabled={busy || !editable}
-                          onClick={() => void onDelete(user)}
-                        >
-                          Hapus
-                        </Button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+                            {INVITE_STATUS_LABEL[invite.status]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-[color:var(--color-body-subtle)]">
+                          {invite.expiresAt
+                            ? formatDate(invite.expiresAt)
+                            : invite.expiresInDays
+                              ? `${invite.expiresInDays} hari`
+                              : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-[color:var(--color-body-subtle)]">
+                          {formatDate(invite.createdAt)}
+                        </td>
+                        <td className="px-6 py-3">
+                          <div className="flex flex-wrap gap-2">
+                            {invite.url && invite.status === "pending" ? (
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                disabled={busy}
+                                onClick={() => void copyInviteUrl(invite.url!)}
+                              >
+                                Salin tautan
+                              </Button>
+                            ) : null}
+                            <Button
+                              type="button"
+                              variant="danger"
+                              size="sm"
+                              disabled={busy || !canRevoke}
+                              onClick={() => void onRevoke(invite)}
+                            >
+                              Batalkan
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      <InviteTeamModal
+        open={inviteOpen}
+        onOpenChange={(open) => {
+          setInviteOpen(open);
+          if (!open) stripInviteParam();
+        }}
+        onInvited={() => {
+          setTabAndUrl("undangan");
+          void loadInvitations();
+          void loadUsers();
+        }}
+      />
     </div>
   );
 }

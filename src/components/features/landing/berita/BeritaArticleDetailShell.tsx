@@ -1,12 +1,11 @@
 import type { ReactElement, ReactNode } from "react";
 
-import { PublicOptimizedImage } from "@/components/shared/PublicOptimizedImage";
-
 import { ArtikelKontenHtml } from "@/components/features/landing/berita/ArtikelKontenHtml";
 import { BeritaArticleJsonLd } from "@/components/features/landing/berita/BeritaArticleJsonLd";
 import { BeritaBreadcrumb } from "@/components/features/landing/berita/BeritaBreadcrumb";
 import { BeritaBreadcrumbJsonLd } from "@/components/features/landing/berita/BeritaBreadcrumbJsonLd";
 import { BeritaCategoryBadge } from "@/components/features/landing/berita/BeritaCategoryBadge";
+import { BeritaCoverMedia } from "@/components/features/landing/berita/BeritaCoverMedia";
 import { BeritaReadingProgress } from "@/components/features/landing/berita/BeritaReadingProgress";
 import { BeritaRelatedArticles } from "@/components/features/landing/berita/BeritaRelatedArticles";
 import { BeritaShareButtons } from "@/components/features/landing/berita/BeritaShareButtons";
@@ -23,7 +22,7 @@ export type BeritaArticleDetailShellProps = {
   sectionPath: string;
   publishedAt: Date;
   authorLabel: string;
-  cover?: { src: string; alt: string };
+  cover?: { src: string; alt: string } | null;
   children?: ReactNode;
   kontenHtml: string;
   ringkasan: string;
@@ -126,19 +125,15 @@ export function BeritaArticleDetailShell({
               </div>
             </header>
 
-            {cover ? (
-              <figure className="relative -mx-4 mt-8 aspect-[16/9] overflow-hidden border border-border-default bg-neutral-soft sm:mx-0">
-                <PublicOptimizedImage
-                  src={cover.src}
-                  alt={cover.alt}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 1024px) 100vw, (max-width: 1280px) 70vw, 880px"
-                  priority
-                  itemProp="image"
-                />
-              </figure>
-            ) : null}
+            <figure className="-mx-4 mt-8 overflow-hidden border border-border-default sm:mx-0">
+              <BeritaCoverMedia
+                src={cover?.src}
+                alt={cover?.alt || `Ilustrasi berita: ${judul}`}
+                className="aspect-[16/9]"
+                sizes="(max-width: 1024px) 100vw, (max-width: 1280px) 70vw, 880px"
+                priority
+              />
+            </figure>
 
             <p
               itemProp="description"

@@ -26,7 +26,6 @@ import {
   getRelatedFasilitasItems,
   getRelatedFasilitasItemsForLms,
 } from "@/lib/fasilitas-landing-content";
-import { LMS_BERITA_KEGIATAN_PATH } from "@/lib/lms-dashboard-seo";
 import { PUBLIC_SITE_PORTAL_LOGIN_HREF } from "@/lib/public-site-nav";
 import {
   publicFormalBodyClassName,
@@ -344,10 +343,10 @@ export function FasilitasDetailPage({
             <PpdbCtaLink href={FASILITAS_FOOTER_CTA_PPDB_HREF} label="Daftar PPDB" className="px-5 py-2.5 text-sm" />
             {isLms ? (
               <Link
-                href={LMS_BERITA_KEGIATAN_PATH}
+                href="/berita/kegiatan-sekolah"
                 className="inline-flex items-center justify-center rounded-full border border-blue-200 bg-white px-5 py-2.5 text-sm font-semibold text-blue-800 shadow-sm transition hover:bg-blue-50 dark:border-blue-800 dark:bg-slate-950 dark:text-blue-200 dark:hover:bg-blue-950/40"
               >
-                Berita platform LMS
+                Berita kegiatan sekolah
               </Link>
             ) : null}
           </div>

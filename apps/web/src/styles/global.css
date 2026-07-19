@@ -89,11 +89,14 @@ html {
   z-index: 50;
 }
 
-/* Main slot — reinforce fade timing/easing when named VT groups are used. */
-::view-transition-old(public-page-main),
-::view-transition-new(public-page-main) {
-  animation-duration: 260ms;
-  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+/**
+ * After an interrupted View Transition, scoped nodes can remain non-interactive
+ * ghosts. Keep the live DOM main slot paintable (main no longer uses a named
+ * VT group; this is a belt-and-suspenders default).
+ */
+.public-page-main {
+  opacity: 1;
+  visibility: visible;
 }
 
 body {

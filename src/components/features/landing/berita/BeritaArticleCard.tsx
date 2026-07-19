@@ -1,16 +1,13 @@
 import Link from "next/link";
 import type { ReactElement } from "react";
 
-import {
-  PublicOptimizedImage,
-  publicOptimizedImageContainerClassName,
-} from "@/components/shared/PublicOptimizedImage";
 import { estimateReadTimeMinutes, formatReadTimeId } from "@/lib/berita-read-time";
 import { publicFormalBodyClassName } from "@/lib/public-section-styles";
 import { cn, formatDateId } from "@/lib/utils";
 
 import type { BeritaItem } from "./berita-data";
 import { BeritaCategoryBadge } from "./BeritaCategoryBadge";
+import { BeritaCoverMedia } from "./BeritaCoverMedia";
 
 type BeritaArticleCardProps = {
   item: BeritaItem;
@@ -98,20 +95,12 @@ export function BeritaArticleCard({
       )}
     >
       <div className="grid gap-0 md:grid-cols-[minmax(0,280px)_1fr]">
-        <div
-          className={cn(
-            "relative aspect-[16/10] min-h-[180px] w-full md:aspect-auto md:min-h-[220px]",
-            publicOptimizedImageContainerClassName,
-          )}
-        >
-          <PublicOptimizedImage
-            src={item.coverSrc}
-            alt=""
-            fill
-            sizes="(max-width: 768px) 100vw, 280px"
-            className="object-cover"
-          />
-        </div>
+        <BeritaCoverMedia
+          src={item.coverSrc}
+          alt=""
+          className="aspect-[16/10] min-h-[180px] w-full md:aspect-auto md:min-h-[220px]"
+          sizes="(max-width: 768px) 100vw, 280px"
+        />
         {body}
       </div>
     </article>

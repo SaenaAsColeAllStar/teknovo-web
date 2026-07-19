@@ -11,10 +11,6 @@ import {
   BERITA_PAGE_LEDE,
   BERITA_PAGE_TITLE,
 } from "@/lib/berita-landing-content";
-import {
-  PublicOptimizedImage,
-  publicOptimizedImageContainerClassName,
-} from "@/components/shared/PublicOptimizedImage";
 import { publicFormalBodyClassName, publicPageSectionWhiteClassName } from "@/lib/public-section-styles";
 import { cn, formatDateId } from "@/lib/utils";
 
@@ -24,6 +20,7 @@ import type { BeritaKegiatanPublikCard } from "@/services/berita-kegiatan-publik
 import { artikelSiswaToBeritaItem } from "./artikel-siswa-to-berita-item";
 import { beritaKegiatanToBeritaItem } from "./berita-kegiatan-to-berita-item";
 import { BERITA_TERBARU } from "./berita-data";
+import { BeritaCoverMedia } from "./BeritaCoverMedia";
 
 export type BeritaPageContentProps = {
   /** Artikel siswa yang sudah diterbitkan (moderated) — digabung ke daftar berita. */
@@ -67,20 +64,12 @@ export function BeritaPageContent({
                 delay={0.06}
               >
                 <div className="grid gap-0 md:grid-cols-[minmax(0,280px)_1fr]">
-                  <div
-                    className={cn(
-                      "relative aspect-[4/3] min-h-[180px] w-full md:aspect-auto md:min-h-[200px]",
-                      publicOptimizedImageContainerClassName,
-                    )}
-                  >
-                    <PublicOptimizedImage
-                      src={item.coverSrc}
-                      alt={item.judul}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 280px"
-                      className="object-cover"
-                    />
-                  </div>
+                  <BeritaCoverMedia
+                    src={item.coverSrc}
+                    alt={item.judul}
+                    className="aspect-[4/3] min-h-[180px] w-full md:aspect-auto md:min-h-[200px]"
+                    sizes="(max-width: 768px) 100vw, 280px"
+                  />
                   <div className="p-6">
                     <p className="text-xs font-medium uppercase tracking-wide text-blue-700 dark:text-blue-400">
                       {formatDateId(new Date(item.tanggal))}

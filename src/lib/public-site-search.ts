@@ -9,7 +9,6 @@ import {
   PUBLIC_SITE_PPDB_HREF,
 } from "@/lib/public-site-nav";
 import { getBeritaKegiatanDetailPath, getBeritaSiswaDetailPath } from "@/lib/seo/berita";
-import { LMS_BERITA_KEGIATAN_SLUG } from "@/lib/seo/lms";
 
 export type PublicSiteSearchHitKind = "berita" | "jurusan" | "halaman";
 
@@ -39,52 +38,6 @@ function resolvePublicApiV1Base(): string {
   if (trimmed.endsWith("/api")) return trimmed;
   return `${trimmed}/api`;
 }
-
-/** Offline / API-down fallback — mirrors known kegiatan berita slugs. */
-const FALLBACK_BERITA_HITS: readonly PublicSiteSearchHit[] = [
-  {
-    id: "fallback-ppdb-g1",
-    title: "Pembukaan Gelombang 1 PPDB 2026/2027",
-    href: getBeritaKegiatanDetailPath("pembukaan-gelombang-1-ppdb-2026"),
-    kind: "berita",
-    publishedAt: "2026-03-01T00:00:00.000Z",
-  },
-  {
-    id: "fallback-jurusan",
-    title: "Program Kejuruan Teknik Mesin & Unit Layanan Wisata",
-    href: getBeritaKegiatanDetailPath("program-kejuruan-teknik-mesin-dan-ulw"),
-    kind: "berita",
-    publishedAt: "2026-02-15T00:00:00.000Z",
-  },
-  {
-    id: "fallback-lms",
-    title: "Platform LMS Online & Pembelajaran Hybrid",
-    href: getBeritaKegiatanDetailPath(LMS_BERITA_KEGIATAN_SLUG),
-    kind: "berita",
-    publishedAt: "2026-02-01T00:00:00.000Z",
-  },
-  {
-    id: "fallback-lab",
-    title: "Laboratorium Komputer Siap Praktik Kejuruan",
-    href: getBeritaKegiatanDetailPath("laboratorium-komputer-siap-praktik"),
-    kind: "berita",
-    publishedAt: "2026-01-20T00:00:00.000Z",
-  },
-  {
-    id: "fallback-akreditasi",
-    title: "Akreditasi A: Komitmen Mutu Pendidikan",
-    href: getBeritaKegiatanDetailPath("akreditasi-a-komitmen-mutu-sekolah"),
-    kind: "berita",
-    publishedAt: "2026-01-10T00:00:00.000Z",
-  },
-  {
-    id: "fallback-ekskul",
-    title: "Ekstrakurikuler & Blogger Club",
-    href: getBeritaKegiatanDetailPath("ekstrakurikuler-dan-blogger-club"),
-    kind: "berita",
-    publishedAt: "2025-12-15T00:00:00.000Z",
-  },
-] as const;
 
 type ApiListItem = {
   id: string;
@@ -167,7 +120,7 @@ function sortByPublishedDesc(a: PublicSiteSearchHit, b: PublicSiteSearchHit): nu
 
 /**
  * Load latest berita (kegiatan + artikel siswa), merged and sorted.
- * Falls back to static index when the API returns nothing.
+ * Empty when API returns nothing (no hardcoded mock berita).
  */
 export async function loadRecentBeritaSearchHits(
   limit = RECENT_BERITA_LIMIT,
@@ -195,9 +148,7 @@ export async function loadRecentBeritaSearchHits(
   ];
 
   hits.sort(sortByPublishedDesc);
-  const sliced = hits.slice(0, limit);
-  if (sliced.length > 0) return sliced;
-  return FALLBACK_BERITA_HITS.slice(0, limit);
+  return hits.slice(0, limit);
 }
 
 export function filterPublicSiteSearchHits(

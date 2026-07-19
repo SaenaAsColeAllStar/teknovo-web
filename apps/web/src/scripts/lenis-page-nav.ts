@@ -1,5 +1,5 @@
 /**
- * Persistent Lenis ↔ ClientRouter coordinator.
+ * Persistent Lenis ↔ ClientRouter coordinator + View Transition failsafe.
  *
  * Lives outside React islands: PublicChrome remounts on every swap, so
  * SmoothScrollProvider listeners can miss `astro:before-preparation` /
@@ -9,8 +9,19 @@
  * - before-preparation: stop Lenis inertia on the outgoing page
  * - after-swap / page-load: resize + immediate scroll to top (or hash)
  *   — smooth scroll-to-top would fight the opacity fade
+ *
+ * Blank-main failsafe:
+ * Named `public-page-main` (and other transition scopes) are hidden by the
+ * UA during View Transitions. If the transition is skipped because the tab
+ * is hidden, those nodes can stay at opacity 0 while the footer (root group)
+ * still paints — matching the live "white page + footer" bug. Restore on
+ * tab focus, bfcache restore, and after navigations settle.
  */
-import { getLenis, prefersReducedMotion } from "@/lib/lenis-public";
+import {
+  getLenis,
+  prefersReducedMotion,
+  PUBLIC_PAGE_TRANSITION_MS,
+} from "@/lib/lenis-public";
 
 const FLAG = "__teknovoLenisPageNav" as const;
 
@@ -71,9 +82,52 @@ function onBeforePreparation(): void {
   getLenis()?.stop();
 }
 
+/** Clear stuck VT / fallback fade state that leaves main content invisible. */
+function restoreTransitionVisibility(): void {
+  document.documentElement.removeAttribute("data-astro-transition-fallback");
+  document.documentElement.removeAttribute("data-astro-transition");
+
+  const nodes = document.querySelectorAll<HTMLElement>(
+    ".public-page-main, .public-marketing-navbar, [data-astro-transition-scope]",
+  );
+
+  for (const el of nodes) {
+    for (const anim of el.getAnimations({ subtree: false })) {
+      try {
+        anim.cancel();
+      } catch {
+        /* ignore */
+      }
+    }
+    el.style.removeProperty("opacity");
+    el.style.removeProperty("visibility");
+  }
+}
+
+function scheduleRestoreAfterNav(): void {
+  // Let intentional crossfade finish, then ensure nothing stayed at opacity 0.
+  window.setTimeout(restoreTransitionVisibility, PUBLIC_PAGE_TRANSITION_MS + 80);
+}
+
 if (typeof window !== "undefined" && !window[FLAG]) {
   window[FLAG] = true;
   document.addEventListener("astro:before-preparation", onBeforePreparation);
-  document.addEventListener("astro:after-swap", syncAfterSwap);
-  document.addEventListener("astro:page-load", syncAfterSwap);
+  document.addEventListener("astro:after-swap", () => {
+    syncAfterSwap();
+    scheduleRestoreAfterNav();
+  });
+  document.addEventListener("astro:page-load", () => {
+    syncAfterSwap();
+    scheduleRestoreAfterNav();
+  });
+
+  // Tab return / minimize restore — primary repro for blank main + visible footer.
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      restoreTransitionVisibility();
+    }
+  });
+  window.addEventListener("pageshow", () => {
+    restoreTransitionVisibility();
+  });
 }

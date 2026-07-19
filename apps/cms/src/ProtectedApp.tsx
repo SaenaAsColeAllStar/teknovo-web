@@ -3,8 +3,10 @@ import { Navigate, Route, Routes } from "react-router-dom";
 
 import { DashboardLayoutClient } from "./components/DashboardLayoutClient";
 import { ArtikelFormPage, ArtikelListPage } from "./pages/ArtikelPages";
+import { BantuanPage } from "./pages/BantuanPage";
 import { BeritaFormPage } from "./pages/BeritaFormPage";
 import { BeritaListPage } from "./pages/BeritaListPage";
+import { DokumentasiPage } from "./pages/DokumentasiPage";
 import { KategoriPage } from "./pages/KategoriPage";
 import { MediaPage } from "./pages/MediaPage";
 import { ModerasiPage } from "./pages/ModerasiPage";
@@ -69,6 +71,8 @@ export function ProtectedApp() {
         <Route path="media" element={<MediaPage />} />
         <Route path="pengguna" element={<PenggunaPage />} />
         <Route path="pengaturan" element={<PengaturanPage />} />
+        <Route path="dokumentasi" element={<DokumentasiPage />} />
+        <Route path="bantuan" element={<BantuanPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

@@ -1,7 +1,6 @@
 ---
 import { ClientRouter } from "astro:transitions";
 import { PublicChrome } from "../components/PublicChrome";
-import { publicPageFade } from "../lib/page-transition";
 import { getPublicSiteMainNav } from "@/services/public-site-nav-publik";
 import "../styles/global.css";
 
@@ -70,8 +69,6 @@ const pathname = Astro.url.pathname || "/";
 const hideNavbar =
   hideNavbarProp ?? (pathname === "/" || pathname === "");
 
-/** Soft main-content crossfade (Lenis-matched ease); navbar stays via view-transition-name. */
-const pageFade = publicPageFade();
 const ogTitle = title.includes("TEKNOVO") ? title : `${title} | TEKNOVO`;
 ---
 
@@ -147,9 +144,14 @@ const ogTitle = title.includes("TEKNOVO") ? title : `${title} | TEKNOVO`;
       }
     </style>
     <link rel="alternate" type="application/rss+xml" title="Berita SMK TEKNOVO" href="/rss.xml" />
-    <!-- Client-side MPA routing; prefers-reduced-motion disables animations automatically. -->
-    <ClientRouter />
-    <!-- Persistent Lenis ↔ ClientRouter sync (survives React chrome remounts). -->
+    <!--
+      Client-side MPA routing. fallback="swap" skips Astro's simulated fade path
+      (data-astro-transition-fallback + fill-mode), which can leave
+      .public-page-main at opacity:0 when a transition is interrupted by a tab
+      switch. Native VT browsers still animate; recovery lives in lenis-page-nav.
+    -->
+    <ClientRouter fallback="swap" />
+    <!-- Persistent Lenis ↔ ClientRouter sync + VT blank-main failsafe. -->
     <script src="../scripts/lenis-page-nav.ts"></script>
   </head>
   <body class="bg-surface font-sans text-body min-h-full">
@@ -157,6 +159,12 @@ const ogTitle = title.includes("TEKNOVO") ? title : `${title} | TEKNOVO`;
       Do not transition:persist PublicChrome: it wraps page <slot /> as React children.
       Persisting would keep Lenis/ClickSpark but risk stale nested islands / children.
       Remount re-inits providers; navbar stays visually stable via view-transition-name.
+
+      Do NOT put transition:animate / transition:name on main. Even
+      transition:animate="none" still assigns a view-transition-name and the UA
+      hides that live DOM node during VT (old pseudo gets opacity:0). When VT is
+      skipped (tab hidden), main can stay invisible while the footer (root group)
+      still paints — the live blank-homepage bug.
     */}
     <PublicChrome
       client:load
@@ -165,7 +173,7 @@ const ogTitle = title.includes("TEKNOVO") ? title : `${title} | TEKNOVO`;
       pathname={pathname}
       mainNav={mainNav}
     >
-      <div class="public-page-main" transition:animate={pageFade} transition:name="public-page-main">
+      <div class="public-page-main">
         <slot />
       </div>
     </PublicChrome>

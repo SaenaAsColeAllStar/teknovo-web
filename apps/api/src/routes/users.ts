@@ -4,13 +4,17 @@ import type { User } from "@clerk/backend";
 import {
   cmsUserCreateSchema,
   cmsUserPatchSchema,
+  CMS_INVITE_EXPIRY_DEFAULT,
   deriveClerkUsername,
   parseCmsRole,
   cmsRoleCanAssignRole,
   withClerkUsernameSuffix,
+  type CmsInvitationListItem,
+  type CmsInvitationStatus,
   type CmsRole,
   type CmsUserListItem,
 } from "@teknovo/shared";
+import type { Invitation } from "@clerk/backend";
 import { requireCmsUserManager, CmsAuthError } from "../auth/cms-auth";
 import {
   errJson,
@@ -205,6 +209,53 @@ function toListItem(user: User): CmsUserListItem {
   };
 }
 
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+function readInviteExpiresInDays(meta: unknown): number | null {
+  if (!meta || typeof meta !== "object") return null;
+  const raw = (meta as { expiresInDays?: unknown }).expiresInDays;
+  if (typeof raw === "number" && Number.isFinite(raw) && raw >= 1 && raw <= 30) {
+    return Math.floor(raw);
+  }
+  return null;
+}
+
+function invitationExpiresAt(
+  createdAtMs: number,
+  expiresInDays: number | null,
+): string | null {
+  if (expiresInDays == null) return null;
+  return new Date(createdAtMs + expiresInDays * MS_PER_DAY).toISOString();
+}
+
+function toInvitationListItem(invitation: Invitation): CmsInvitationListItem {
+  const role = parseCmsRole(invitation.publicMetadata);
+  const expiresInDays = readInviteExpiresInDays(invitation.publicMetadata);
+  const status = (invitation.status ?? "pending") as CmsInvitationStatus;
+  return {
+    id: invitation.id,
+    email: invitation.emailAddress,
+    role,
+    status,
+    createdAt: new Date(invitation.createdAt).toISOString(),
+    expiresAt: invitationExpiresAt(invitation.createdAt, expiresInDays),
+    expiresInDays,
+    url: invitation.url ?? null,
+    revoked: invitation.revoked === true || status === "revoked",
+  };
+}
+
+/** Editors only see siswa invitations; Super Admin sees all. */
+function filterInvitationsForActor(
+  actorRole: CmsRole,
+  items: CmsInvitationListItem[],
+): CmsInvitationListItem[] {
+  if (actorRole === "editor") {
+    return items.filter((item) => item.role === "siswa");
+  }
+  return items;
+}
+
 function assertCanAssign(actorRole: CmsRole, targetRole: CmsRole): void {
   if (!cmsRoleCanAssignRole(actorRole, targetRole)) {
     if (actorRole === "editor") {
@@ -332,6 +383,8 @@ usersRoutes.post("/", async (c) => {
     }
 
     const { email, nama, role, password } = parsed.data;
+    const expiresInDays =
+      parsed.data.expiresInDays ?? CMS_INVITE_EXPIRY_DEFAULT;
     assertCanAssign(session.role, role);
 
     const clerk = requireClerk(c.env);
@@ -339,7 +392,7 @@ usersRoutes.post("/", async (c) => {
       return errJson(c, "UNCONFIGURED", "CLERK_SECRET_KEY belum dikonfigurasi.", 503);
     }
     const names = splitNama(nama);
-    const publicMetadata = { role };
+    const publicMetadata: { role: CmsRole; expiresInDays?: number } = { role };
 
     if (password && password.length >= 8) {
       const baseUsername = deriveClerkUsername(email);
@@ -397,12 +450,20 @@ usersRoutes.post("/", async (c) => {
 
     // No password → Clerk invitation (user sets password on accept).
     try {
+      publicMetadata.expiresInDays = expiresInDays;
+      const cmsOrigin = (c.env.CMS_ORIGIN || "https://cms.smkteknovo.sch.id").replace(
+        /\/$/,
+        "",
+      );
       const invitation = await clerk.invitations.createInvitation({
         emailAddress: email,
         publicMetadata,
         notify: true,
         ignoreExisting: false,
+        expiresInDays,
+        redirectUrl: `${cmsOrigin}/sign-in`,
       });
+      const item = toInvitationListItem(invitation);
       return okJson(
         c,
         {
@@ -410,8 +471,12 @@ usersRoutes.post("/", async (c) => {
           email: invitation.emailAddress,
           name: nama?.trim() || null,
           role,
-          createdAt: new Date(invitation.createdAt).toISOString(),
+          createdAt: item.createdAt,
           invited: true as const,
+          status: item.status,
+          expiresAt: item.expiresAt,
+          expiresInDays: item.expiresInDays,
+          url: item.url,
         },
         201,
       );
@@ -423,6 +488,112 @@ usersRoutes.post("/", async (c) => {
           "Email sudah terdaftar atau undangan masih aktif.",
           409,
         );
+      }
+      return errJson(c, "CLERK", clerkErrorMessage(err), 502);
+    }
+  } catch (err) {
+    return handleApiError(c, err);
+  }
+});
+
+usersRoutes.get("/invitations", async (c) => {
+  try {
+    const session = await requireCmsUserManager(c.req.raw, c.env);
+    const clerk = requireClerk(c.env);
+    if (!clerk) {
+      return errJson(c, "UNCONFIGURED", "CLERK_SECRET_KEY belum dikonfigurasi.", 503);
+    }
+    const limit = Math.min(
+      Math.max(Number(c.req.query("limit") ?? "50") || 50, 1),
+      100,
+    );
+    const offset = Math.max(Number(c.req.query("offset") ?? "0") || 0, 0);
+    const page = Math.floor(offset / limit) + 1;
+    const statusRaw = c.req.query("status");
+    const status =
+      statusRaw === "pending" ||
+      statusRaw === "accepted" ||
+      statusRaw === "revoked" ||
+      statusRaw === "expired"
+        ? statusRaw
+        : undefined;
+
+    // Editors need role filtering client-side; fetch a wider window then slice.
+    const fetchLimit = session.role === "editor" ? 100 : limit;
+    const fetchOffset = session.role === "editor" ? 0 : offset;
+
+    const result = await clerk.invitations.getInvitationList({
+      limit: fetchLimit,
+      offset: fetchOffset,
+      ...(status ? { status } : {}),
+    });
+
+    const filtered = filterInvitationsForActor(
+      session.role,
+      result.data.map(toInvitationListItem),
+    );
+    const items =
+      session.role === "editor"
+        ? filtered.slice(offset, offset + limit)
+        : filtered;
+
+    return okListJson(c, items, {
+      page,
+      limit,
+      total:
+        session.role === "editor" ? filtered.length : result.totalCount,
+    });
+  } catch (err) {
+    if (err instanceof CmsAuthError) return handleApiError(c, err);
+    return errJson(c, "CLERK", clerkErrorMessage(err), 502);
+  }
+});
+
+usersRoutes.post("/invitations/:id/revoke", async (c) => {
+  try {
+    const session = await requireCmsUserManager(c.req.raw, c.env);
+    const invitationId = c.req.param("id");
+    const clerk = requireClerk(c.env);
+    if (!clerk) {
+      return errJson(c, "UNCONFIGURED", "CLERK_SECRET_KEY belum dikonfigurasi.", 503);
+    }
+
+    try {
+      const listed = await clerk.invitations.getInvitationList({
+        query: invitationId,
+        limit: 10,
+      });
+      const existing = listed.data.find((inv) => inv.id === invitationId);
+      if (!existing) {
+        return errJson(c, "NOT_FOUND", "Undangan tidak ditemukan.", 404);
+      }
+
+      const existingRole = parseCmsRole(existing.publicMetadata);
+      if (session.role === "editor" && existingRole !== "siswa") {
+        throw new CmsAuthError(
+          "Admin hanya dapat membatalkan undangan Siswa.",
+          403,
+        );
+      }
+      if (existing.status === "revoked" || existing.revoked) {
+        return errJson(c, "CONFLICT", "Undangan sudah dibatalkan.", 409);
+      }
+      if (existing.status === "accepted") {
+        return errJson(
+          c,
+          "CONFLICT",
+          "Undangan sudah diterima; tidak dapat dibatalkan.",
+          409,
+        );
+      }
+
+      const revoked = await clerk.invitations.revokeInvitation(invitationId);
+      return okJson(c, toInvitationListItem(revoked));
+    } catch (err) {
+      if (err instanceof CmsAuthError) throw err;
+      const msg = clerkErrorMessage(err).toLowerCase();
+      if (msg.includes("not found") || msg.includes("couldn't find")) {
+        return errJson(c, "NOT_FOUND", "Undangan tidak ditemukan.", 404);
       }
       return errJson(c, "CLERK", clerkErrorMessage(err), 502);
     }
