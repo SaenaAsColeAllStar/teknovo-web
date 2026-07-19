@@ -91,6 +91,7 @@ export async function d1ListEkstrakurikuler(
     status?: SiteContentStatus;
     page?: number;
     limit?: number;
+    includeTotal?: boolean;
   } = {},
 ): Promise<{
   items: EkstrakurikulerListItem[];
@@ -101,14 +102,18 @@ export async function d1ListEkstrakurikuler(
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 50));
   const offset = (page - 1) * limit;
+  const includeTotal = opts.includeTotal !== false;
   const where = opts.status ? `WHERE status = ?` : "";
   const binds: unknown[] = opts.status ? [opts.status] : [];
 
-  const countRow = await db
-    .prepare(`SELECT COUNT(*) AS c FROM ekstrakurikuler ${where}`)
-    .bind(...binds)
-    .first<{ c: number }>();
-  const total = Number(countRow?.c ?? 0);
+  let total = -1;
+  if (includeTotal) {
+    const countRow = await db
+      .prepare(`SELECT COUNT(*) AS c FROM ekstrakurikuler ${where}`)
+      .bind(...binds)
+      .first<{ c: number }>();
+    total = Number(countRow?.c ?? 0);
+  }
 
   const { results } = await db
     .prepare(

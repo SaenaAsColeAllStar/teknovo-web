@@ -41,6 +41,7 @@ artikelRoutes.get("/", async (c) => {
     const page = Number(c.req.query("page") ?? "1");
     const limit = Number(c.req.query("limit") ?? "20");
     const mine = c.req.query("mine") === "1" || c.req.query("mine") === "true";
+    const includeTotal = c.req.query("includeTotal") !== "0";
 
     let mineUserId: string | undefined;
     if (!status || status !== "PUBLISHED" || mine) {
@@ -53,6 +54,7 @@ artikelRoutes.get("/", async (c) => {
       page,
       limit,
       mineUserId,
+      includeTotal,
     });
     return okListJson(c, result.items, {
       page: result.page,

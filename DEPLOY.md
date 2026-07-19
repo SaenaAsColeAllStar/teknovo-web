@@ -120,6 +120,7 @@ Local CORS: set `ENVIRONMENT=development` in `apps/api/.dev.vars` so localhost o
 - **Health**: `GET /api/health`
 - **Rebuild hook**: `POST /api/v1/hooks/rebuild-web` with `Authorization: Bearer <REBUILD_WEB_SECRET>` only (no JSON body secret).
 - **Clerk webhook**: Svix signature required; handler ack-only until sync is built.
+- **D1 list performance**: migration `0004_perf_indexes.sql` adds composite indexes and application-maintained `sort_at` on `berita` / `artikel_siswa` (replaces `ORDER BY COALESCE(...)`). List `limit` max 100; optional `?includeTotal=0` skips COUNT.
 
 ## GitHub Actions secrets
 

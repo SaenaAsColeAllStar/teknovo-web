@@ -32,6 +32,7 @@ fasilitasRoutes.get("/", async (c) => {
       | undefined;
     const page = Number(c.req.query("page") ?? "1");
     const limit = Number(c.req.query("limit") ?? "50");
+    const includeTotal = c.req.query("includeTotal") !== "0";
 
     if (!status || status !== "PUBLISHED") {
       await requireCmsSession(c.req.raw, c.env);
@@ -41,6 +42,7 @@ fasilitasRoutes.get("/", async (c) => {
       status: status ?? undefined,
       page,
       limit,
+      includeTotal,
     });
     return okListJson(c, result.items, {
       page: result.page,

@@ -93,25 +93,31 @@ export async function d1ListBerita(
     status?: BeritaStatus;
     page?: number;
     limit?: number;
+    /** When false, skip COUNT(*) (meta.total = -1). Default true. */
+    includeTotal?: boolean;
   } = {},
 ): Promise<{ items: BeritaListItem[]; total: number; page: number; limit: number }> {
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
   const offset = (page - 1) * limit;
+  const includeTotal = opts.includeTotal !== false;
 
   const where = opts.status ? `WHERE b.status = ?` : "";
   const binds: unknown[] = opts.status ? [opts.status] : [];
 
-  const countRow = await db
-    .prepare(`SELECT COUNT(*) AS c FROM berita b ${where}`)
-    .bind(...binds)
-    .first<{ c: number }>();
-  const total = Number(countRow?.c ?? 0);
+  let total = -1;
+  if (includeTotal) {
+    const countRow = await db
+      .prepare(`SELECT COUNT(*) AS c FROM berita b ${where}`)
+      .bind(...binds)
+      .first<{ c: number }>();
+    total = Number(countRow?.c ?? 0);
+  }
 
   const { results } = await db
     .prepare(
       `${SELECT_JOIN} ${where}
-       ORDER BY COALESCE(b.published_at, b.created_at) DESC
+       ORDER BY b.sort_at DESC, b.id DESC
        LIMIT ? OFFSET ?`,
     )
     .bind(...binds, limit, offset)
@@ -156,13 +162,14 @@ export async function d1CreateBerita(
   const ts = nowIso();
   const publishedAt =
     input.status === "PUBLISHED" ? ts : null;
+  const sortAt = publishedAt ?? ts;
   await db
     .prepare(
       `INSERT INTO berita (
          id, judul, slug, ringkasan, konten, cover_url, status, kategori_id,
          meta_title, meta_description, meta_keywords, og_image_url, canonical_url,
-         penulis_id, penulis_nama, published_at, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         penulis_id, penulis_nama, published_at, created_at, updated_at, sort_at
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -183,6 +190,7 @@ export async function d1CreateBerita(
       publishedAt,
       ts,
       ts,
+      sortAt,
     )
     .run();
   const created = await d1GetBeritaById(db, id);
@@ -203,12 +211,14 @@ export async function d1UpdateBerita(
   if (input.status !== "PUBLISHED") {
     /* keep historical published_at if archived */
   }
+  const sortAt = publishedAt ?? existing.createdAt;
   await db
     .prepare(
       `UPDATE berita SET
          judul = ?, slug = ?, ringkasan = ?, konten = ?, cover_url = ?, status = ?,
          kategori_id = ?, meta_title = ?, meta_description = ?, meta_keywords = ?,
-         og_image_url = ?, canonical_url = ?, published_at = ?, updated_at = ?
+         og_image_url = ?, canonical_url = ?, published_at = ?, updated_at = ?,
+         sort_at = ?
        WHERE id = ?`,
     )
     .bind(
@@ -226,6 +236,7 @@ export async function d1UpdateBerita(
       input.canonicalUrl ?? null,
       publishedAt,
       ts,
+      sortAt,
       id,
     )
     .run();

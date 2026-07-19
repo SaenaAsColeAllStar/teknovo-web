@@ -108,6 +108,8 @@ export async function d1ListArtikel(
     mineUserId?: string;
     page?: number;
     limit?: number;
+    /** When false, skip COUNT(*) (meta.total = -1). Default true. */
+    includeTotal?: boolean;
   } = {},
 ): Promise<{
   items: ArtikelSiswaListItem[];
@@ -118,6 +120,7 @@ export async function d1ListArtikel(
   const page = Math.max(1, opts.page ?? 1);
   const limit = Math.min(100, Math.max(1, opts.limit ?? 20));
   const offset = (page - 1) * limit;
+  const includeTotal = opts.includeTotal !== false;
 
   const clauses: string[] = [];
   const binds: unknown[] = [];
@@ -131,16 +134,19 @@ export async function d1ListArtikel(
   }
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
 
-  const countRow = await db
-    .prepare(`SELECT COUNT(*) AS c FROM artikel_siswa a ${where}`)
-    .bind(...binds)
-    .first<{ c: number }>();
-  const total = Number(countRow?.c ?? 0);
+  let total = -1;
+  if (includeTotal) {
+    const countRow = await db
+      .prepare(`SELECT COUNT(*) AS c FROM artikel_siswa a ${where}`)
+      .bind(...binds)
+      .first<{ c: number }>();
+    total = Number(countRow?.c ?? 0);
+  }
 
   const { results } = await db
     .prepare(
       `${SELECT_JOIN} ${where}
-       ORDER BY COALESCE(a.submitted_at, a.updated_at) DESC
+       ORDER BY a.sort_at DESC, a.id DESC
        LIMIT ? OFFSET ?`,
     )
     .bind(...binds, limit, offset)
@@ -185,14 +191,15 @@ export async function d1CreateArtikel(
   const ts = nowIso();
   const submittedAt = input.status === "REVIEW" ? ts : null;
   const publishedAt = input.status === "PUBLISHED" ? ts : null;
+  const sortAt = submittedAt ?? ts;
   await db
     .prepare(
       `INSERT INTO artikel_siswa (
          id, judul, slug, ringkasan, konten, cover_url, status, kategori_id,
          penulis_id, penulis_nama, penulis_kelas, rejected_reason,
-         submitted_at, published_at, created_at, updated_at,
+         submitted_at, published_at, created_at, updated_at, sort_at,
          meta_title, meta_description, meta_keywords, og_image_url, canonical_url
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -210,6 +217,7 @@ export async function d1CreateArtikel(
       publishedAt,
       ts,
       ts,
+      sortAt,
       input.metaTitle ?? null,
       input.metaDescription ?? null,
       input.metaKeywords ?? null,
@@ -236,13 +244,14 @@ export async function d1UpdateArtikel(
     submittedAt = ts;
   }
   if (input.status === "PUBLISHED" && !publishedAt) publishedAt = ts;
+  const sortAt = submittedAt ?? ts;
   await db
     .prepare(
       `UPDATE artikel_siswa SET
          judul = ?, slug = ?, ringkasan = ?, konten = ?, cover_url = ?, status = ?,
          kategori_id = ?, penulis_kelas = ?, submitted_at = ?, published_at = ?,
-         updated_at = ?, meta_title = ?, meta_description = ?, meta_keywords = ?,
-         og_image_url = ?, canonical_url = ?,
+         updated_at = ?, sort_at = ?, meta_title = ?, meta_description = ?,
+         meta_keywords = ?, og_image_url = ?, canonical_url = ?,
          rejected_reason = CASE WHEN ? != 'ARCHIVED' THEN rejected_reason ELSE rejected_reason END
        WHERE id = ?`,
     )
@@ -258,6 +267,7 @@ export async function d1UpdateArtikel(
       submittedAt,
       publishedAt,
       ts,
+      sortAt,
       input.metaTitle ?? null,
       input.metaDescription ?? null,
       input.metaKeywords ?? null,
@@ -288,12 +298,14 @@ export async function d1ApproveArtikel(
   const existing = await d1GetArtikelById(db, id);
   if (!existing || existing.status !== "REVIEW") return null;
   const ts = nowIso();
+  // Keep submitted_at as sort key when present (matches legacy COALESCE).
+  const sortAt = existing.submittedAt ?? ts;
   await db
     .prepare(
       `UPDATE artikel_siswa SET status = 'PUBLISHED', published_at = ?,
-         rejected_reason = NULL, updated_at = ? WHERE id = ?`,
+         rejected_reason = NULL, updated_at = ?, sort_at = ? WHERE id = ?`,
     )
-    .bind(ts, ts, id)
+    .bind(ts, ts, sortAt, id)
     .run();
   return d1GetArtikelById(db, id);
 }
@@ -306,12 +318,13 @@ export async function d1RejectArtikel(
   const existing = await d1GetArtikelById(db, id);
   if (!existing || existing.status !== "REVIEW") return null;
   const ts = nowIso();
+  const sortAt = existing.submittedAt ?? ts;
   await db
     .prepare(
       `UPDATE artikel_siswa SET status = 'ARCHIVED', rejected_reason = ?,
-         updated_at = ? WHERE id = ?`,
+         updated_at = ?, sort_at = ? WHERE id = ?`,
     )
-    .bind(reason?.trim() || null, ts, id)
+    .bind(reason?.trim() || null, ts, sortAt, id)
     .run();
   return d1GetArtikelById(db, id);
 }

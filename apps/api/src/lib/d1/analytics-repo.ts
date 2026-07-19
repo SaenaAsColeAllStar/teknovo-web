@@ -3,28 +3,20 @@ import type { CmsAnalyticsOverview } from "@teknovo/shared";
 export async function d1AnalyticsOverview(
   db: D1Database,
 ): Promise<CmsAnalyticsOverview> {
-  const [
-    beritaTotal,
-    beritaPublished,
-    beritaDraft,
-    beritaArchived,
-    artikelTotal,
-    artikelReview,
-    artikelPublished,
-    kategoriTotal,
-  ] = await Promise.all([
-    count(db, `SELECT COUNT(*) AS c FROM berita`),
-    count(db, `SELECT COUNT(*) AS c FROM berita WHERE status = 'PUBLISHED'`),
-    count(db, `SELECT COUNT(*) AS c FROM berita WHERE status = 'DRAFT'`),
-    count(db, `SELECT COUNT(*) AS c FROM berita WHERE status = 'ARCHIVED'`),
-    count(db, `SELECT COUNT(*) AS c FROM artikel_siswa`),
-    count(db, `SELECT COUNT(*) AS c FROM artikel_siswa WHERE status = 'REVIEW'`),
-    count(
-      db,
-      `SELECT COUNT(*) AS c FROM artikel_siswa WHERE status = 'PUBLISHED'`,
-    ),
+  const [beritaByStatus, artikelByStatus, kategoriTotal] = await Promise.all([
+    countsByStatus(db, "berita"),
+    countsByStatus(db, "artikel_siswa"),
     count(db, `SELECT COUNT(*) AS c FROM kategori`),
   ]);
+
+  const beritaPublished = beritaByStatus.get("PUBLISHED") ?? 0;
+  const beritaDraft = beritaByStatus.get("DRAFT") ?? 0;
+  const beritaArchived = beritaByStatus.get("ARCHIVED") ?? 0;
+  const beritaTotal = beritaPublished + beritaDraft + beritaArchived;
+
+  const artikelPublished = artikelByStatus.get("PUBLISHED") ?? 0;
+  const artikelReview = artikelByStatus.get("REVIEW") ?? 0;
+  const artikelTotal = [...artikelByStatus.values()].reduce((a, b) => a + b, 0);
 
   return {
     beritaTotal,
@@ -37,6 +29,20 @@ export async function d1AnalyticsOverview(
     kategoriTotal,
     source: "api",
   };
+}
+
+async function countsByStatus(
+  db: D1Database,
+  table: "berita" | "artikel_siswa",
+): Promise<Map<string, number>> {
+  const { results } = await db
+    .prepare(`SELECT status, COUNT(*) AS c FROM ${table} GROUP BY status`)
+    .all<{ status: string; c: number }>();
+  const map = new Map<string, number>();
+  for (const row of results ?? []) {
+    map.set(row.status, Number(row.c ?? 0));
+  }
+  return map;
 }
 
 async function count(db: D1Database, sql: string): Promise<number> {

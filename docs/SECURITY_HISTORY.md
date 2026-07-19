@@ -100,6 +100,10 @@ Bug di bawah ini **bukan advisory CVE**, tetapi berdampak keamanan (DoS kuota), 
 - Invite-only CMS roles (`90ed1b6`); MFA verify flow (`ea9923d`).
 - Dokumentasi Clerk: `docs/CLERK.md`.
 
+### D1 performance (reliability under load)
+
+- Migration `0004_perf_indexes.sql`: composite indexes + `sort_at` on berita/artikel (avoids non-sargable `ORDER BY COALESCE`); site-content `(status, sort_order)` indexes. List `limit` ≤ 100; optional `?includeTotal=0`.
+
 ---
 
 ## Risiko residual / follow-up ops
@@ -114,6 +118,9 @@ Bug di bawah ini **bukan advisory CVE**, tetapi berdampak keamanan (DoS kuota), 
 | **Unpublish / arsip TEST berita** | Konten uji masih bisa tampil di build publik jika status `PUBLISHED` | Audit D1: unpublish/arsip artikel & berita TEST sebelum go-live konten |
 | **Clerk webhook ack-only** | Signature verified tetapi belum sync produk penuh | Implement sync user/role bila dibutuhkan |
 | **OpenNext monolit** | Deploy ke Free → **10027** (3 MiB) | Jangan deploy; tetap Split Free (`DEPLOY.md`) |
+| **D1 OFFSET pagination** | Deep pages still scan skipped rows | Cursor/`keyset` pagination (additive) when lists grow |
+| **D1 JSON blobs** | fasilitas/ekskul extras in TEXT JSON | Normalize only if query patterns need it |
+| **UUID v4 PK** | Random keys; no time-ordering | ULID migration (invasive; deferred) |
 
 ---
 

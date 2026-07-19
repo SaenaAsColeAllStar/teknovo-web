@@ -34,6 +34,7 @@ ekstrakurikulerRoutes.get("/", async (c) => {
     const page = Number(c.req.query("page") ?? "1");
     const limit = Number(c.req.query("limit") ?? "50");
     const full = c.req.query("full") === "1";
+    const includeTotal = c.req.query("includeTotal") !== "0";
 
     if (!status || status !== "PUBLISHED") {
       await requireCmsSession(c.req.raw, c.env);
@@ -52,6 +53,7 @@ ekstrakurikulerRoutes.get("/", async (c) => {
       status: status ?? undefined,
       page,
       limit,
+      includeTotal,
     });
     return okListJson(c, result.items, {
       page: result.page,

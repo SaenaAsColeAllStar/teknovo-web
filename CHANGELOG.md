@@ -12,9 +12,10 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
-_HEAD saat dokumen ini ditulis: `0d337b7` (main)._
+### Performance — D1 list indexes
 
-Tidak ada perubahan setelah HEAD di atas.
+- Migration `0004_perf_indexes.sql`: composite indexes + `sort_at` on berita/artikel; site-content `(status, sort_order)` indexes.
+- List repos ORDER BY indexed `sort_at` (not `COALESCE`); optional `?includeTotal=0`; analytics uses `GROUP BY status`.
 
 ---
 

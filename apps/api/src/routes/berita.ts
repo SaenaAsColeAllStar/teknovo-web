@@ -33,6 +33,7 @@ beritaRoutes.get("/", async (c) => {
       | undefined;
     const page = Number(c.req.query("page") ?? "1");
     const limit = Number(c.req.query("limit") ?? "20");
+    const includeTotal = c.req.query("includeTotal") !== "0";
 
     // Public: only explicit PUBLISHED. Any other filter (or all statuses) needs auth.
     if (!status || status !== "PUBLISHED") {
@@ -43,6 +44,7 @@ beritaRoutes.get("/", async (c) => {
       status: status ?? undefined,
       page,
       limit,
+      includeTotal,
     });
     return okListJson(c, result.items, {
       page: result.page,

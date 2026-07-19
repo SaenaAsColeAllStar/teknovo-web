@@ -46,9 +46,12 @@ pnpm deploy
 | `migrations/0001_init.sql` | Core tables (`berita`, `artikel_siswa`, …) |
 | `migrations/0002_site_content.sql` | Fasilitas / ekskul / prestasi / site_media |
 | `migrations/0003_article_seo.sql` | SEO columns on `artikel_siswa` + `meta_keywords` on `berita` |
+| `migrations/0004_perf_indexes.sql` | Composite indexes + `sort_at` on berita/artikel (list ORDER BY) |
 
 Local: `pnpm --filter @teknovo/api d1:migrate:local`  
 Remote: `pnpm --filter @teknovo/api d1:migrate:remote`
+
+**List API notes:** `limit` capped at 100. Pass `?includeTotal=0` to skip the COUNT(*) round-trip (`meta.total` = `-1`). Lists order by indexed `sort_at` (berita/artikel) or `(status, sort_order)` composites (site content).
 
 ## Bindings (sudah di wrangler.toml)
 
