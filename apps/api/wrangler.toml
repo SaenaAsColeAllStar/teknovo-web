@@ -25,7 +25,9 @@ enabled = true
 R2_PUBLIC_URL = "https://r2.ctos.web.id"
 CMS_ORIGIN = "https://cms.smkteknovo.sch.id"
 WEB_ORIGIN = "https://smkteknovo.sch.id"
+ENVIRONMENT = "production"
 # Set secrets via: wrangler secret put CLERK_SECRET_KEY
 #                  wrangler secret put CLERK_WEBHOOK_SECRET
 #                  wrangler secret put GITHUB_REBUILD_TOKEN
 #                  wrangler secret put REBUILD_WEB_SECRET
+# Local: set ENVIRONMENT=development in .dev.vars to allow localhost CORS.

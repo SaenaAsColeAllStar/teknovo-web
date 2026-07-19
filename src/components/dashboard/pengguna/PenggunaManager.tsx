@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   CMS_ROLE_LABEL,
   cmsAssignableRoles,
+  deriveClerkUsername,
   type CmsRole,
 } from "@teknovo/shared";
 
@@ -71,6 +72,16 @@ export function PenggunaManager({ currentUserId }: Props) {
   const [role, setRole] = useState<CmsRole>(defaultCreateRole);
   const [password, setPassword] = useState("");
 
+  const previewUsername = useMemo(() => {
+    const trimmed = email.trim();
+    if (!trimmed.includes("@")) return null;
+    try {
+      return deriveClerkUsername(trimmed);
+    } catch {
+      return null;
+    }
+  }, [email]);
+
   useEffect(() => {
     setRole(defaultCreateRole);
   }, [defaultCreateRole]);
@@ -123,6 +134,26 @@ export function PenggunaManager({ currentUserId }: Props) {
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
+    const emailTrim = email.trim();
+    const passwordTrim = password.trim();
+
+    if (!emailTrim || !emailTrim.includes("@")) {
+      toast.error("Email tidak valid.");
+      return;
+    }
+    if (passwordTrim && passwordTrim.length < 8) {
+      toast.error(
+        "Password minimal 8 karakter, atau kosongkan untuk undangan email.",
+      );
+      return;
+    }
+    if (passwordTrim && /^\d+$/.test(passwordTrim)) {
+      toast.error(
+        "Password tidak boleh hanya angka. Gunakan kombinasi huruf dan angka.",
+      );
+      return;
+    }
+
     setBusy(true);
     try {
       const token = await getToken();
@@ -137,10 +168,10 @@ export function PenggunaManager({ currentUserId }: Props) {
       }
       const created = await createCmsUser(
         {
-          email: email.trim(),
+          email: emailTrim,
           nama: nama.trim() || undefined,
           role,
-          password: password.trim() || undefined,
+          password: passwordTrim || undefined,
         },
         token,
       );
@@ -150,7 +181,9 @@ export function PenggunaManager({ currentUserId }: Props) {
         });
       } else {
         toast.success("Akun dibuat", {
-          description: created.email ?? undefined,
+          description: created.email
+            ? `${created.email} (username Clerk: ${deriveClerkUsername(emailTrim)})`
+            : undefined,
         });
       }
       resetForm();
@@ -255,14 +288,21 @@ export function PenggunaManager({ currentUserId }: Props) {
             <CardDescription>
               Isi password untuk membuat akun langsung, atau kosongkan agar
               Clerk mengirim undangan email (user set password sendiri).
+              Username Clerk digenerate otomatis dari email — bukan password
+              database/D1.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="grid max-w-xl gap-4" onSubmit={onCreate}>
+            <form
+              className="grid max-w-xl gap-4"
+              onSubmit={(e) => void onCreate(e)}
+              autoComplete="off"
+            >
               <div className="space-y-2">
                 <Label htmlFor="user-email">Email</Label>
                 <Input
                   id="user-email"
+                  name="cms-new-user-email"
                   type="email"
                   required
                   autoComplete="off"
@@ -271,12 +311,20 @@ export function PenggunaManager({ currentUserId }: Props) {
                   placeholder="nama@sekolah.id"
                   disabled={busy}
                 />
+                {previewUsername ? (
+                  <p className="text-xs text-[color:var(--color-body-subtle)]">
+                    Username Clerk (otomatis):{" "}
+                    <code className="font-mono">{previewUsername}</code>
+                  </p>
+                ) : null}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="user-nama">Nama (opsional)</Label>
                 <Input
                   id="user-nama"
+                  name="cms-new-user-nama"
                   type="text"
+                  autoComplete="off"
                   value={nama}
                   onChange={(e) => setNama(e.target.value)}
                   placeholder="Nama lengkap"
@@ -300,17 +348,23 @@ export function PenggunaManager({ currentUserId }: Props) {
                 </select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="user-password">Password (opsional)</Label>
+                <Label htmlFor="user-password">Password login (opsional)</Label>
                 <Input
                   id="user-password"
+                  name="cms-new-user-password"
                   type="password"
                   autoComplete="new-password"
                   minLength={8}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Min. 8 karakter — kosong = undangan email"
+                  placeholder="Min. 8 karakter unik — kosong = undangan email"
                   disabled={busy}
                 />
+                <p className="text-xs text-[color:var(--color-body-subtle)]">
+                  Password ini untuk login CMS user baru. Jangan pakai password
+                  database/server atau kata sandi yang sering bocor (Clerk
+                  menolak password dari Have I Been Pwned).
+                </p>
               </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={busy || !email.trim()}>

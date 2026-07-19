@@ -16,12 +16,15 @@ import type { PublicSiteNavEntry } from "@/lib/public-site-nav";
 export function PublicChrome({
   children,
   hideNavbar,
+  hideFooter,
   pathname,
   mainNav,
 }: {
   children: ReactNode;
   /** From Astro `url.pathname` — avoid SSR always-`/` pathname snap hiding chrome wrongly. */
   hideNavbar?: boolean;
+  /** Full-bleed pages (404) — no marketing footer under the overlay. */
+  hideFooter?: boolean;
   /** From Astro `url.pathname` — correct active nav in SSG / View Transition snapshots. */
   pathname?: string;
   mainNav?: PublicSiteNavEntry[];
@@ -29,6 +32,7 @@ export function PublicChrome({
   return (
     <PublicSiteLayout
       hideNavbar={hideNavbar}
+      hideFooter={hideFooter}
       pathname={pathname}
       mainNav={mainNav}
     >

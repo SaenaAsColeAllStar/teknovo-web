@@ -4,3 +4,5 @@ CLERK_WEBHOOK_SECRET=GANTI_whsec_...
 GITHUB_REBUILD_TOKEN=
 REBUILD_WEB_SECRET=
 GITHUB_REPO=SaenaAsColeAllStar/teknovo-web
+# Allow localhost CORS while developing against wrangler dev
+ENVIRONMENT=development

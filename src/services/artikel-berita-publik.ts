@@ -36,6 +36,7 @@ export type ArtikelSiswaPublikDetail = {
   metaKeywords: string | null;
   ogImageOverride: string | null;
   kategori: string | null;
+  canonicalUrl: string | null;
 };
 
 export type BeritaSitemapEntry = {
@@ -73,11 +74,12 @@ function artikelToDetail(row: ArtikelSiswa): ArtikelSiswaPublikDetail {
     penulisKelas: row.penulis?.kelas?.trim() || "—",
     coverSrc: row.coverUrl?.trim() || FALLBACK_COVER,
     coverAlt: null,
-    metaTitle: null,
-    metaDescription: row.ringkasan,
-    metaKeywords: null,
-    ogImageOverride: row.coverUrl,
+    metaTitle: row.metaTitle?.trim() || null,
+    metaDescription: row.metaDescription?.trim() || row.ringkasan,
+    metaKeywords: row.metaKeywords?.trim() || null,
+    ogImageOverride: row.ogImageUrl?.trim() || row.coverUrl,
     kategori: row.kategori?.nama ?? null,
+    canonicalUrl: row.canonicalUrl?.trim() || null,
   };
 }
 

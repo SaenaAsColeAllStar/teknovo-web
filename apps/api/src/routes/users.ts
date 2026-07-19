@@ -4,8 +4,10 @@ import type { User } from "@clerk/backend";
 import {
   cmsUserCreateSchema,
   cmsUserPatchSchema,
+  deriveClerkUsername,
   parseCmsRole,
   cmsRoleCanAssignRole,
+  withClerkUsernameSuffix,
   type CmsRole,
   type CmsUserListItem,
 } from "@teknovo/shared";
@@ -17,6 +19,7 @@ import {
   okListJson,
   type AppEnv,
 } from "../lib/http";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 function requireClerk(env: Env) {
   if (!env.CLERK_SECRET_KEY || env.CLERK_SECRET_KEY.startsWith("GANTI_")) {
@@ -26,6 +29,157 @@ function requireClerk(env: Env) {
 }
 
 type ClerkClient = NonNullable<ReturnType<typeof requireClerk>>;
+
+type ClerkApiErrorItem = {
+  code?: string;
+  longMessage?: string;
+  message?: string;
+  meta?: { paramName?: string; name?: string; names?: string | string[] };
+};
+
+function clerkErrors(err: unknown): ClerkApiErrorItem[] {
+  if (
+    err &&
+    typeof err === "object" &&
+    "errors" in err &&
+    Array.isArray((err as { errors: unknown }).errors)
+  ) {
+    return (err as { errors: ClerkApiErrorItem[] }).errors;
+  }
+  return [];
+}
+
+function clerkErrorMessage(err: unknown): string {
+  const first = clerkErrors(err)[0];
+  if (first) return first.longMessage || first.message || "Permintaan Clerk gagal.";
+  if (err instanceof Error) return err.message;
+  return "Permintaan Clerk gagal.";
+}
+
+function clerkErrorBlob(err: unknown): string {
+  const parts = clerkErrors(err).flatMap((e) => [
+    e.code ?? "",
+    e.longMessage ?? "",
+    e.message ?? "",
+    e.meta?.paramName ?? "",
+    e.meta?.name ?? "",
+    Array.isArray(e.meta?.names) ? e.meta.names.join(" ") : (e.meta?.names ?? ""),
+  ]);
+  return `${parts.join(" ")} ${clerkErrorMessage(err)}`.toLowerCase();
+}
+
+/** Map Clerk Backend errors to actionable Indonesian admin messages. */
+function mapClerkCreateUserError(err: unknown): {
+  code: string;
+  message: string;
+  status: ContentfulStatusCode;
+} {
+  const blob = clerkErrorBlob(err);
+  const items = clerkErrors(err);
+  const parts: string[] = [];
+  let code = "CLERK";
+  let status: ContentfulStatusCode = 502;
+
+  const passwordBreached =
+    items.some((e) => e.code === "form_password_pwned") ||
+    blob.includes("data breach") ||
+    blob.includes("pwned") ||
+    blob.includes("compromised");
+
+  if (passwordBreached) {
+    code = "PASSWORD_BREACHED";
+    status = 400;
+    parts.push(
+      "Password login akun baru pernah ditemukan di kebocoran data online (Have I Been Pwned). Ini bukan password database/D1 — pakai password unik yang lebih kuat, atau kosongkan field agar Clerk mengirim undangan email.",
+    );
+  }
+
+  const usernameIssue =
+    items.some(
+      (e) =>
+        e.code === "form_data_missing" ||
+        e.code?.includes("username") ||
+        e.meta?.paramName === "username" ||
+        e.meta?.name === "username" ||
+        (typeof e.longMessage === "string" &&
+          e.longMessage.toLowerCase().includes("username")),
+    ) || /\["username"\]/.test(blob);
+
+  if (usernameIssue && !passwordBreached) {
+    // Prefer password message when both fire; username is auto-derived now.
+    code = parts.length ? code : "USERNAME_INVALID";
+    status = 400;
+    parts.push(
+      "Username tidak memenuhi aturan Clerk (instance mewajibkan username: 4–64 karakter, huruf/angka/underscore). CMS menurunkan username dari email otomatis.",
+    );
+  } else if (usernameIssue && passwordBreached) {
+    parts.push(
+      "Selain itu, pastikan Username diaktifkan di Clerk Dashboard (User & authentication).",
+    );
+  }
+
+  if (
+    !passwordBreached &&
+    (items.some((e) => e.code === "form_password_validation_failed") ||
+      (blob.includes("password") && blob.includes("length")))
+  ) {
+    code = "PASSWORD_WEAK";
+    status = 400;
+    parts.push(
+      "Password tidak memenuhi aturan Clerk (minimal 8 karakter, bukan password umum).",
+    );
+  }
+
+  if (parts.length === 0 && isClerkConflict(err)) {
+    return {
+      code: "CONFLICT",
+      message: "Email atau username sudah terdaftar di Clerk.",
+      status: 409,
+    };
+  }
+
+  if (parts.length > 0) {
+    return { code, message: parts.join(" "), status };
+  }
+
+  return {
+    code: "CLERK",
+    message: clerkErrorMessage(err),
+    status: 502,
+  };
+}
+
+function isClerkConflict(err: unknown): boolean {
+  const blob = clerkErrorBlob(err);
+  return (
+    blob.includes("already exists") ||
+    blob.includes("taken") ||
+    blob.includes("duplicate") ||
+    blob.includes("identifier_exists") ||
+    blob.includes("form_identifier_exists")
+  );
+}
+
+function isUsernameConflict(err: unknown): boolean {
+  const blob = clerkErrorBlob(err);
+  return (
+    blob.includes("username") &&
+    (blob.includes("taken") ||
+      blob.includes("exists") ||
+      blob.includes("duplicate") ||
+      blob.includes("identifier"))
+  );
+}
+
+/** Username disabled on the Clerk instance — retry create without it. */
+function isUsernameFeatureDisabled(err: unknown): boolean {
+  const blob = clerkErrorBlob(err);
+  return (
+    (blob.includes("disabled") && blob.includes("username")) ||
+    blob.includes("form_param_unknown") ||
+    blob.includes("form_unknown_parameter")
+  );
+}
 
 function splitNama(nama: string | undefined | null): {
   firstName?: string;
@@ -49,31 +203,6 @@ function toListItem(user: User): CmsUserListItem {
     role: parseCmsRole(user.publicMetadata),
     createdAt: new Date(user.createdAt).toISOString(),
   };
-}
-
-function clerkErrorMessage(err: unknown): string {
-  if (
-    err &&
-    typeof err === "object" &&
-    "errors" in err &&
-    Array.isArray((err as { errors: unknown }).errors)
-  ) {
-    const first = (err as { errors: Array<{ longMessage?: string; message?: string }> })
-      .errors[0];
-    return first?.longMessage || first?.message || "Permintaan Clerk gagal.";
-  }
-  if (err instanceof Error) return err.message;
-  return "Permintaan Clerk gagal.";
-}
-
-function isClerkConflict(err: unknown): boolean {
-  const msg = clerkErrorMessage(err).toLowerCase();
-  return (
-    msg.includes("already exists") ||
-    msg.includes("taken") ||
-    msg.includes("duplicate") ||
-    msg.includes("identifier")
-  );
 }
 
 function assertCanAssign(actorRole: CmsRole, targetRole: CmsRole): void {
@@ -213,26 +342,57 @@ usersRoutes.post("/", async (c) => {
     const publicMetadata = { role };
 
     if (password && password.length >= 8) {
-      try {
-        const user = await clerk.users.createUser({
-          emailAddress: [email],
-          password,
-          ...names,
-          publicMetadata,
-          skipPasswordChecks: false,
-        });
-        return okJson(c, { ...toListItem(user), invited: false as const }, 201);
-      } catch (err) {
-        if (isClerkConflict(err)) {
-          return errJson(
-            c,
-            "CONFLICT",
-            "Email sudah terdaftar di Clerk.",
-            409,
-          );
+      const baseUsername = deriveClerkUsername(email);
+      let lastErr: unknown;
+
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const username =
+          attempt === 0
+            ? baseUsername
+            : withClerkUsernameSuffix(baseUsername, attempt);
+        try {
+          const user = await clerk.users.createUser({
+            emailAddress: [email],
+            username,
+            password,
+            ...names,
+            publicMetadata,
+            skipPasswordChecks: false,
+          });
+          return okJson(c, { ...toListItem(user), invited: false as const }, 201);
+        } catch (err) {
+          lastErr = err;
+
+          // Instance has Username disabled — create without it.
+          if (attempt === 0 && isUsernameFeatureDisabled(err)) {
+            try {
+              const user = await clerk.users.createUser({
+                emailAddress: [email],
+                password,
+                ...names,
+                publicMetadata,
+                skipPasswordChecks: false,
+              });
+              return okJson(
+                c,
+                { ...toListItem(user), invited: false as const },
+                201,
+              );
+            } catch (retryErr) {
+              lastErr = retryErr;
+              break;
+            }
+          }
+
+          // Username taken — try a suffixed handle.
+          if (isUsernameConflict(err) && attempt < 4) continue;
+
+          break;
         }
-        return errJson(c, "CLERK", clerkErrorMessage(err), 502);
       }
+
+      const mapped = mapClerkCreateUserError(lastErr);
+      return errJson(c, mapped.code, mapped.message, mapped.status);
     }
 
     // No password → Clerk invitation (user sets password on accept).

@@ -6,6 +6,8 @@ interface Env {
   R2_PUBLIC_URL: string;
   CMS_ORIGIN: string;
   WEB_ORIGIN: string;
+  /** `production` (default) gates localhost CORS; use `development` locally. */
+  ENVIRONMENT?: string;
   CLERK_SECRET_KEY: string;
   CLERK_WEBHOOK_SECRET?: string;
   GITHUB_REBUILD_TOKEN?: string;

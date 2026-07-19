@@ -1,6 +1,7 @@
 ---
-import { ClientRouter, fade } from "astro:transitions";
+import { ClientRouter } from "astro:transitions";
 import { PublicChrome } from "../components/PublicChrome";
+import { publicPageFade } from "../lib/page-transition";
 import { getPublicSiteMainNav } from "@/services/public-site-nav-publik";
 import "../styles/global.css";
 
@@ -11,6 +12,23 @@ type Props = {
   ogImage?: string;
   /** High-priority image URLs to preload (e.g. home hero LCP). */
   preloadImages?: string[];
+  /**
+   * Force-hide the three-tier marketing navbar (e.g. 404 full-bleed).
+   * Default: hidden on beranda (`/`) which uses HeroOverlayNav instead.
+   */
+  hideNavbar?: boolean;
+  /** Hide public footer (e.g. 404 full-bleed). */
+  hideFooter?: boolean;
+  /** Open Graph type — use `article` on berita/artikel detail. */
+  ogType?: "website" | "article";
+  ogLocale?: string;
+  siteName?: string;
+  publishedTime?: string;
+  modifiedTime?: string;
+  authorName?: string;
+  articleSection?: string;
+  keywords?: string;
+  robots?: string;
 };
 
 const {
@@ -19,6 +37,17 @@ const {
   canonical,
   ogImage,
   preloadImages = [],
+  hideNavbar: hideNavbarProp,
+  hideFooter = false,
+  ogType = "website",
+  ogLocale = "id_ID",
+  siteName = "SMK TEKNOVO",
+  publishedTime,
+  modifiedTime,
+  authorName,
+  articleSection,
+  keywords,
+  robots = "index, follow",
 } = Astro.props;
 
 const site = Astro.site?.href?.replace(/\/$/, "") || "https://smkteknovo.sch.id";
@@ -38,9 +67,12 @@ const apiOrigin = (
 
 const mainNav = await getPublicSiteMainNav();
 const pathname = Astro.url.pathname || "/";
+const hideNavbar =
+  hideNavbarProp ?? (pathname === "/" || pathname === "");
 
-/** Subtle main-content crossfade; navbar uses view-transition-name (see global.css). */
-const pageFade = fade({ duration: "180ms" });
+/** Soft main-content crossfade (Lenis-matched ease); navbar stays via view-transition-name. */
+const pageFade = publicPageFade();
+const ogTitle = title.includes("TEKNOVO") ? title : `${title} | TEKNOVO`;
 ---
 
 <!doctype html>
@@ -50,11 +82,40 @@ const pageFade = fade({ duration: "180ms" });
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta name="robots" content={robots} />
+    {keywords ? <meta name="keywords" content={keywords} /> : null}
     <link rel="canonical" href={url} />
-    <meta property="og:title" content={title} />
+    <meta property="og:type" content={ogType} />
+    <meta property="og:locale" content={ogLocale} />
+    <meta property="og:site_name" content={siteName} />
+    <meta property="og:title" content={ogTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={url} />
     {ogImage ? <meta property="og:image" content={ogImage} /> : null}
+    {
+      ogType === "article" && publishedTime ? (
+        <meta property="article:published_time" content={publishedTime} />
+      ) : null
+    }
+    {
+      ogType === "article" && modifiedTime ? (
+        <meta property="article:modified_time" content={modifiedTime} />
+      ) : null
+    }
+    {
+      ogType === "article" && authorName ? (
+        <meta property="article:author" content={authorName} />
+      ) : null
+    }
+    {
+      ogType === "article" && articleSection ? (
+        <meta property="article:section" content={articleSection} />
+      ) : null
+    }
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={ogTitle} />
+    <meta name="twitter:description" content={description} />
+    {ogImage ? <meta name="twitter:image" content={ogImage} /> : null}
     <meta name="theme-color" content="#1313BA" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -88,6 +149,8 @@ const pageFade = fade({ duration: "180ms" });
     <link rel="alternate" type="application/rss+xml" title="Berita SMK TEKNOVO" href="/rss.xml" />
     <!-- Client-side MPA routing; prefers-reduced-motion disables animations automatically. -->
     <ClientRouter />
+    <!-- Persistent Lenis ↔ ClientRouter sync (survives React chrome remounts). -->
+    <script src="../scripts/lenis-page-nav.ts"></script>
   </head>
   <body class="bg-surface font-sans text-body min-h-full">
     {/*
@@ -97,7 +160,8 @@ const pageFade = fade({ duration: "180ms" });
     */}
     <PublicChrome
       client:load
-      hideNavbar={pathname === "/" || pathname === ""}
+      hideNavbar={hideNavbar}
+      hideFooter={hideFooter}
       pathname={pathname}
       mainNav={mainNav}
     >

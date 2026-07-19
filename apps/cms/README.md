@@ -184,6 +184,24 @@ dan Admin (`canManageUsers` / `role === "admin" | "editor"`). UI: `PenggunaPage`
 `PenggunaManager`; API via `fetchCmsUsers` / `createCmsUser` / `updateCmsUser` /
 `deleteCmsUser` → `GET|POST|PATCH|DELETE /api/v1/users`.
 
-Tambah akun: email wajib, nama & password opsional (password ≥8 → `users.createUser`; kosong →
-undangan Clerk). Opsi peran mengikuti aktor (lihat matriks di atas). Ubah peran / hapus:
-Super Admin penuh (kecuali diri sendiri); Admin hanya akun Siswa.
+Tambah akun: email wajib, nama & password opsional (password ≥8 → `users.createUser`
+dengan **username otomatis** dari local-part email; kosong → undangan Clerk). Opsi peran
+mengikuti aktor (lihat matriks di atas). Ubah peran / hapus: Super Admin penuh (kecuali
+diri sendiri); Admin hanya akun Siswa.
+
+### Buat user — penyebab error umum
+
+| Pesan Clerk / API | Artinya | Perbaikan |
+|-------------------|---------|-----------|
+| `["username"] data doesn't match user requirements…` | Instance Clerk **mewajibkan username**, tapi request lama tidak mengirimnya | Sudah diperbaiki di API (derive username). Pastikan Dashboard → **User & authentication → Username** enabled (required atau optional). |
+| `Password has been found in an online data breach…` | Password **login akun baru** ada di Have I Been Pwned | **Bukan** password database/D1. Pakai password unik yang lebih kuat, atau kosongkan field → undangan email. Jangan matikan breach check. |
+| Email already exists / Conflict | Email sudah ada di Clerk | Pakai email lain, atau kelola user yang sudah ada. |
+
+Password di form Pengguna **tidak** diisi dari `.env` / secret API — admin mengetik sendiri (atau kosong = invite).
+
+#### Clerk Dashboard (selaras dengan create-user)
+
+1. **User & authentication → Email address** — enabled (required untuk CMS).
+2. **User & authentication → Username** — enabled jika ingin username; CMS selalu mengirim username turunan email saat `createUser`. Jika Username **disabled** total, API akan retry tanpa username.
+3. **User & authentication → Password** — enabled; biarkan **Breach password protection** ON.
+4. Restrictions: sign-up publik tetap ditutup (invite-only).

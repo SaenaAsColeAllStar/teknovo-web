@@ -7,6 +7,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
     "d1:migrate:local": "wrangler d1 migrations apply teknovo-article --local",
     "d1:migrate:remote": "wrangler d1 migrations apply teknovo-article --remote"
   },
@@ -14,11 +15,13 @@
     "@clerk/backend": "^2.29.0",
     "@teknovo/shared": "workspace:*",
     "hono": "^4.9.0",
+    "isomorphic-dompurify": "^2.26.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260717.1",
     "typescript": "^5",
+    "vitest": "^3.2.4",
     "wrangler": "^4.112.0"
   }
 }

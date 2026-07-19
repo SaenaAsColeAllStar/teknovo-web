@@ -14,6 +14,7 @@ type BeritaRow = {
   kategori_slug: string | null;
   meta_title: string | null;
   meta_description: string | null;
+  meta_keywords: string | null;
   og_image_url: string | null;
   canonical_url: string | null;
   penulis_id: string | null;
@@ -26,7 +27,7 @@ type BeritaRow = {
 const SELECT_JOIN = `
   SELECT b.id, b.judul, b.slug, b.ringkasan, b.konten, b.cover_url, b.status,
          b.kategori_id, k.nama AS kategori_nama, k.slug AS kategori_slug,
-         b.meta_title, b.meta_description, b.og_image_url, b.canonical_url,
+         b.meta_title, b.meta_description, b.meta_keywords, b.og_image_url, b.canonical_url,
          b.penulis_id, b.penulis_nama, b.published_at, b.created_at, b.updated_at
   FROM berita b
   LEFT JOIN kategori k ON k.id = b.kategori_id
@@ -60,6 +61,7 @@ function mapFull(row: BeritaRow): Berita {
     updatedAt: row.updated_at,
     metaTitle: row.meta_title,
     metaDescription: row.meta_description,
+    metaKeywords: row.meta_keywords,
     ogImageUrl: row.og_image_url,
     canonicalUrl: row.canonical_url,
     penulis: row.penulis_id
@@ -78,6 +80,7 @@ export type BeritaWriteInput = {
   coverUrl?: string;
   metaTitle?: string;
   metaDescription?: string;
+  metaKeywords?: string;
   ogImageUrl?: string;
   canonicalUrl?: string;
   penulisId?: string;
@@ -157,9 +160,9 @@ export async function d1CreateBerita(
     .prepare(
       `INSERT INTO berita (
          id, judul, slug, ringkasan, konten, cover_url, status, kategori_id,
-         meta_title, meta_description, og_image_url, canonical_url,
+         meta_title, meta_description, meta_keywords, og_image_url, canonical_url,
          penulis_id, penulis_nama, published_at, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -172,6 +175,7 @@ export async function d1CreateBerita(
       input.kategoriId ?? null,
       input.metaTitle ?? null,
       input.metaDescription ?? null,
+      input.metaKeywords ?? null,
       input.ogImageUrl ?? null,
       input.canonicalUrl ?? null,
       input.penulisId ?? null,
@@ -203,8 +207,8 @@ export async function d1UpdateBerita(
     .prepare(
       `UPDATE berita SET
          judul = ?, slug = ?, ringkasan = ?, konten = ?, cover_url = ?, status = ?,
-         kategori_id = ?, meta_title = ?, meta_description = ?, og_image_url = ?,
-         canonical_url = ?, published_at = ?, updated_at = ?
+         kategori_id = ?, meta_title = ?, meta_description = ?, meta_keywords = ?,
+         og_image_url = ?, canonical_url = ?, published_at = ?, updated_at = ?
        WHERE id = ?`,
     )
     .bind(
@@ -217,6 +221,7 @@ export async function d1UpdateBerita(
       input.kategoriId ?? null,
       input.metaTitle ?? null,
       input.metaDescription ?? null,
+      input.metaKeywords ?? null,
       input.ogImageUrl ?? null,
       input.canonicalUrl ?? null,
       publishedAt,

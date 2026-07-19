@@ -34,10 +34,21 @@ cd apps/api
 npx wrangler secret put CLERK_SECRET_KEY
 npx wrangler secret put CLERK_WEBHOOK_SECRET
 npx wrangler secret put GITHUB_REBUILD_TOKEN
-# Apply any pending D1 migrations before/after deploy (creates site_media, etc.)
+# Apply any pending D1 migrations before/after deploy (creates site_media, article SEO columns, etc.)
 pnpm d1:migrate:remote
 pnpm deploy
 ```
+
+### D1 migrations
+
+| File | Purpose |
+|------|---------|
+| `migrations/0001_init.sql` | Core tables (`berita`, `artikel_siswa`, …) |
+| `migrations/0002_site_content.sql` | Fasilitas / ekskul / prestasi / site_media |
+| `migrations/0003_article_seo.sql` | SEO columns on `artikel_siswa` + `meta_keywords` on `berita` |
+
+Local: `pnpm --filter @teknovo/api d1:migrate:local`  
+Remote: `pnpm --filter @teknovo/api d1:migrate:remote`
 
 ## Bindings (sudah di wrangler.toml)
 

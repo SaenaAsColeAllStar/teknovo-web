@@ -6,6 +6,7 @@ import {
   type BeritaArticleSeoInput,
 } from "@/lib/berita-seo";
 import { sanitizeArtikelHtml } from "@/lib/sanitize-artikel-html";
+import { truncateMetaDescription } from "@/lib/seo/urls";
 import {
   getArtikelSiswaPublikBySlug,
   getRelatedArtikelSiswa,
@@ -33,11 +34,12 @@ const [relatedSiswa, relatedKegiatan] = await Promise.all([
 const related = [...relatedSiswa, ...relatedKegiatan].slice(0, 3);
 const authorLabel = `${artikel.penulisNama} · ${artikel.penulisKelas}`;
 const coverAlt = artikel.coverAlt?.trim() || `Ilustrasi artikel: ${artikel.judul}`;
+const path = getBeritaSiswaDetailPath(slug);
 const seo: BeritaArticleSeoInput = {
   kind: "siswa",
   judul: artikel.judul,
   ringkasan: artikel.ringkasan,
-  path: getBeritaSiswaDetailPath(slug),
+  path,
   publishedAt: artikel.publishedAt,
   authorName: authorLabel,
   imageUrl: artikel.coverSrc,
@@ -46,15 +48,27 @@ const seo: BeritaArticleSeoInput = {
   metaKeywords: artikel.metaKeywords,
   ogImageOverride: artikel.ogImageOverride,
 };
-const title = artikel.metaTitle || artikel.judul;
-const description =
-  artikel.metaDescription || artikel.ringkasan || "Artikel siswa SMK TEKNOVO";
+const title = artikel.metaTitle?.trim() || artikel.judul;
+const description = truncateMetaDescription(
+  artikel.metaDescription?.trim() ||
+    artikel.ringkasan ||
+    "Artikel siswa SMK TEKNOVO",
+);
+const ogImage = artikel.ogImageOverride || artikel.coverSrc || undefined;
+const publishedIso = artikel.publishedAt.toISOString();
 ---
 
 <BaseLayout
   title={title}
   description={description}
-  ogImage={artikel.ogImageOverride || artikel.coverSrc || undefined}
+  canonical={artikel.canonicalUrl || undefined}
+  ogImage={ogImage}
+  ogType="article"
+  publishedTime={publishedIso}
+  modifiedTime={publishedIso}
+  authorName={authorLabel}
+  articleSection={artikel.kategori || "Artikel siswa"}
+  keywords={artikel.metaKeywords || undefined}
 >
   <BeritaArticleDetailShell
     client:load

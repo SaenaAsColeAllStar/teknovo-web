@@ -23,7 +23,9 @@ import "lenis/dist/lenis.css";
  * Skips Lenis entirely when `prefers-reduced-motion: reduce`.
  *
  * Astro ClientRouter remounts chrome each navigation — we re-bind on mount and
- * sync scroll on `astro:after-swap` / `astro:page-load` (instant top or hash).
+ * sync scroll on remount (rAF). Persistent `apps/web` script also handles
+ * `astro:before-preparation` / `astro:after-swap` so inertia stops before the
+ * fade and scroll resets after swap without fighting View Transitions.
  */
 export function SmoothScrollProvider({
   children,
@@ -130,9 +132,12 @@ export function SmoothScrollProvider({
   }, [smoothEnabled]);
 
   /**
-   * After Astro ClientRouter swaps (or on remount), sync Lenis:
-   * - hash → immediate scroll to target (scroll-margin / scroll-padding apply)
-   * - else → instant jump to top of the new page
+   * After remount (ClientRouter swap), sync Lenis once the instance is ready:
+   * - hash → immediate scroll to target
+   * - else → instant jump to top (smooth scroll would fight the page fade)
+   *
+   * Persistent apps/web `lenis-page-nav` script also listens to Astro events;
+   * both paths are idempotent (immediate scrollTo same target).
    */
   useEffect(() => {
     if (!smoothEnabled) return;
@@ -142,6 +147,7 @@ export function SmoothScrollProvider({
       if (!lenis) return;
 
       lenis.resize();
+      lenis.start();
 
       const hash = window.location.hash;
       if (hash.length > 1) {
@@ -161,11 +167,9 @@ export function SmoothScrollProvider({
 
     const id = window.requestAnimationFrame(syncScroll);
     document.addEventListener("astro:page-load", syncScroll);
-    document.addEventListener("astro:after-swap", syncScroll);
     return () => {
       window.cancelAnimationFrame(id);
       document.removeEventListener("astro:page-load", syncScroll);
-      document.removeEventListener("astro:after-swap", syncScroll);
     };
   }, [smoothEnabled]);
 

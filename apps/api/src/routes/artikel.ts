@@ -79,7 +79,8 @@ artikelRoutes.post("/", async (c) => {
     }
 
     let status = parsed.data.status;
-    if (session.role === "siswa" && status === "PUBLISHED") {
+    // Only Super Admin may publish directly; siswa/editor go through REVIEW / approve.
+    if (session.role !== "admin" && status === "PUBLISHED") {
       status = "REVIEW";
     }
 
@@ -92,6 +93,11 @@ artikelRoutes.post("/", async (c) => {
       penulisId: session.userId,
       penulisNama: session.fullName || session.email || "Siswa",
       penulisKelas: parsed.data.penulisKelas,
+      metaTitle: parsed.data.metaTitle || undefined,
+      metaDescription: parsed.data.metaDescription || undefined,
+      metaKeywords: parsed.data.metaKeywords || undefined,
+      ogImageUrl: parsed.data.ogImageUrl || undefined,
+      canonicalUrl: parsed.data.canonicalUrl || undefined,
     });
 
     if (shouldRebuildForArtikelStatus(created.status)) {
@@ -161,7 +167,8 @@ artikelRoutes.patch("/:id", async (c) => {
     }
 
     let status = parsed.data.status;
-    if (session.role === "siswa" && status === "PUBLISHED") {
+    // Editors may edit body for moderation but cannot publish without admin approve.
+    if (session.role !== "admin" && status === "PUBLISHED") {
       status = "REVIEW";
     }
 
@@ -173,6 +180,11 @@ artikelRoutes.patch("/:id", async (c) => {
       kategoriId: parsed.data.kategoriId || undefined,
       penulisKelas: parsed.data.penulisKelas,
       penulisId: existing.penulis?.id ?? session.userId,
+      metaTitle: parsed.data.metaTitle || undefined,
+      metaDescription: parsed.data.metaDescription || undefined,
+      metaKeywords: parsed.data.metaKeywords || undefined,
+      ogImageUrl: parsed.data.ogImageUrl || undefined,
+      canonicalUrl: parsed.data.canonicalUrl || undefined,
     });
 
     if (

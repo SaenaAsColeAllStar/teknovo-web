@@ -72,8 +72,8 @@ html {
 
 /**
  * View Transitions (Astro ClientRouter): keep the three-tier navbar visually
- * stable while main content fades. Astro already disables animations when
- * prefers-reduced-motion: reduce.
+ * stable while main content fades with a Lenis-matched ease (~260ms).
+ * Astro already disables animations when prefers-reduced-motion: reduce.
  */
 .public-marketing-navbar {
   view-transition-name: public-nav;
@@ -87,6 +87,13 @@ html {
 
 ::view-transition-group(public-nav) {
   z-index: 50;
+}
+
+/* Main slot — reinforce fade timing/easing when named VT groups are used. */
+::view-transition-old(public-page-main),
+::view-transition-new(public-page-main) {
+  animation-duration: 260ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 body {

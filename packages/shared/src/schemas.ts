@@ -14,6 +14,7 @@ export const beritaFormSchema = z.object({
   coverUrl: z.string().url().optional().or(z.literal("")),
   metaTitle: z.string().max(70).optional().or(z.literal("")),
   metaDescription: z.string().max(160).optional().or(z.literal("")),
+  metaKeywords: z.string().max(200).optional().or(z.literal("")),
   ogImageUrl: z.string().url().optional().or(z.literal("")),
   canonicalUrl: z.string().url().optional().or(z.literal("")),
 });
@@ -33,6 +34,11 @@ export const artikelSiswaFormSchema = z.object({
   status: z.enum(["DRAFT", "REVIEW", "PUBLISHED", "ARCHIVED"]),
   coverUrl: z.string().url().optional().or(z.literal("")),
   penulisKelas: z.string().max(50).optional(),
+  metaTitle: z.string().max(70).optional().or(z.literal("")),
+  metaDescription: z.string().max(160).optional().or(z.literal("")),
+  metaKeywords: z.string().max(200).optional().or(z.literal("")),
+  ogImageUrl: z.string().url().optional().or(z.literal("")),
+  canonicalUrl: z.string().url().optional().or(z.literal("")),
 });
 
 export type ArtikelSiswaFormValues = z.infer<typeof artikelSiswaFormSchema>;
@@ -228,7 +234,9 @@ export const cmsUserCreateSchema = z.object({
   email: z.string().trim().email().max(120),
   nama: z.union([z.string().trim().max(160), z.literal("")]).optional(),
   role: z.enum(["admin", "editor", "siswa", "viewer"]),
-  /** If set (≥8), create account immediately. If omitted/empty, send Clerk invitation. */
+  /** If set (≥8), create account immediately with derived Clerk username.
+   * Must be a unique login password (not DB/D1 secrets). Clerk rejects
+   * passwords found in Have I Been Pwned. If omitted/empty, send invitation. */
   password: z
     .union([z.literal(""), z.string().min(8).max(128)])
     .optional(),

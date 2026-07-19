@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useCmsRole } from "@/components/dashboard/CmsRoleProvider";
 import { BeritaRichTextEditor } from "@/components/dashboard/berita/BeritaRichTextEditor";
 import { MediaLibrary } from "@/components/dashboard/media/MediaLibrary";
+import { ArticleSeoFields } from "@/components/dashboard/seo/ArticleSeoFields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,8 +61,17 @@ export function ArtikelSiswaForm({ mode, initial, kategori }: Props) {
       status: initial?.status ?? "DRAFT",
       coverUrl: initial?.coverUrl ?? "",
       penulisKelas: initial?.penulis?.kelas ?? "",
+      metaTitle: initial?.metaTitle ?? "",
+      metaDescription: initial?.metaDescription ?? "",
+      metaKeywords: initial?.metaKeywords ?? "",
+      ogImageUrl: initial?.ogImageUrl ?? "",
+      canonicalUrl: initial?.canonicalUrl ?? "",
     },
   });
+
+  const watchedKategoriId = form.watch("kategoriId");
+  const kategoriNama =
+    kategori.find((k) => k.id === watchedKategoriId)?.nama ?? null;
 
   async function withToken() {
     const token = await getToken();
@@ -371,6 +381,16 @@ export function ArtikelSiswaForm({ mode, initial, kategori }: Props) {
           </p>
         ) : null}
       </div>
+
+      <ArticleSeoFields
+        kind="artikel"
+        disabled={!!busy || readOnly}
+        register={form.register}
+        watch={form.watch}
+        setValue={form.setValue}
+        errors={form.formState.errors}
+        kategoriNama={kategoriNama}
+      />
 
       {canWriteArtikel ? (
         <div className="flex flex-wrap items-center gap-2 border-t border-[color:var(--color-border)] pt-4">

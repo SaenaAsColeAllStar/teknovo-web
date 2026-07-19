@@ -27,6 +27,7 @@ export type BeritaKegiatanPublikDetail = BeritaKegiatanPublikCard & {
   metaKeywords: string | null;
   ogImageOverride: string | null;
   kategori: string | null;
+  canonicalUrl: string | null;
 };
 
 const FALLBACK_COVER = LANDING_MEDIA.berita.profilSmkWebp;
@@ -50,6 +51,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
     metaKeywords: null,
     ogImageOverride: null,
     kategori: null,
+    canonicalUrl: null,
   },
   {
     id: "bk-program-vokasi",
@@ -69,6 +71,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
     metaKeywords: null,
     ogImageOverride: null,
     kategori: null,
+    canonicalUrl: null,
   },
   {
     id: "bk-lms-hybrid",
@@ -88,6 +91,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
     metaKeywords: null,
     ogImageOverride: null,
     kategori: null,
+    canonicalUrl: null,
   },
   {
     id: "bk-lab-komputer",
@@ -107,6 +111,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
     metaKeywords: null,
     ogImageOverride: null,
     kategori: null,
+    canonicalUrl: null,
   },
   {
     id: "bk-akreditasi",
@@ -126,6 +131,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
     metaKeywords: null,
     ogImageOverride: null,
     kategori: null,
+    canonicalUrl: null,
   },
   {
     id: "bk-ekstrakurikuler",
@@ -145,6 +151,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
     metaKeywords: null,
     ogImageOverride: null,
     kategori: null,
+    canonicalUrl: null,
   },
   {
     id: "bk-pkl-industri",
@@ -164,6 +171,7 @@ const FALLBACK_BERITA_KEGIATAN: BeritaKegiatanPublikDetail[] = [
     metaKeywords: null,
     ogImageOverride: null,
     kategori: null,
+    canonicalUrl: null,
   },
 ];
 
@@ -216,11 +224,12 @@ function beritaToDetail(row: Berita): BeritaKegiatanPublikDetail {
     konten: row.konten,
     publishedAt,
     coverAlt: null,
-    metaTitle: null,
-    metaDescription: row.ringkasan,
-    metaKeywords: null,
-    ogImageOverride: row.coverUrl,
+    metaTitle: row.metaTitle?.trim() || null,
+    metaDescription: row.metaDescription?.trim() || row.ringkasan,
+    metaKeywords: row.metaKeywords?.trim() || null,
+    ogImageOverride: row.ogImageUrl?.trim() || row.coverUrl,
     kategori: row.kategori?.nama ?? null,
+    canonicalUrl: row.canonicalUrl?.trim() || null,
   };
 }
 

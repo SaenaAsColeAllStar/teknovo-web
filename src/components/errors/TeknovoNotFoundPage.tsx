@@ -1,8 +1,10 @@
 import { Home, Mail, Newspaper, type LucideIcon } from "lucide-react";
 import type { ReactElement } from "react";
 
+import { BrandLogoMark } from "@/components/brand/BrandLogoMark";
 import { NotFoundLostIllustration } from "@/components/errors/NotFoundLostIllustration";
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
+import { BRAND_SHORT } from "@/lib/branding";
 import {
   getTeknovoNotFoundHomeHref,
   type TeknovoNotFoundApp,
@@ -62,6 +64,22 @@ export function TeknovoNotFoundPage({
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14 xl:gap-20">
           {/* Left — reading order first */}
           <div className="flex flex-col items-start text-left">
+            <PublicSiteLink
+              href={home}
+              className="mb-8 inline-flex items-center gap-2.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-2"
+              aria-label={`Beranda ${BRAND_SHORT}`}
+            >
+              <BrandLogoMark
+                pixelSize={36}
+                shine={false}
+                priority
+                roundedClassName="rounded-none"
+              />
+              <span className="text-sm font-bold tracking-[0.06em] text-brand">
+                SMK {BRAND_SHORT}
+              </span>
+            </PublicSiteLink>
+
             <h1 className="max-w-xl text-balance text-3xl font-bold tracking-tight text-heading sm:text-4xl xl:text-5xl xl:leading-[1.12]">
               404 / Halaman tidak ditemukan
             </h1>

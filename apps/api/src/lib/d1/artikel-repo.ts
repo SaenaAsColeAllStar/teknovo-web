@@ -16,6 +16,11 @@ type ArtikelRow = {
   kategori_id: string | null;
   kategori_nama: string | null;
   kategori_slug: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  meta_keywords: string | null;
+  og_image_url: string | null;
+  canonical_url: string | null;
   penulis_id: string;
   penulis_nama: string | null;
   penulis_kelas: string | null;
@@ -29,6 +34,8 @@ type ArtikelRow = {
 const SELECT_JOIN = `
   SELECT a.id, a.judul, a.slug, a.ringkasan, a.konten, a.cover_url, a.status,
          a.kategori_id, k.nama AS kategori_nama, k.slug AS kategori_slug,
+         a.meta_title, a.meta_description, a.meta_keywords, a.og_image_url,
+         a.canonical_url,
          a.penulis_id, a.penulis_nama, a.penulis_kelas, a.rejected_reason,
          a.submitted_at, a.published_at, a.created_at, a.updated_at
   FROM artikel_siswa a
@@ -68,6 +75,11 @@ function mapFull(row: ArtikelRow): ArtikelSiswa {
     konten: row.konten,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    metaTitle: row.meta_title,
+    metaDescription: row.meta_description,
+    metaKeywords: row.meta_keywords,
+    ogImageUrl: row.og_image_url,
+    canonicalUrl: row.canonical_url,
   };
 }
 
@@ -82,6 +94,11 @@ export type ArtikelWriteInput = {
   penulisKelas?: string;
   penulisId: string;
   penulisNama?: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string;
+  ogImageUrl?: string;
+  canonicalUrl?: string;
 };
 
 export async function d1ListArtikel(
@@ -173,8 +190,9 @@ export async function d1CreateArtikel(
       `INSERT INTO artikel_siswa (
          id, judul, slug, ringkasan, konten, cover_url, status, kategori_id,
          penulis_id, penulis_nama, penulis_kelas, rejected_reason,
-         submitted_at, published_at, created_at, updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`,
+         submitted_at, published_at, created_at, updated_at,
+         meta_title, meta_description, meta_keywords, og_image_url, canonical_url
+       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       id,
@@ -192,6 +210,11 @@ export async function d1CreateArtikel(
       publishedAt,
       ts,
       ts,
+      input.metaTitle ?? null,
+      input.metaDescription ?? null,
+      input.metaKeywords ?? null,
+      input.ogImageUrl ?? null,
+      input.canonicalUrl ?? null,
     )
     .run();
   const created = await d1GetArtikelById(db, id);
@@ -218,7 +241,9 @@ export async function d1UpdateArtikel(
       `UPDATE artikel_siswa SET
          judul = ?, slug = ?, ringkasan = ?, konten = ?, cover_url = ?, status = ?,
          kategori_id = ?, penulis_kelas = ?, submitted_at = ?, published_at = ?,
-         updated_at = ?, rejected_reason = CASE WHEN ? != 'ARCHIVED' THEN rejected_reason ELSE rejected_reason END
+         updated_at = ?, meta_title = ?, meta_description = ?, meta_keywords = ?,
+         og_image_url = ?, canonical_url = ?,
+         rejected_reason = CASE WHEN ? != 'ARCHIVED' THEN rejected_reason ELSE rejected_reason END
        WHERE id = ?`,
     )
     .bind(
@@ -233,6 +258,11 @@ export async function d1UpdateArtikel(
       submittedAt,
       publishedAt,
       ts,
+      input.metaTitle ?? null,
+      input.metaDescription ?? null,
+      input.metaKeywords ?? null,
+      input.ogImageUrl ?? null,
+      input.canonicalUrl ?? null,
       input.status,
       id,
     )

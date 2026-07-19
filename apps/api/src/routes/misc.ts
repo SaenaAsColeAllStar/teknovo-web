@@ -21,8 +21,10 @@ import {
   d1GetPengaturan,
   d1UpsertPengaturan,
 } from "../lib/d1/pengaturan-repo";
+import { log } from "../lib/logger";
 import { triggerWebRebuild } from "../lib/rebuild-web";
 import { safeEqualSecret } from "../lib/secrets";
+import { verifySvixSignature } from "../lib/svix-verify";
 import {
   errJson,
   handleApiError,
@@ -223,19 +225,14 @@ hooksRoutes.post("/rebuild-web", async (c) => {
     }
 
     const auth = c.req.header("Authorization");
-    const body = (await c.req.json().catch(() => ({}))) as {
-      secret?: string;
-      reason?: string;
-    };
-    // Prefer Authorization: Bearer; body.secret accepted for legacy callers.
-    const provided =
-      (auth?.startsWith("Bearer ") ? auth.slice(7).trim() : "") ||
-      (typeof body.secret === "string" ? body.secret.trim() : "");
-
+    const provided = auth?.startsWith("Bearer ") ? auth.slice(7).trim() : "";
     if (!provided || !safeEqualSecret(provided, secret)) {
       return errJson(c, "UNAUTHORIZED", "Secret tidak valid.", 401);
     }
 
+    const body = (await c.req.json().catch(() => ({}))) as {
+      reason?: string;
+    };
     const reason =
       typeof body.reason === "string" && body.reason.trim()
         ? body.reason.trim().slice(0, 200)
@@ -259,7 +256,22 @@ webhookRoutes.post("/clerk", async (c) => {
       503,
     );
   }
-  // Svix verification can be added later; accept and ack for Free Worker lightness.
-  await c.req.text();
+
+  const payload = await c.req.text();
+  const ok = await verifySvixSignature({
+    secret,
+    payload,
+    svixId: c.req.header("svix-id") ?? null,
+    svixTimestamp: c.req.header("svix-timestamp") ?? null,
+    svixSignature: c.req.header("svix-signature") ?? null,
+  });
+  if (!ok) {
+    log.warn("clerk_webhook_invalid_signature", {
+      requestId: c.get("requestId"),
+    });
+    return errJson(c, "UNAUTHORIZED", "Signature webhook tidak valid.", 401);
+  }
+
+  // Verified — ack only until product sync is implemented.
   return okJson(c, { received: true });
 });

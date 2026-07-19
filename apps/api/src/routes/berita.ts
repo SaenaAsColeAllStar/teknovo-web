@@ -75,6 +75,7 @@ beritaRoutes.post("/", async (c) => {
       kategoriId: parsed.data.kategoriId || undefined,
       metaTitle: parsed.data.metaTitle || undefined,
       metaDescription: parsed.data.metaDescription || undefined,
+      metaKeywords: parsed.data.metaKeywords || undefined,
       ogImageUrl: parsed.data.ogImageUrl || undefined,
       canonicalUrl: parsed.data.canonicalUrl || undefined,
       penulisId: session.userId,
@@ -154,6 +155,7 @@ beritaRoutes.patch("/:key", async (c) => {
       kategoriId: parsed.data.kategoriId || undefined,
       metaTitle: parsed.data.metaTitle || undefined,
       metaDescription: parsed.data.metaDescription || undefined,
+      metaKeywords: parsed.data.metaKeywords || undefined,
       ogImageUrl: parsed.data.ogImageUrl || undefined,
       canonicalUrl: parsed.data.canonicalUrl || undefined,
     });

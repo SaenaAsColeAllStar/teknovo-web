@@ -3,6 +3,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import { TeknovoNotFoundPage } from "@/components/errors/TeknovoNotFoundPage";
 ---
 
-<BaseLayout title="Halaman tidak ditemukan">
+{/* hideNavbar/hideFooter: pathname is `/404`, so chrome would otherwise still mount
+    and BrandLogoMark can paint over the Beranda shortcut card under the overlay. */}
+<BaseLayout title="Halaman tidak ditemukan" hideNavbar hideFooter>
   <TeknovoNotFoundPage client:load app="landing" escapePublicChrome />
 </BaseLayout>

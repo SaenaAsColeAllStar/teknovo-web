@@ -15,12 +15,15 @@ import { ClickSpark } from "@/components/ui/click-spark/ClickSpark";
 export function PublicSiteLayout({
   children,
   hideNavbar,
+  hideFooter = false,
   pathname,
   mainNav,
 }: Readonly<{
   children: ReactNode;
   /** Override: sembunyikan chrome tiga tingkat (default: otomatis di beranda). */
   hideNavbar?: boolean;
+  /** Sembunyikan footer (halaman 404 full-bleed). */
+  hideFooter?: boolean;
   /** Astro `url.pathname` — keeps navbar active styles correct in SSG HTML. */
   pathname?: string;
   mainNav?: import("@/lib/public-site-nav").PublicSiteNavEntry[];
@@ -45,7 +48,7 @@ export function PublicSiteLayout({
               mainNav={mainNav}
             />
             <AppShellMain>{children}</AppShellMain>
-            <PublicFooter />
+            {hideFooter ? null : <PublicFooter />}
           </AppShell>
         </ClickSpark>
       </SmoothScrollProvider>

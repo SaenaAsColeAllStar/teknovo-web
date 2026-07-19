@@ -40,7 +40,7 @@ Monorepo butuh `pnpm-workspace.yaml` di root — pakai filter build + output di 
 |---------|----------|
 | **teknovo-web** (Astro) | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id` (**host only — no `/api`**), `PUBLIC_SITE_URL=https://smkteknovo.sch.id`, `PUBLIC_R2_URL=https://r2.ctos.web.id` |
 | **teknovo-cms** (Vite) | **`VITE_API_URL=https://cf.smkteknovo.sch.id/api`** + `VITE_CLERK_PUBLISHABLE_KEY=pk_…`. Host-only `…sch.id` also OK (build appends `/api`). `PUBLIC_API_URL` is accepted as a fallback if you already set it on this project. |
-| **teknovo-cms-api** | Secrets via `wrangler secret put` (bukan Pages env): `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET`, `GITHUB_REBUILD_TOKEN` |
+| **teknovo-cms-api** | Secrets via `wrangler secret put`: `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET` (Svix), `GITHUB_REBUILD_TOKEN`, `REBUILD_WEB_SECRET` (Bearer-only hook). Vars: `CMS_ORIGIN`, `WEB_ORIGIN`, `ENVIRONMENT=production` |
 
 **Jangan** pakai nama `PUBLIC_API_URL` sebagai satu-satunya var di **teknovo-cms** — itu nama Astro (`teknovo-web`). CMS membaca `VITE_API_URL` (atau fallback `PUBLIC_API_URL` sejak perbaikan build). Nilai CMS boleh `…/api`; nilai web **tanpa** `/api` (kalau web dapat `…/api`, build sekarang strip suffix agar tidak jadi `/api/api`).
 
@@ -92,10 +92,34 @@ cd apps/api
 npx wrangler secret put CLERK_SECRET_KEY
 npx wrangler secret put CLERK_WEBHOOK_SECRET
 npx wrangler secret put GITHUB_REBUILD_TOKEN   # PAT: repo scope, for rebuild-web
-npx wrangler secret put REBUILD_WEB_SECRET     # optional manual hook
+npx wrangler secret put REBUILD_WEB_SECRET     # manual hook — Authorization: Bearer only
+```
+
+**Required for publish → public site:** without `GITHUB_REBUILD_TOKEN`, CMS publish writes D1 but skips the Astro rebuild (silent until Worker logs). Verify:
+
+```bash
+cd apps/api && npx wrangler secret list   # must include GITHUB_REBUILD_TOKEN
+```
+
+Manual rebuild (until the secret is set): GitHub → Actions → **Rebuild Astro web (apex)** → Run workflow, or:
+
+```bash
+gh workflow run rebuild-web.yml -f reason="manual after publish"
 ```
 
 Optional var `GITHUB_REPO` (default `SaenaAsColeAllStar/teknovo-web`) via wrangler.toml `[vars]` or dashboard.
+
+Local CORS: set `ENVIRONMENT=development` in `apps/api/.dev.vars` so localhost origins are allowed. Production (`ENVIRONMENT=production`) allowlist = `CMS_ORIGIN` + `WEB_ORIGIN` only.
+
+## Security notes (API)
+
+- **Rate limits** (per Worker isolate, `CF-Connecting-IP`): hooks/webhooks 5/min, media 20/min, public GET 120/min, writes 40/min. Counters reset on cold start — not a global cluster limit.
+- **Pages** (`apps/web`, `apps/cms`) ship CSP / HSTS / frame deny via `public/_headers`.
+- **API Worker** adds `X-Content-Type-Options`, `X-Frame-Options`, CSP `default-src 'none'`, and echoes `X-Request-Id`.
+- **HTML** (artikel/berita TipTap): `isomorphic-dompurify` allowlist on write (`nodejs_compat`).
+- **Health**: `GET /api/health`
+- **Rebuild hook**: `POST /api/v1/hooks/rebuild-web` with `Authorization: Bearer <REBUILD_WEB_SECRET>` only (no JSON body secret).
+- **Clerk webhook**: Svix signature required; handler ack-only until sync is built.
 
 ## GitHub Actions secrets
 
@@ -104,9 +128,11 @@ Optional var `GITHUB_REPO` (default `SaenaAsColeAllStar/teknovo-web`) via wrangl
 
 Workflows:
 
-- `.github/workflows/deploy-api.yml` — push ke `apps/api`
-- `.github/workflows/deploy-cms.yml` — push ke `apps/cms`
-- `.github/workflows/rebuild-web.yml` — `repository_dispatch` type `rebuild-web` (dari API saat publish)
+- `.github/workflows/deploy-api.yml` — push ke `apps/api` → environment **`production`**
+- `.github/workflows/deploy-cms.yml` — push ke `apps/cms` → environment **`production`**
+- `.github/workflows/rebuild-web.yml` — `repository_dispatch` type `rebuild-web` → environment **`production`**
+
+**Setup sekali:** GitHub → Settings → Environments → buat `production` → Mandatory reviewers (opsional tapi disarankan) + secrets environment-scoped jika ingin memisahkan dari repo secrets.
 
 ## DNS / Clerk cutover checklist
 

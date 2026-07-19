@@ -8,6 +8,17 @@ import type { LenisOptions, ScrollToOptions } from "lenis";
 export const PUBLIC_LENIS_LERP = 0.14;
 /** Programmatic / anchor scroll duration (seconds). */
 export const PUBLIC_LENIS_DURATION = 0.65;
+/**
+ * Soft crossfade for Astro ClientRouter page swaps (ms).
+ * Kept light so navigations feel eased, not theatrical.
+ */
+export const PUBLIC_PAGE_TRANSITION_MS = 260;
+/**
+ * CSS timing for View Transitions — approximates `publicLenisEasing` (expo-out).
+ * Used by Astro `transition:animate` + `::view-transition-*` CSS.
+ */
+export const PUBLIC_PAGE_TRANSITION_EASE =
+  "cubic-bezier(0.22, 1, 0.36, 1)" as const;
 /** Slightly sharper than Lenis default expo for micro-interaction feel. */
 export function publicLenisEasing(t: number): number {
   return Math.min(1, 1.001 - Math.pow(2, -12 * t));

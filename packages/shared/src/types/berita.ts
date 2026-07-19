@@ -23,6 +23,8 @@ export type Berita = BeritaListItem & {
   metaTitle?: string | null;
   /** Meta description; kosong = pakai ringkasan. */
   metaDescription?: string | null;
+  /** Kata kunci meta (opsional, dipisah koma). */
+  metaKeywords?: string | null;
   /** OG image; kosong = pakai coverUrl. */
   ogImageUrl?: string | null;
   /** Canonical URL absolut opsional. */

@@ -363,6 +363,7 @@ function normalizeBeritaPayload(values: BeritaFormValues) {
     coverUrl: values.coverUrl?.trim() || undefined,
     metaTitle: values.metaTitle?.trim() || undefined,
     metaDescription: values.metaDescription?.trim() || undefined,
+    metaKeywords: values.metaKeywords?.trim() || undefined,
     ogImageUrl: values.ogImageUrl?.trim() || undefined,
     canonicalUrl: values.canonicalUrl?.trim() || undefined,
   };
@@ -382,6 +383,7 @@ export const beritaFormSchema = z.object({
   coverUrl: z.string().url().optional().or(z.literal("")),
   metaTitle: z.string().max(70).optional().or(z.literal("")),
   metaDescription: z.string().max(160).optional().or(z.literal("")),
+  metaKeywords: z.string().max(200).optional().or(z.literal("")),
   ogImageUrl: z.string().url().optional().or(z.literal("")),
   canonicalUrl: z.string().url().optional().or(z.literal("")),
 });
@@ -584,6 +586,11 @@ function normalizeArtikelSiswaPayload(values: ArtikelSiswaFormValues) {
     status: values.status,
     coverUrl: values.coverUrl?.trim() || undefined,
     penulisKelas: values.penulisKelas?.trim() || undefined,
+    metaTitle: values.metaTitle?.trim() || undefined,
+    metaDescription: values.metaDescription?.trim() || undefined,
+    metaKeywords: values.metaKeywords?.trim() || undefined,
+    ogImageUrl: values.ogImageUrl?.trim() || undefined,
+    canonicalUrl: values.canonicalUrl?.trim() || undefined,
   };
 }
 
@@ -600,6 +607,11 @@ export const artikelSiswaFormSchema = z.object({
   status: z.enum(["DRAFT", "REVIEW", "PUBLISHED", "ARCHIVED"]),
   coverUrl: z.string().url().optional().or(z.literal("")),
   penulisKelas: z.string().max(50).optional(),
+  metaTitle: z.string().max(70).optional().or(z.literal("")),
+  metaDescription: z.string().max(160).optional().or(z.literal("")),
+  metaKeywords: z.string().max(200).optional().or(z.literal("")),
+  ogImageUrl: z.string().url().optional().or(z.literal("")),
+  canonicalUrl: z.string().url().optional().or(z.literal("")),
 });
 
 export type ArtikelSiswaFormValues = z.infer<typeof artikelSiswaFormSchema>;
