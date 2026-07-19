@@ -5,11 +5,14 @@ import {
   KESISWAAN_PRESTASI_PAGE_LEDE,
   KESISWAAN_PRESTASI_PAGE_TITLE,
 } from "@/lib/kesiswaan-landing-content";
+import { getPrestasiPublikTerverifikasi } from "@/services/kesiswaan-publik";
+
+const prestasiItems = await getPrestasiPublikTerverifikasi(48);
 ---
 
 <BaseLayout
   title={KESISWAAN_PRESTASI_PAGE_TITLE}
   description={KESISWAAN_PRESTASI_PAGE_LEDE}
 >
-  <KesiswaanPrestasiPage client:load />
+  <KesiswaanPrestasiPage client:load prestasiItems={prestasiItems} />
 </BaseLayout>

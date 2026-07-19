@@ -19,18 +19,16 @@ export type KesiswaanPrestasiPublikStats = {
   fromDatabase: boolean;
 };
 
-const FALLBACK_EKSKUL_AKTIF = 5;
-
 const EMPTY_HUB: KesiswaanHubPublikStats = {
-  ekskulAktif: FALLBACK_EKSKUL_AKTIF,
+  ekskulAktif: 0,
   anggotaEkskul: 0,
   prestasiTerverifikasi: 0,
   fromDatabase: false,
 };
 
 const EMPTY_EKSTRA: KesiswaanEkstraPublikStats = {
-  unitCount: FALLBACK_EKSKUL_AKTIF,
-  kategoriCount: 4,
+  unitCount: 0,
+  kategoriCount: 0,
   prestasiCount: 0,
   anggotaEkskul: 0,
   siswaDiEkskul: 0,

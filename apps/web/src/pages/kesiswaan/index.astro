@@ -5,8 +5,21 @@ import {
   KESISWAAN_HUB_PAGE_TITLE,
   KESISWAAN_METADATA_DESCRIPTION,
 } from "@/lib/kesiswaan-landing-content";
+import {
+  getEkskulPublikCards,
+  getPrestasiPublikTerverifikasi,
+} from "@/services/kesiswaan-publik";
+
+const [ekskulItems, prestasiItems] = await Promise.all([
+  getEkskulPublikCards(),
+  getPrestasiPublikTerverifikasi(4),
+]);
 ---
 
 <BaseLayout title={KESISWAAN_HUB_PAGE_TITLE} description={KESISWAAN_METADATA_DESCRIPTION}>
-  <KesiswaanSection client:load />
+  <KesiswaanSection
+    client:load
+    ekskulItems={ekskulItems}
+    prestasiItems={prestasiItems}
+  />
 </BaseLayout>

@@ -4,8 +4,6 @@ import {
   fetchFasilitasListOrNull,
 } from "@/lib/api-client";
 import {
-  FASILITAS_ITEMS,
-  FASILITAS_SLUGS,
   type FasilitasLandingItem,
   type FasilitasSlug,
   getFasilitasItem as getHardcodedFasilitasItem,
@@ -48,7 +46,7 @@ function listToLanding(item: FasilitasListItem): FasilitasLandingItem {
   };
 }
 
-/** Published fasilitas from API, with hardcoded fallback (berita pattern). */
+/** Published fasilitas from API. Empty / unreachable / 429 → [] (no mock inventory). */
 export async function getPublishedFasilitasItems(): Promise<
   FasilitasLandingItem[]
 > {
@@ -56,28 +54,20 @@ export async function getPublishedFasilitasItems(): Promise<
     status: "PUBLISHED",
     limit: 50,
   });
-  if (fromApi === null || fromApi.length === 0) {
-    return [...FASILITAS_ITEMS];
-  }
+  if (fromApi === null || fromApi.length === 0) return [];
   return fromApi.map(listToLanding);
 }
 
 export async function getPublishedFasilitasSlugs(): Promise<string[]> {
   const items = await getPublishedFasilitasItems();
-  const slugs = items.map((i) => i.slug);
-  return slugs.length > 0 ? slugs : [...FASILITAS_SLUGS];
+  return items.map((i) => i.slug);
 }
 
 export async function getPublishedFasilitasBySlug(
   slug: string,
 ): Promise<FasilitasLandingItem | null> {
   const fromApi = await fetchFasilitasBySlugOrNull(slug);
-  if (fromApi === undefined) {
-    return getHardcodedFasilitasItem(slug as FasilitasSlug) ?? null;
-  }
-  if (fromApi === null) {
-    return getHardcodedFasilitasItem(slug as FasilitasSlug) ?? null;
-  }
+  if (fromApi === undefined || fromApi === null) return null;
   return apiToLanding(fromApi);
 }
 
@@ -93,13 +83,7 @@ export async function getFasilitasNavLeaves(): Promise<FasilitasNavLeaf[]> {
     limit: 50,
   });
   if (fromApi === null || fromApi.length === 0) {
-    return [
-      { label: "Ringkasan Fasilitas", href: "/fasilitas" },
-      { label: "Absensi Digital", href: "/fasilitas/absensi-digital" },
-      { label: "Lab Komputer", href: "/fasilitas/laboratorium-komputer" },
-      { label: "Perpustakaan Digital", href: "/fasilitas/perpustakaan-digital" },
-      { label: "LMS Sekolah", href: "/fasilitas/lms-sekolah" },
-    ];
+    return [{ label: "Ringkasan Fasilitas", href: "/fasilitas" }];
   }
   return [
     { label: "Ringkasan Fasilitas", href: "/fasilitas" },

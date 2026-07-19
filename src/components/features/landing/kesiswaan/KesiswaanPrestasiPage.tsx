@@ -10,11 +10,20 @@ import {
   KESISWAAN_PRESTASI_PAGE_TITLE,
 } from "@/lib/kesiswaan-landing-content";
 import { publicSectionIntroClassName } from "@/lib/public-section-styles";
-import { getPrestasiPublikTerverifikasi } from "@/services/kesiswaan-publik";
+import {
+  getPrestasiPublikTerverifikasi,
+  type PrestasiPublikCard,
+} from "@/services/kesiswaan-publik";
 import { cn } from "@/lib/utils";
 
-export async function KesiswaanPrestasiPage(): Promise<ReactElement> {
-  const prestasiItems = await getPrestasiPublikTerverifikasi(48);
+type KesiswaanPrestasiPageProps = {
+  prestasiItems?: PrestasiPublikCard[];
+};
+
+export async function KesiswaanPrestasiPage({
+  prestasiItems: prestasiProp,
+}: KesiswaanPrestasiPageProps = {}): Promise<ReactElement> {
+  const prestasiItems = prestasiProp ?? (await getPrestasiPublikTerverifikasi(48));
 
   return (
     <KesiswaanPageShell

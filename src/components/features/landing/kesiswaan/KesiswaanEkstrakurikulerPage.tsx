@@ -36,9 +36,19 @@ import {
 import { resolveOsisCoverSrc } from "@/lib/ekstrakurikuler-media";
 import { KesiswaanPageShell } from "@/components/features/landing/KesiswaanPageShell";
 import { publicFormalBodyClassName } from "@/lib/public-section-styles";
-import { getEkskulPublikCards, getPrestasiPublikCards } from "@/services/kesiswaan-publik";
-import { getKesiswaanEkstraPublikStats } from "@/services/kesiswaan-publik-stats";
+import {
+  getEkskulPublikCards,
+  getPrestasiPublikCards,
+  type EkskulPublikCard,
+  type PrestasiPublikCard,
+} from "@/services/kesiswaan-publik";
 import { cn } from "@/lib/utils";
+
+type KesiswaanEkstrakurikulerPageProps = {
+  /** Prefetched at Astro build — avoids client re-fetch / 429 mock fallthrough. */
+  ekskulItems?: EkskulPublikCard[];
+  prestasiItems?: PrestasiPublikCard[];
+};
 
 const bandShellClass =
   "relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950";
@@ -73,30 +83,35 @@ function HeroStatTile({
   );
 }
 
-export async function KesiswaanEkstrakurikulerPage(): Promise<ReactElement> {
-  const [ekskulItems, heroStats, prestasiItems] = await Promise.all([
-    getEkskulPublikCards(),
-    getKesiswaanEkstraPublikStats(),
-    getPrestasiPublikCards(8),
+export async function KesiswaanEkstrakurikulerPage({
+  ekskulItems: ekskulProp,
+  prestasiItems: prestasiProp,
+}: KesiswaanEkstrakurikulerPageProps = {}): Promise<ReactElement> {
+  const [ekskulItems, prestasiItems] = await Promise.all([
+    ekskulProp ?? getEkskulPublikCards(),
+    prestasiProp ?? getPrestasiPublikCards(8),
   ]);
   const osisCover = resolveOsisCoverSrc();
+  const unitCount = ekskulItems.length;
+  const kategoriCount = new Set(ekskulItems.map((item) => item.kategori)).size;
+  const prestasiCount = prestasiItems.length;
 
   return (
     <KesiswaanPageShell eyebrow={EKSTRA_HERO_EYEBROW} title={EKSTRA_PAGE_TITLE} lede={EKSTRA_PAGE_LEDE}>
       <MotionInView as="ul" className="mt-12 grid w-full gap-4 sm:grid-cols-3" delay={0.04}>
           <HeroStatTile
             icon={<EkstrakurikulerIconGlyph iconKey="semua" className="size-5" />}
-            value={String(heroStats.unitCount)}
+            value={String(unitCount)}
             label={EKSTRA_STATS_LABELS.unit}
           />
           <HeroStatTile
             icon={<EkstrakurikulerIconGlyph iconKey="teknologi" className="size-5" />}
-            value={String(heroStats.kategoriCount)}
+            value={String(kategoriCount)}
             label={EKSTRA_STATS_LABELS.kategori}
           />
           <HeroStatTile
             icon={<EkstrakurikulerIconGlyph iconKey="prestasi" className="size-5" />}
-            value={String(heroStats.prestasiCount)}
+            value={String(prestasiCount)}
             label={EKSTRA_STATS_LABELS.prestasi}
           />
         </MotionInView>

@@ -22,7 +22,6 @@ import {
   type FasilitasSlug,
   type FasilitasStatChip,
   getFasilitasDetailPath,
-  getFasilitasItem,
   getRelatedFasilitasItems,
   getRelatedFasilitasItemsForLms,
 } from "@/lib/fasilitas-landing-content";
@@ -87,7 +86,7 @@ export function FasilitasDetailPage({
   liveStats,
   item: itemProp,
 }: FasilitasDetailPageProps): ReactElement {
-  const item = itemProp ?? getFasilitasItem(slug);
+  const item = itemProp ?? null;
   if (!item) {
     notFound();
   }

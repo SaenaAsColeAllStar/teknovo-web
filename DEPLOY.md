@@ -170,6 +170,17 @@ Akun Free: **100.000 request Worker / hari** (reset 00:00 UTC). Melebihi → Clo
 - CMS list pages harus **tidak** memasukkan `getToken` Clerk yang berubah tiap render ke `useEffect` deps (lihat `useCmsGetToken`) — loop refetch bisa menghabiskan kuota dalam jam.
 - Cek dashboard: Workers & Pages → Metrics. Path yang sering di-hammer: `/api/v1/ekstrakurikuler`.
 - Mitigasi sementara: tutup tab CMS yang looping; tunggu reset UTC; atau upgrade **Workers Paid**.
+- Situs publik **tidak** lagi mengisi inventori mock saat API kosong/429 — halaman ekskul/prestasi/fasilitas menampilkan empty state sampai ada baris `PUBLISHED` di D1.
+
+### Seed konten publik (Super Admin)
+
+Di `cms.smkteknovo.sch.id` (peran Super Admin / Admin dengan manage site content):
+
+1. **Ekstrakurikuler** → `/ekstrakurikuler/baru` → isi unit → status **PUBLISHED** → simpan.
+2. **Prestasi** / **Fasilitas** sama: status **PUBLISHED**.
+3. Publish memicu rebuild Astro (`rebuild-web`); atau push ke `main` / deploy Pages manual.
+
+Tanpa baris terbit, hub publik sengaja kosong (bukan Blogger Club / Coding Club mock).
 
 ## Legacy: OpenNext + Workers Paid
 

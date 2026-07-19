@@ -10,20 +10,10 @@ import {
 import {
   FASILITAS_PAGE_LEDE,
   FASILITAS_PAGE_TITLE,
-  getFasilitasDetailPath,
-  getFasilitasItem,
   type FasilitasLandingItem,
   type FasilitasSlug,
 } from "@/lib/fasilitas-landing-content";
 import { cn } from "@/lib/utils";
-
-/** Bento reading order: TL wide → TR narrow → BL narrow → BR wide. */
-const BENTO_ORDER = [
-  "absensi-digital",
-  "lms-sekolah",
-  "laboratorium-komputer",
-  "perpustakaan-digital",
-] as const satisfies readonly FasilitasSlug[];
 
 const BENTO_SPANS = [
   "lg:col-span-2",
@@ -92,16 +82,7 @@ export function FasilitasHubPage({
 }: {
   items?: readonly FasilitasLandingItem[];
 } = {}): ReactElement {
-  const cards =
-    items && items.length > 0
-      ? [...items]
-      : BENTO_ORDER.map((slug) => {
-          const item = getFasilitasItem(slug);
-          if (!item) {
-            throw new Error(`Missing fasilitas item: ${slug}`);
-          }
-          return item;
-        });
+  const cards = items ? [...items] : [];
 
   return (
     <FasilitasPageShell title={FASILITAS_PAGE_TITLE} lede={FASILITAS_PAGE_LEDE} showHubHero>
@@ -115,40 +96,49 @@ export function FasilitasHubPage({
         </p>
       </MotionInView>
 
-      <ul className="mt-12 grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-6 xl:gap-6">
-        {cards.map((item, idx) => {
-          const wide = idx === 0 || idx === 3;
-          return (
-            <MotionInView
-              as="li"
-              key={item.slug}
-              id={item.slug}
-              delay={0.05 * idx}
-              className={cn("scroll-mt-24", BENTO_SPANS[idx])}
-            >
-              <PublicSiteLink
-                href={getFasilitasDetailPath(item.slug)}
-                className="group flex h-full min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-border-default bg-surface transition-[border-color,box-shadow] duration-300 hover:border-brand/35 hover:shadow-[0_12px_40px_-18px_rgba(19,19,186,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 sm:min-h-[24rem] lg:min-h-[26rem]"
+      {cards.length === 0 ? (
+        <p className="mt-12 rounded-2xl border border-dashed border-border-default bg-surface px-4 py-12 text-center text-sm text-body">
+          Belum ada fasilitas terbit. Super Admin dapat menambah dan mempublikasikan unit di CMS
+          → Fasilitas.
+        </p>
+      ) : (
+        <ul className="mt-12 grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-6 xl:gap-6">
+          {cards.map((item, idx) => {
+            const wide = idx === 0 || idx === 3;
+            const blurb =
+              BENTO_BLURBS[item.slug as FasilitasSlug] ?? item.description;
+            return (
+              <MotionInView
+                as="li"
+                key={item.slug}
+                id={item.slug}
+                delay={0.05 * idx}
+                className={cn("scroll-mt-24", BENTO_SPANS[idx] ?? "lg:col-span-1")}
               >
-                <div className="p-5 sm:p-6">
-                  <h3 className="text-left text-lg font-bold tracking-tight text-heading sm:text-xl">
-                    {item.title}
-                  </h3>
-                  <p className="mt-2.5 text-left text-sm leading-relaxed text-body">
-                    {BENTO_BLURBS[item.slug]}
-                  </p>
-                </div>
-                <FasilitasBentoMock
-                  coverSrc={item.coverSrc}
-                  coverAlt={item.title}
-                  wide={wide}
-                  priority={idx === 0}
-                />
-              </PublicSiteLink>
-            </MotionInView>
-          );
-        })}
-      </ul>
+                <PublicSiteLink
+                  href={`/fasilitas/${item.slug}`}
+                  className="group flex h-full min-h-[22rem] flex-col overflow-hidden rounded-2xl border border-border-default bg-surface transition-[border-color,box-shadow] duration-300 hover:border-brand/35 hover:shadow-[0_12px_40px_-18px_rgba(19,19,186,0.28)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/30 sm:min-h-[24rem] lg:min-h-[26rem]"
+                >
+                  <div className="p-5 sm:p-6">
+                    <h3 className="text-left text-lg font-bold tracking-tight text-heading sm:text-xl">
+                      {item.title}
+                    </h3>
+                    <p className="mt-2.5 text-left text-sm leading-relaxed text-body">
+                      {blurb}
+                    </p>
+                  </div>
+                  <FasilitasBentoMock
+                    coverSrc={item.coverSrc}
+                    coverAlt={item.title}
+                    wide={wide}
+                    priority={idx === 0}
+                  />
+                </PublicSiteLink>
+              </MotionInView>
+            );
+          })}
+        </ul>
+      )}
     </FasilitasPageShell>
   );
 }

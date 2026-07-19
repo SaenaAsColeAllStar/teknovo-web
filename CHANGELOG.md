@@ -12,6 +12,12 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Fix — publik ekskul/prestasi/fasilitas tanpa mock
+
+- `getEkskulPublikCards` / prestasi / fasilitas: API kosong, gagal, atau 429 → `[]` (bukan inventori mock).
+- Astro preload data di build untuk hub kesiswaan (pola berita); hero stats dari data nyata.
+- Hub fasilitas: empty state jika belum ada baris `PUBLISHED` di D1.
+
 ### Performance — D1 list indexes
 
 - Migration `0004_perf_indexes.sql`: composite indexes + `sort_at` on berita/artikel; site-content `(status, sort_order)` indexes.

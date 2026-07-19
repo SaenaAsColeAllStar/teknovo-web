@@ -2,8 +2,18 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { KesiswaanEkstrakurikulerPage } from "@/components/features/landing/kesiswaan/KesiswaanEkstrakurikulerPage";
 import { EKSTRA_PAGE_LEDE, EKSTRA_PAGE_TITLE } from "@/lib/ekstrakurikuler-landing-content";
+import { getEkskulPublikCards, getPrestasiPublikCards } from "@/services/kesiswaan-publik";
+
+const [ekskulItems, prestasiItems] = await Promise.all([
+  getEkskulPublikCards(),
+  getPrestasiPublikCards(8),
+]);
 ---
 
 <BaseLayout title={EKSTRA_PAGE_TITLE} description={EKSTRA_PAGE_LEDE[0]}>
-  <KesiswaanEkstrakurikulerPage client:load />
+  <KesiswaanEkstrakurikulerPage
+    client:load
+    ekskulItems={ekskulItems}
+    prestasiItems={prestasiItems}
+  />
 </BaseLayout>

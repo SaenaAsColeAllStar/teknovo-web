@@ -5,7 +5,6 @@ import { FasilitasDetailPage } from "@/components/features/landing/FasilitasDeta
 import { LmsJsonLd } from "@/components/features/lms/LmsJsonLd";
 import {
   type FasilitasSlug,
-  getFasilitasItem,
   isFasilitasSlug,
 } from "@/lib/fasilitas-landing-content";
 import { LMS_PAGE_SEO } from "@/lib/lms-dashboard-seo";
@@ -24,17 +23,16 @@ export async function getStaticPaths() {
 
 const slug = Astro.params.slug as string;
 const fromApi = await getPublishedFasilitasBySlug(slug);
-const typedOk = isFasilitasSlug(slug) || Boolean(fromApi);
-if (!typedOk) {
+const isAbsensi = slug === "absensi-digital";
+const isLms = slug === "lms-sekolah";
+
+if (!fromApi && !isAbsensi && !isLms) {
   return Astro.redirect("/fasilitas");
 }
 
-const typedSlug = slug as FasilitasSlug;
-const isAbsensi = slug === "absensi-digital";
-const isLms = slug === "lms-sekolah";
+const typedSlug = (isFasilitasSlug(slug) ? slug : slug) as FasilitasSlug;
 const liveStats = isLms ? await getLmsPublikStats() : undefined;
-
-const item = fromApi ?? (isFasilitasSlug(slug) ? getFasilitasItem(typedSlug) : null);
+const item = fromApi;
 const lmsSeo = LMS_PAGE_SEO["fasilitas-lms"];
 const title = isLms ? lmsSeo.title : (item?.title ?? "Fasilitas");
 const description = isLms
