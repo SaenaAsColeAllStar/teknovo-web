@@ -1,5 +1,5 @@
 import Image, { type ImageProps } from "next/image";
-import type { ReactElement } from "react";
+import { forwardRef, type ReactElement, type Ref } from "react";
 
 import {
   getLandingImageBlurDataUrl,
@@ -20,15 +20,18 @@ export type PublicOptimizedImageProps = Omit<ImageProps, "placeholder" | "blurDa
 /**
  * Landing/public `next/image` wrapper — blur placeholder, q=75 default, remote unoptimized.
  */
-export function PublicOptimizedImage({
-  src,
-  quality = 75,
-  skipBlur,
-  blurDataURL: blurOverride,
-  priority,
-  loading,
-  ...rest
-}: PublicOptimizedImageProps): ReactElement {
+export const PublicOptimizedImage = forwardRef(function PublicOptimizedImage(
+  {
+    src,
+    quality = 75,
+    skipBlur,
+    blurDataURL: blurOverride,
+    priority,
+    loading,
+    ...rest
+  }: PublicOptimizedImageProps,
+  ref: Ref<HTMLImageElement>,
+): ReactElement {
   const srcStr = typeof src === "string" ? src : "";
   const remote = nextImageRemoteProps(srcStr);
   const autoBlur = !skipBlur && !remote.unoptimized && shouldUseLandingImageBlur(srcStr)
@@ -38,6 +41,7 @@ export function PublicOptimizedImage({
 
   return (
     <Image
+      ref={ref}
       src={src}
       quality={quality}
       placeholder={blur ? "blur" : undefined}
@@ -48,4 +52,4 @@ export function PublicOptimizedImage({
       {...rest}
     />
   );
-}
+});

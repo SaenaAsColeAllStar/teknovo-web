@@ -1,4 +1,4 @@
-import type { ImgHTMLAttributes, ReactNode } from "react";
+import { forwardRef, type ImgHTMLAttributes, type ReactNode } from "react";
 
 export type ImageProps = Omit<
   ImgHTMLAttributes<HTMLImageElement>,
@@ -20,19 +20,22 @@ export type ImageProps = Omit<
 };
 
 /** Shim next/image → img (R2 URLs already absolute). */
-export default function Image({
-  src,
-  alt,
-  width,
-  height,
-  fill,
-  priority,
-  className,
-  style,
-  sizes,
-  loading,
-  ...rest
-}: ImageProps) {
+const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
+  {
+    src,
+    alt,
+    width,
+    height,
+    fill,
+    priority,
+    className,
+    style,
+    sizes,
+    loading,
+    ...rest
+  },
+  ref,
+) {
   const resolved = typeof src === "string" ? src : src.src;
   const imgStyle = fill
     ? {
@@ -50,6 +53,7 @@ export default function Image({
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
+      ref={ref}
       src={resolved}
       alt={alt}
       width={fill ? undefined : width}
@@ -67,4 +71,6 @@ export default function Image({
       {...imgRest}
     />
   );
-}
+});
+
+export default Image;

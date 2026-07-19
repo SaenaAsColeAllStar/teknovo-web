@@ -34,7 +34,6 @@ export function SignInView({
   className,
 }: SignInViewProps): ReactElement {
   const illustration = <SignInLoginIllustration className="w-full" />;
-  const webHost = CMS_WEB_ORIGIN.replace(/^https?:\/\//, "");
 
   return (
     <AuthSplitLayout
@@ -51,7 +50,6 @@ export function SignInView({
         >
           <ArrowLeft className="size-3.5 shrink-0" aria-hidden />
           Kembali ke situs
-          <span className="text-[color:var(--color-body-subtle)]">· {webHost}</span>
         </a>
 
         <div className="mt-5 inline-flex items-center gap-2.5">

@@ -1,15 +1,12 @@
-import { ArrowRight, ImageIcon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import type { ReactElement } from "react";
 
 import { artikelSiswaToBeritaItem } from "@/components/features/landing/berita/artikel-siswa-to-berita-item";
 import { beritaKegiatanToBeritaItem } from "@/components/features/landing/berita/berita-kegiatan-to-berita-item";
+import { BeritaCoverMedia } from "@/components/features/landing/berita/BeritaCoverMedia";
 import { BERITA_TERBARU, type BeritaItem } from "@/components/features/landing/berita/berita-data";
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
 import { MotionInView } from "@/components/motion/MotionInView";
-import {
-  PublicOptimizedImage,
-  publicOptimizedImageContainerClassName,
-} from "@/components/shared/PublicOptimizedImage";
 import {
   BERITA_HOME_ARCHIVE_LEDE,
   BERITA_HOME_ARCHIVE_TITLE,
@@ -57,31 +54,15 @@ function BacaSelengkapnya({ className }: { className?: string }): ReactElement {
 
 function BlogFeaturedCard({ item }: { item: BeritaItem }): ReactElement {
   const href = item.detailHref ?? "/berita/berita-terbaru";
-  const hasCover = Boolean(item.coverSrc?.trim());
 
   return (
     <article className="flex h-full min-h-[28rem] flex-col lg:min-h-0">
-      <div
-        className={cn(
-          "relative w-full shrink-0 overflow-hidden rounded-lg",
-          "aspect-[4/3] sm:aspect-[5/4] lg:aspect-auto lg:h-[48%] lg:min-h-[12rem]",
-          hasCover ? publicOptimizedImageContainerClassName : "bg-brand",
-        )}
-      >
-        {hasCover ? (
-          <PublicOptimizedImage
-            src={item.coverSrc}
-            alt=""
-            fill
-            sizes="(max-width: 1024px) 100vw, 33vw"
-            className="object-cover"
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center text-white/80" aria-hidden>
-            <ImageIcon className="size-12 stroke-[1.25]" />
-          </div>
-        )}
-      </div>
+      <BeritaCoverMedia
+        src={item.coverSrc}
+        alt=""
+        className="w-full shrink-0 rounded-lg aspect-[4/3] sm:aspect-[5/4] lg:aspect-auto lg:h-[48%] lg:min-h-[12rem]"
+        sizes="(max-width: 1024px) 100vw, 33vw"
+      />
 
       <div className="mt-5 flex min-h-0 flex-1 flex-col">
         <h3 className="text-left text-xl font-bold leading-snug tracking-tight text-heading sm:text-2xl">
