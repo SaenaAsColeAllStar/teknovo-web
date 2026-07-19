@@ -4,6 +4,7 @@
  * Single-row translucent nav pinned to the home photographic hero.
  * Brand left · primary links center · two compact CTAs right (not the three-tier chrome).
  */
+import { AnimatePresence, m } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import {
   useEffect,
@@ -18,8 +19,15 @@ import {
   PublicDesktopNavDropdown,
   PublicMobileNavGroup,
 } from "@/components/layout/PublicSiteNavMenus";
+import { useLenisScrollLock } from "@/hooks/use-lenis-scroll-lock";
 import { usePublicSitePathname } from "@/hooks/use-public-site-pathname";
 import { BRAND_SHORT } from "@/lib/branding";
+import {
+  prefersReducedMotion,
+  PUBLIC_NAV_MENU_DURATION,
+  PUBLIC_NAV_MENU_EXIT_DURATION,
+  publicLenisEasing,
+} from "@/lib/lenis-public";
 import { isPublicSiteNavEntryActive } from "@/lib/public-site-nav-active";
 import {
   PUBLIC_SITE_CMS_LOGIN_HREF,
@@ -48,6 +56,8 @@ export function HeroOverlayNav({
   const mobileNavId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
   const navEntries = mainNav;
+
+  useLenisScrollLock(mobileOpen);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -152,62 +162,83 @@ export function HeroOverlayNav({
         </div>
       </div>
 
-      {mobileOpen ? (
-        <div
-          id={mobileNavId}
-          className="hero-mobile-nav border-b border-white/15 bg-brand-strong/95 backdrop-blur-md"
-        >
-          <nav
-            className="public-site-container flex max-h-[70vh] flex-col items-stretch gap-1 overflow-y-auto py-3"
-            aria-label="Menu situs"
+      <AnimatePresence initial={false}>
+        {mobileOpen ? (
+          <m.div
+            id={mobileNavId}
+            className="hero-mobile-nav overflow-hidden border-b border-white/15 bg-brand-strong/95 backdrop-blur-md"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{
+              height: "auto",
+              opacity: 1,
+              transition: {
+                duration: prefersReducedMotion() ? 0 : PUBLIC_NAV_MENU_DURATION,
+                ease: publicLenisEasing,
+              },
+            }}
+            exit={{
+              height: 0,
+              opacity: 0,
+              transition: {
+                duration: prefersReducedMotion()
+                  ? 0
+                  : PUBLIC_NAV_MENU_EXIT_DURATION,
+                ease: publicLenisEasing,
+              },
+            }}
           >
-            {navEntries.map((entry) => {
-              if (entry.type === "link") {
-                const active = isPublicSiteNavEntryActive(pathname, entry);
+            <nav
+              className="public-site-container flex max-h-[70vh] flex-col items-stretch gap-1 overflow-y-auto py-3"
+              aria-label="Menu situs"
+            >
+              {navEntries.map((entry) => {
+                if (entry.type === "link") {
+                  const active = isPublicSiteNavEntryActive(pathname, entry);
+                  return (
+                    <PublicSiteLink
+                      key={entry.href}
+                      href={entry.href}
+                      className={cn(
+                        "block border border-transparent px-3 py-2.5 text-sm font-medium text-white",
+                        active && "border-white/20 bg-white/10",
+                      )}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {entry.label}
+                    </PublicSiteLink>
+                  );
+                }
+
                 return (
-                  <PublicSiteLink
-                    key={entry.href}
-                    href={entry.href}
-                    className={cn(
-                      "block border border-transparent px-3 py-2.5 text-sm font-medium text-white",
-                      active && "border-white/20 bg-white/10",
-                    )}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {entry.label}
-                  </PublicSiteLink>
+                  <PublicMobileNavGroup
+                    key={entry.id}
+                    entry={entry}
+                    onNavigate={() => setMobileOpen(false)}
+                    appearance="overlay"
+                  />
                 );
-              }
+              })}
 
-              return (
-                <PublicMobileNavGroup
-                  key={entry.id}
-                  entry={entry}
-                  onNavigate={() => setMobileOpen(false)}
-                  appearance="overlay"
-                />
-              );
-            })}
-
-            <div className="flex flex-col gap-2 border-t border-white/15 pt-3">
-              <PublicSiteLink
-                href={PUBLIC_SITE_PPDB_HREF}
-                className="inline-flex w-full items-center justify-center border border-white/35 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
-                onClick={() => setMobileOpen(false)}
-              >
-                {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
-              </PublicSiteLink>
-              <a
-                href={PUBLIC_SITE_CMS_LOGIN_HREF}
-                className="inline-flex w-full items-center justify-center border border-white/35 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
-                onClick={() => setMobileOpen(false)}
-              >
-                Login
-              </a>
-            </div>
-          </nav>
-        </div>
-      ) : null}
+              <div className="flex flex-col gap-2 border-t border-white/15 pt-3">
+                <PublicSiteLink
+                  href={PUBLIC_SITE_PPDB_HREF}
+                  className="inline-flex w-full items-center justify-center border border-white/35 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {PUBLIC_SITE_NAV_PPDB_CTA_LABEL}
+                </PublicSiteLink>
+                <a
+                  href={PUBLIC_SITE_CMS_LOGIN_HREF}
+                  className="inline-flex w-full items-center justify-center border border-white/35 bg-white/10 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/20"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Login
+                </a>
+              </div>
+            </nav>
+          </m.div>
+        ) : null}
+      </AnimatePresence>
     </header>
   );
 }

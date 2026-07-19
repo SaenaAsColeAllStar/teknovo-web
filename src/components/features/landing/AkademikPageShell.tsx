@@ -17,8 +17,8 @@ export type AkademikPageShellProps = {
   title: string;
   lede: string;
   /**
-   * When set, replaces centered intro with the four-band tenaga pengajar
-   * page slice (top bar → intro → showcase → features).
+   * When set, replaces centered intro with the tenaga pengajar
+   * page slice (intro → showcase → features).
    */
   featuredFeedKey?: AkademikFeedKey;
   children: ReactNode;

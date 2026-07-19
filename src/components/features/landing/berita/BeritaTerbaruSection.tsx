@@ -1,10 +1,8 @@
 import type { ReactElement } from "react";
 
 import {
-  BERITA_BLOG_SECTION_LEDE,
   BERITA_BLOG_SECTION_TITLE,
   BERITA_EMPTY_TERBARU,
-  BERITA_TERBARU_PAGE_LEDE,
 } from "@/lib/berita-landing-content";
 import type { ArtikelSiswaPublikCard } from "@/services/artikel-berita-publik";
 import type { BeritaKegiatanPublikCard } from "@/services/berita-kegiatan-publik";
@@ -40,7 +38,6 @@ export function BeritaTerbaruSection({
       items={blogItems}
       emptyMessage={BERITA_EMPTY_TERBARU}
       title={dariSekolah.length > 0 ? BERITA_BLOG_SECTION_TITLE : "Berita terbaru"}
-      lede={dariSekolah.length > 0 ? BERITA_BLOG_SECTION_LEDE : BERITA_TERBARU_PAGE_LEDE}
     />
   );
 }

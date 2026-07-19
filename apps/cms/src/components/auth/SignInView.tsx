@@ -35,7 +35,7 @@ export function SignInView({
         <SignInLoginIllustration className="mx-auto w-full max-w-md opacity-90" />
       }
     >
-      <div className="w-full max-w-md rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 shadow-md sm:p-8">
+      <div className="w-full max-w-2xl rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 shadow-md sm:p-8">
         <div className="inline-flex items-center gap-2.5">
           <span
             className={cn(

@@ -19,8 +19,18 @@ function getPathname() {
   return typeof window !== "undefined" ? window.location.pathname : "/";
 }
 
+/**
+ * SSR snapshot must stay "/" (no `window` during Astro SSG). Do not read
+ * `window` here — a divergent client snapshot causes hydration errors.
+ * Consumers that need the real route in SSG HTML should pass `Astro.url.pathname`
+ * (see `usePublicSitePathname(ssrPathname)`).
+ */
+function getServerSnapshot() {
+  return "/";
+}
+
 export function usePathname(): string {
-  return useSyncExternalStore(subscribe, getPathname, () => "/");
+  return useSyncExternalStore(subscribe, getPathname, getServerSnapshot);
 }
 
 export function useRouter() {

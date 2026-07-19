@@ -1,6 +1,5 @@
 import { BRAND_SHORT } from "@/lib/branding";
 import { LANDING_MEDIA } from "@/lib/public-media-paths";
-import { PUBLIC_SITE_PPDB_HREF } from "@/lib/public-site-nav";
 
 /** Ringkasan kesiswaan publik — selaras `/akademik` dan `/fasilitas`. */
 export const KESISWAAN_PUBLIC_HUB_HREF = "/kesiswaan" as const;
@@ -29,13 +28,6 @@ export const KESISWAAN_HUB_HERO_CARD_TITLE =
 
 export const KESISWAAN_HUB_HERO_CARD_BODY =
   `Setiap unit kegiatan dan pencapaian siswa dikelola melalui sistem sekolah — orang tua dapat memantau perkembangan di luar kelas tanpa menunggu pengumuman manual.` as const;
-
-/** Four-band hub slice — nav, headline, showcase, features. */
-export const KESISWAAN_SLICE_NAV_LINKS = [
-  { href: "/kesiswaan/ekstrakurikuler#osis", label: "OSIS" },
-  { href: "/kesiswaan/ekstrakurikuler", label: "Ekstrakurikuler" },
-  { href: "/kesiswaan/prestasi", label: "Prestasi" },
-] as const;
 
 /** Multi-line hub headline (`\\n` → line breaks in FourBandPageSlice). */
 export const KESISWAAN_SLICE_HEADLINE =
@@ -117,11 +109,6 @@ export const KESISWAAN_HUB_NEWSLETTER_PRIVACY_AFTER =
 export const KESISWAAN_HUB_NEWSLETTER_PRIVACY_HREF = "/kontak" as const;
 
 export const KESISWAAN_HUB_NEWSLETTER_MAIL_SUBJECT = "Daftar buletin sekolah" as const;
-
-export const KESISWAAN_PPDB_CTA = {
-  href: PUBLIC_SITE_PPDB_HREF,
-  label: "Daftar PPDB",
-} as const;
 
 export type KesiswaanSubnavItem = {
   href: string;

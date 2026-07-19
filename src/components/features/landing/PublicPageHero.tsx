@@ -12,7 +12,8 @@ import { cn } from "@/lib/utils";
 export type PublicPageHeroProps = {
   eyebrow: string;
   title: string;
-  lede: string | readonly string[];
+  /** Optional supporting copy under the title. */
+  lede?: string | readonly string[];
   className?: string;
   eyebrowClassName?: string;
   titleClassName?: string;
@@ -30,7 +31,7 @@ export function PublicPageHero({
   titleAdornment,
   children,
 }: PublicPageHeroProps): ReactElement {
-  const ledeParagraphs = Array.isArray(lede) ? lede : [lede];
+  const ledeParagraphs = lede == null ? [] : Array.isArray(lede) ? lede : [lede];
 
   return (
     <MotionInView as="header" className={cn("mx-auto max-w-3xl text-center", className)}>
@@ -43,16 +44,22 @@ export function PublicPageHero({
       ) : (
         <h1 className={cn(publicPageHeroTitleClassName, titleClassName)}>{title}</h1>
       )}
-      <div className={ledeParagraphs.length > 1 ? "mx-auto mt-5 max-w-2xl space-y-4" : undefined}>
-        {ledeParagraphs.map((paragraph) => (
-          <p
-            key={paragraph.slice(0, 32)}
-            className={cn(publicPageHeroLedeClassName, publicSectionIntroClassName, ledeParagraphs.length > 1 && "mt-0")}
-          >
-            {paragraph}
-          </p>
-        ))}
-      </div>
+      {ledeParagraphs.length > 0 ? (
+        <div className={ledeParagraphs.length > 1 ? "mx-auto mt-5 max-w-2xl space-y-4" : undefined}>
+          {ledeParagraphs.map((paragraph) => (
+            <p
+              key={paragraph.slice(0, 32)}
+              className={cn(
+                publicPageHeroLedeClassName,
+                publicSectionIntroClassName,
+                ledeParagraphs.length > 1 && "mt-0",
+              )}
+            >
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      ) : null}
       {children}
     </MotionInView>
   );

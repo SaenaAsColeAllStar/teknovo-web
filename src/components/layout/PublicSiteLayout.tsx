@@ -15,11 +15,14 @@ import { ClickSpark } from "@/components/ui/click-spark/ClickSpark";
 export function PublicSiteLayout({
   children,
   hideNavbar,
+  pathname,
   mainNav,
 }: Readonly<{
   children: ReactNode;
   /** Override: sembunyikan chrome tiga tingkat (default: otomatis di beranda). */
   hideNavbar?: boolean;
+  /** Astro `url.pathname` — keeps navbar active styles correct in SSG HTML. */
+  pathname?: string;
   mainNav?: import("@/lib/public-site-nav").PublicSiteNavEntry[];
 }>): ReactElement {
   return (
@@ -36,7 +39,11 @@ export function PublicSiteLayout({
           className="min-h-screen"
         >
           <AppShell variant="public">
-            <PublicMarketingNavbar hidden={hideNavbar} mainNav={mainNav} />
+            <PublicMarketingNavbar
+              hidden={hideNavbar}
+              pathname={pathname}
+              mainNav={mainNav}
+            />
             <AppShellMain>{children}</AppShellMain>
             <PublicFooter />
           </AppShell>

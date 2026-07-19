@@ -11,7 +11,12 @@ export {
   scrollToPublic,
   scrollToTopPublic,
   getPublicNavScrollOffsetPx,
+  lockLenisScroll,
   publicLenisOptions,
+  publicLenisEasing,
+  prefersReducedMotion,
   PUBLIC_LENIS_DURATION,
   PUBLIC_LENIS_LERP,
+  PUBLIC_NAV_MENU_DURATION,
+  PUBLIC_NAV_MENU_EXIT_DURATION,
 } from "@/lib/lenis-public";

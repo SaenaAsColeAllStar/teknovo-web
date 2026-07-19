@@ -1,4 +1,5 @@
 import { useAuth, useClerk, useSignIn } from "@clerk/react";
+import { Eye, EyeOff } from "lucide-react";
 import {
   type FormEvent,
   type ReactElement,
@@ -117,6 +118,7 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
   const [mfaStrategy, setMfaStrategy] = useState<MfaStrategy>("totp");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -597,15 +599,33 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
             />
           </Field>
           <Field id="password" label="Kata sandi" required error={fieldMessage(errors?.fields, "password")}>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              placeholder="••••••••"
-            />
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                className="absolute inset-y-0 right-0 flex items-center px-3 text-[color:var(--color-body-subtle)] hover:text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={
+                  showPassword ? "Sembunyikan kata sandi" : "Tunjukkan kata sandi"
+                }
+                aria-pressed={showPassword}
+              >
+                {showPassword ? (
+                  <EyeOff className="size-4" aria-hidden />
+                ) : (
+                  <Eye className="size-4" aria-hidden />
+                )}
+              </button>
+            </div>
           </Field>
         </div>
 

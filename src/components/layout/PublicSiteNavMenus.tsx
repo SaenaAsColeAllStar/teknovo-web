@@ -3,7 +3,9 @@
 /**
  * Shared desktop dropdown + mobile accordion for public main nav groups.
  * Appearance tokens keep marketing chrome and hero overlay in sync.
+ * Open/close uses Framer Motion with Lenis easing; Lenis scroll locks while open.
  */
+import { AnimatePresence, m } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import {
   useEffect,
@@ -16,7 +18,14 @@ import {
 
 import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
 import { useHoverIntentOpen } from "@/hooks/use-hover-intent-open";
+import { useLenisScrollLock } from "@/hooks/use-lenis-scroll-lock";
 import type { PublicSiteNavGroup } from "@/lib/public-site-nav";
+import {
+  prefersReducedMotion,
+  PUBLIC_NAV_MENU_DURATION,
+  PUBLIC_NAV_MENU_EXIT_DURATION,
+  publicLenisEasing,
+} from "@/lib/lenis-public";
 import { cn } from "@/lib/utils";
 
 export type PublicSiteNavAppearance = "surface" | "overlay";
@@ -77,6 +86,16 @@ const mobileItemClassName: Record<PublicSiteNavAppearance, string> = {
   overlay: "block px-3 py-2 pl-5 text-sm text-white/80 hover:text-white",
 };
 
+function navMenuTransition(exiting = false) {
+  if (prefersReducedMotion()) {
+    return { duration: 0 };
+  }
+  return {
+    duration: exiting ? PUBLIC_NAV_MENU_EXIT_DURATION : PUBLIC_NAV_MENU_DURATION,
+    ease: publicLenisEasing,
+  };
+}
+
 export function PublicDesktopNavDropdown({
   entry,
   active,
@@ -96,6 +115,8 @@ export function PublicDesktopNavDropdown({
     onRootPointerLeave,
     toggleFromClick,
   } = useHoverIntentOpen();
+
+  useLenisScrollLock(open);
 
   useEffect(() => {
     if (!open) return;
@@ -160,27 +181,40 @@ export function PublicDesktopNavDropdown({
           aria-hidden
         />
       </button>
-      {open ? (
-        <div
-          id={panelId}
-          role="menu"
-          className="absolute top-full left-0 z-50 min-w-[14rem] pt-2"
-        >
-          <div className={panelClassName[appearance]}>
-            {entry.items.map((item) => (
-              <PublicSiteLink
-                key={item.href}
-                href={item.href}
-                role="menuitem"
-                className={menuItemClassName[appearance]}
-                onClick={closeMenu}
-              >
-                {item.label}
-              </PublicSiteLink>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {open ? (
+          <m.div
+            id={panelId}
+            role="menu"
+            className="absolute top-full left-0 z-50 min-w-[14rem] origin-top pt-2"
+            initial={{ opacity: 0, y: -6 }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              transition: navMenuTransition(),
+            }}
+            exit={{
+              opacity: 0,
+              y: -4,
+              transition: navMenuTransition(true),
+            }}
+          >
+            <div className={panelClassName[appearance]}>
+              {entry.items.map((item) => (
+                <PublicSiteLink
+                  key={item.href}
+                  href={item.href}
+                  role="menuitem"
+                  className={menuItemClassName[appearance]}
+                  onClick={closeMenu}
+                >
+                  {item.label}
+                </PublicSiteLink>
+              ))}
+            </div>
+          </m.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }
@@ -216,25 +250,40 @@ export function PublicMobileNavGroup({
           aria-hidden
         />
       </button>
-      {open ? (
-        <div
-          id={`${groupId}-panel`}
-          role="region"
-          aria-labelledby={`${groupId}-trigger`}
-          className="space-y-0.5 pb-2"
-        >
-          {entry.items.map((item) => (
-            <PublicSiteLink
-              key={item.href}
-              href={item.href}
-              className={mobileItemClassName[appearance]}
-              onClick={onNavigate}
-            >
-              {item.label}
-            </PublicSiteLink>
-          ))}
-        </div>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {open ? (
+          <m.div
+            id={`${groupId}-panel`}
+            role="region"
+            aria-labelledby={`${groupId}-trigger`}
+            className="overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{
+              height: "auto",
+              opacity: 1,
+              transition: navMenuTransition(),
+            }}
+            exit={{
+              height: 0,
+              opacity: 0,
+              transition: navMenuTransition(true),
+            }}
+          >
+            <div className="space-y-0.5 pb-2">
+              {entry.items.map((item) => (
+                <PublicSiteLink
+                  key={item.href}
+                  href={item.href}
+                  className={mobileItemClassName[appearance]}
+                  onClick={onNavigate}
+                >
+                  {item.label}
+                </PublicSiteLink>
+              ))}
+            </div>
+          </m.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

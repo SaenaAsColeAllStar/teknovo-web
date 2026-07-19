@@ -20,7 +20,7 @@ export default function KontakPage(): ReactElement {
   return (
     <MotionInView as="section" className={publicPageSectionContactClassName}>
       <div className="public-site-container">
-        <PublicPageHero eyebrow={KONTAK_HERO_EYEBROW} title={KONTAK_PAGE_TITLE} lede={KONTAK_PAGE_LEDE} />
+        <PublicPageHero eyebrow={KONTAK_HERO_EYEBROW} title={KONTAK_PAGE_TITLE} />
         <div className="mt-16 sm:mt-20">
           <PublicContactSection />
         </div>

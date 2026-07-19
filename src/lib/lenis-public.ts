@@ -48,6 +48,42 @@ export function prefersReducedMotion(): boolean {
 }
 
 /**
+ * Nested-safe Lenis pause while overlays / nav menus are open so wheel
+ * inertia does not fight fixed panels. Call the returned release fn on close.
+ */
+let lenisScrollLockCount = 0;
+
+export function lockLenisScroll(): () => void {
+  if (typeof window === "undefined" || prefersReducedMotion()) {
+    return () => {};
+  }
+
+  const lenis = getLenis();
+  if (!lenis) return () => {};
+
+  if (lenisScrollLockCount === 0) {
+    lenis.stop();
+  }
+  lenisScrollLockCount += 1;
+
+  let released = false;
+  return () => {
+    if (released) return;
+    released = true;
+    lenisScrollLockCount = Math.max(0, lenisScrollLockCount - 1);
+    if (lenisScrollLockCount === 0) {
+      getLenis()?.start();
+    }
+  };
+}
+
+/** Open/close duration (seconds) for public nav menus — snappy with Lenis feel. */
+export const PUBLIC_NAV_MENU_DURATION = 0.2;
+
+/** Slightly shorter exit so dismiss feels immediate. */
+export const PUBLIC_NAV_MENU_EXIT_DURATION = 0.15;
+
+/**
  * Sticky public navbar height from `--public-nav-bottom`
  * (set by PublicMarketingNavbar ResizeObserver).
  */

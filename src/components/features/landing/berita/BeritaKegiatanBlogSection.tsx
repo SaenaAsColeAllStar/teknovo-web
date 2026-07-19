@@ -5,7 +5,6 @@ import { PublicSiteLink } from "@/components/layout/PublicSiteLink";
 import { MotionInView } from "@/components/motion/MotionInView";
 import {
   BERITA_BLOG_AUTHOR_FALLBACK,
-  BERITA_BLOG_SECTION_LEDE,
   BERITA_BLOG_SECTION_TITLE,
   BERITA_EMPTY_KEGIATAN,
   BERITA_HOME_READ_MORE_LABEL,
@@ -21,7 +20,6 @@ export type BeritaKegiatanBlogSectionProps = {
   items: BeritaItem[];
   emptyMessage?: string;
   title?: string;
-  lede?: string;
 };
 
 function authorLabel(item: BeritaItem): string {
@@ -155,7 +153,6 @@ export function BeritaKegiatanBlogSection({
   items,
   emptyMessage = BERITA_EMPTY_KEGIATAN,
   title = BERITA_BLOG_SECTION_TITLE,
-  lede = BERITA_BLOG_SECTION_LEDE,
 }: BeritaKegiatanBlogSectionProps): ReactElement {
   const slice = items.slice(0, FEATURED_PLUS_CARDS);
   const featured = slice[0];
@@ -171,14 +168,6 @@ export function BeritaKegiatanBlogSection({
           >
             {title}
           </h2>
-          <p
-            className={cn(
-              "mx-auto mt-4 max-w-xl text-sm leading-relaxed text-body sm:text-base",
-              publicFormalBodyClassName,
-            )}
-          >
-            {lede}
-          </p>
         </header>
 
         <div className="mt-8 border-t border-[#E8E8F8] sm:mt-10" role="presentation" />

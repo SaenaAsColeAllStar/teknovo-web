@@ -5,6 +5,7 @@
  * Self-contained chrome for the public site layout.
  * Dropdown/search primitives shared with the public site chrome.
  */
+import { AnimatePresence, m } from "framer-motion";
 import { Mail, Menu, Phone, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -28,6 +29,7 @@ import {
   type PublicSiteSearchCategoryId,
 } from "@/components/layout/PublicSiteSearchForm";
 import { Button } from "@/components/ui/button";
+import { useLenisScrollLock } from "@/hooks/use-lenis-scroll-lock";
 import { usePublicSitePathname } from "@/hooks/use-public-site-pathname";
 import { BRAND_SHORT } from "@/lib/branding";
 import { CONTACT } from "@/lib/constants";
@@ -37,6 +39,12 @@ import {
   PUBLIK_CONTACT_EMAIL,
   PUBLIK_CONTACT_WA_DISPLAY,
 } from "@/lib/kontak-publik";
+import {
+  prefersReducedMotion,
+  PUBLIC_NAV_MENU_DURATION,
+  PUBLIC_NAV_MENU_EXIT_DURATION,
+  publicLenisEasing,
+} from "@/lib/lenis-public";
 import { isPublicSiteNavEntryActive } from "@/lib/public-site-nav-active";
 import {
   PUBLIC_SITE_CMS_LOGIN_HREF,
@@ -78,15 +86,21 @@ export type PublicMarketingNavbarProps = {
    * Bila tidak di-set, otomatis true saat pathname situs publik adalah `/`.
    */
   hidden?: boolean;
+  /**
+   * Path dari Astro SSG (`Astro.url.pathname`). Mencegah underline aktif
+   * menyala di Beranda saat View Transition — shim `usePathname` SSR-nya `/`.
+   */
+  pathname?: string;
   /** Override main nav (fasilitas dari API saat SSG). */
   mainNav?: readonly PublicSiteNavEntry[];
 };
 
 export function PublicMarketingNavbar({
   hidden,
+  pathname: pathnameProp,
   mainNav = PUBLIC_SITE_MAIN_NAV,
 }: PublicMarketingNavbarProps = {}): ReactElement | null {
-  const pathname = usePublicSitePathname();
+  const pathname = usePublicSitePathname(pathnameProp);
   const router = useRouter();
   const headerRef = useRef<HTMLElement>(null);
   const mobileNavId = useId();
@@ -98,6 +112,8 @@ export function PublicMarketingNavbar({
     useState<PublicSiteSearchCategoryId>("all");
 
   const hideChrome = hidden ?? pathname === "/";
+
+  useLenisScrollLock(mobileOpen);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -307,108 +323,129 @@ export function PublicMarketingNavbar({
       </div>
 
       {/* Mobile menu — ≤768px via .ds-menu-toggle companion panel */}
-      {mobileOpen ? (
-        <div
-          id={mobileNavId}
-          className="ds-mobile-nav border-b border-border-default bg-surface"
-        >
-          <nav
-            className={cn(
-              tierContainerClassName,
-              "max-h-[70vh] flex-col items-stretch gap-1 overflow-y-auto py-3",
-            )}
-            aria-label="Menu situs"
+      <AnimatePresence initial={false}>
+        {mobileOpen ? (
+          <m.div
+            id={mobileNavId}
+            className="ds-mobile-nav overflow-hidden border-b border-border-default bg-surface"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{
+              height: "auto",
+              opacity: 1,
+              transition: {
+                duration: prefersReducedMotion() ? 0 : PUBLIC_NAV_MENU_DURATION,
+                ease: publicLenisEasing,
+              },
+            }}
+            exit={{
+              height: 0,
+              opacity: 0,
+              transition: {
+                duration: prefersReducedMotion()
+                  ? 0
+                  : PUBLIC_NAV_MENU_EXIT_DURATION,
+                ease: publicLenisEasing,
+              },
+            }}
           >
-            {navEntries.map((entry) => {
-              if (entry.type === "link") {
-                const active = isPublicSiteNavEntryActive(pathname, entry);
+            <nav
+              className={cn(
+                tierContainerClassName,
+                "max-h-[70vh] flex-col items-stretch gap-1 overflow-y-auto py-3",
+              )}
+              aria-label="Menu situs"
+            >
+              {navEntries.map((entry) => {
+                if (entry.type === "link") {
+                  const active = isPublicSiteNavEntryActive(pathname, entry);
+                  return (
+                    <PublicSiteLink
+                      key={entry.href}
+                      href={entry.href}
+                      className={cn(
+                        "block border border-transparent px-3 py-2.5 text-sm font-medium text-heading",
+                        active && "border-border-default bg-neutral-soft",
+                      )}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {entry.label}
+                    </PublicSiteLink>
+                  );
+                }
+
                 return (
-                  <PublicSiteLink
-                    key={entry.href}
-                    href={entry.href}
-                    className={cn(
-                      "block border border-transparent px-3 py-2.5 text-sm font-medium text-heading",
-                      active && "border-border-default bg-neutral-soft",
-                    )}
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {entry.label}
-                  </PublicSiteLink>
+                  <PublicMobileNavGroup
+                    key={entry.id}
+                    entry={entry}
+                    onNavigate={() => setMobileOpen(false)}
+                    appearance="surface"
+                  />
                 );
-              }
+              })}
 
-              return (
-                <PublicMobileNavGroup
-                  key={entry.id}
-                  entry={entry}
-                  onNavigate={() => setMobileOpen(false)}
-                  appearance="surface"
-                />
-              );
-            })}
-
-            <div className="flex flex-col gap-2 border-t border-border-default pt-3 sm:hidden">
-              <a
-                href={contactPhoneHref}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-body"
-                rel="noopener noreferrer"
-                target="_blank"
-                onClick={() => setMobileOpen(false)}
-              >
-                <Phone className="size-[18px]" aria-hidden />
-                {contactPhoneDisplay}
-              </a>
-              <a
-                href={contactEmailHref}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-body"
-                onClick={() => setMobileOpen(false)}
-              >
-                <Mail className="size-[18px]" aria-hidden />
-                {contactEmailDisplay}
-              </a>
-            </div>
-
-            <div className="flex flex-col gap-2 border-t border-border-default pt-3 md:hidden">
-              <a
-                href={contactPhoneHref}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-heading"
-                rel="noopener noreferrer"
-                target="_blank"
-                onClick={() => setMobileOpen(false)}
-              >
-                Hubungi kami
-                <Phone className="size-[18px]" aria-hidden />
-              </a>
-              <Button
-                asChild
-                variant="secondary"
-                className="h-auto w-full px-5 py-2.5 text-sm font-medium text-heading"
-              >
+              <div className="flex flex-col gap-2 border-t border-border-default pt-3 sm:hidden">
                 <a
-                  href={PUBLIC_SITE_CMS_LOGIN_HREF}
+                  href={contactPhoneHref}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-body"
+                  rel="noopener noreferrer"
+                  target="_blank"
                   onClick={() => setMobileOpen(false)}
                 >
-                  Login
+                  <Phone className="size-[18px]" aria-hidden />
+                  {contactPhoneDisplay}
                 </a>
-              </Button>
-            </div>
+                <a
+                  href={contactEmailHref}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-body"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  <Mail className="size-[18px]" aria-hidden />
+                  {contactEmailDisplay}
+                </a>
+              </div>
 
-            <div className="border-t border-border-default pt-3 md:hidden">
-              <PublicSiteSearchForm
-                idPrefix={`${searchFormId}-mobile`}
-                searchQuery={searchQuery}
-                searchCategory={searchCategory}
-                onQueryChange={setSearchQuery}
-                onCategoryChange={setSearchCategory}
-                onSubmit={onSearchSubmit}
-                onNavigateSuggestion={onNavigateSuggestion}
-                appearance="surface"
-                className="w-full"
-              />
-            </div>
-          </nav>
-        </div>
-      ) : null}
+              <div className="flex flex-col gap-2 border-t border-border-default pt-3 md:hidden">
+                <a
+                  href={contactPhoneHref}
+                  className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-heading"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Hubungi kami
+                  <Phone className="size-[18px]" aria-hidden />
+                </a>
+                <Button
+                  asChild
+                  variant="secondary"
+                  className="h-auto w-full px-5 py-2.5 text-sm font-medium text-heading"
+                >
+                  <a
+                    href={PUBLIC_SITE_CMS_LOGIN_HREF}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    Login
+                  </a>
+                </Button>
+              </div>
+
+              <div className="border-t border-border-default pt-3 md:hidden">
+                <PublicSiteSearchForm
+                  idPrefix={`${searchFormId}-mobile`}
+                  searchQuery={searchQuery}
+                  searchCategory={searchCategory}
+                  onQueryChange={setSearchQuery}
+                  onCategoryChange={setSearchCategory}
+                  onSubmit={onSearchSubmit}
+                  onNavigateSuggestion={onNavigateSuggestion}
+                  appearance="surface"
+                  className="w-full"
+                />
+              </div>
+            </nav>
+          </m.div>
+        ) : null}
+      </AnimatePresence>
     </header>
   );
 }

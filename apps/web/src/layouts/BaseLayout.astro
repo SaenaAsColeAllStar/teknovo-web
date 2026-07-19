@@ -37,6 +37,7 @@ const apiOrigin = (
   .replace(/\/api$/, "");
 
 const mainNav = await getPublicSiteMainNav();
+const pathname = Astro.url.pathname || "/";
 
 /** Subtle main-content crossfade; navbar uses view-transition-name (see global.css). */
 const pageFade = fade({ duration: "180ms" });
@@ -96,7 +97,8 @@ const pageFade = fade({ duration: "180ms" });
     */}
     <PublicChrome
       client:load
-      hideNavbar={Astro.url.pathname === "/" || Astro.url.pathname === ""}
+      hideNavbar={pathname === "/" || pathname === ""}
+      pathname={pathname}
       mainNav={mainNav}
     >
       <div class="public-page-main" transition:animate={pageFade} transition:name="public-page-main">
