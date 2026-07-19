@@ -39,7 +39,7 @@ Monorepo butuh `pnpm-workspace.yaml` di root — pakai filter build + output di 
 | Project | Variabel |
 |---------|----------|
 | **teknovo-web** (Astro) | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id` (**host only — no `/api`**), `PUBLIC_SITE_URL=https://smkteknovo.sch.id`, `PUBLIC_R2_URL=https://r2.ctos.web.id` |
-| **teknovo-cms** (Vite) | **`VITE_API_URL=https://cf.smkteknovo.sch.id/api`** + `VITE_CLERK_PUBLISHABLE_KEY=pk_…`. Host-only `…sch.id` also OK (build appends `/api`). `PUBLIC_API_URL` is accepted as a fallback if you already set it on this project. |
+| **teknovo-cms** (Vite) | **`VITE_API_URL=https://cf.smkteknovo.sch.id/api`** + `VITE_CLERK_PUBLISHABLE_KEY=pk_…` (**Production + Preview**). Host-only `…sch.id` also OK (build appends `/api`). `PUBLIC_API_URL` is accepted as a fallback if you already set it on this project. **Vite bakes these at build time** — a `wrangler pages deploy` of `dist` built without them overwrites a good GitHub/Pages build and shows “CMS belum dikonfigurasi”. |
 | **teknovo-cms-api** | Secrets via `wrangler secret put`: `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET` (Svix), `GITHUB_REBUILD_TOKEN`, `REBUILD_WEB_SECRET` (Bearer-only hook). Vars: `CMS_ORIGIN`, `WEB_ORIGIN`, `ENVIRONMENT=production` |
 
 **Jangan** pakai nama `PUBLIC_API_URL` sebagai satu-satunya var di **teknovo-cms** — itu nama Astro (`teknovo-web`). CMS membaca `VITE_API_URL` (atau fallback `PUBLIC_API_URL` sejak perbaikan build). Nilai CMS boleh `…/api`; nilai web **tanpa** `/api` (kalau web dapat `…/api`, build sekarang strip suffix agar tidak jadi `/api/api`).
@@ -124,13 +124,15 @@ Local CORS: set `ENVIRONMENT=development` in `apps/api/.dev.vars` so localhost o
 ## GitHub Actions secrets
 
 - `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
-- `VITE_CLERK_PUBLISHABLE_KEY` (CMS build)
+- `VITE_CLERK_PUBLISHABLE_KEY` (CMS build — **required** for `deploy-cms.yml`)
 
 Workflows:
 
 - `.github/workflows/deploy-api.yml` — push ke `apps/api` → environment **`production`**
-- `.github/workflows/deploy-cms.yml` — push ke `apps/cms` → environment **`production`**
+- `.github/workflows/deploy-cms.yml` — push ke `apps/cms` → environment **`production`**; hardcodes `VITE_API_URL=https://cf.smkteknovo.sch.id/api`
 - `.github/workflows/rebuild-web.yml` — `repository_dispatch` type `rebuild-web` → environment **`production`**
+
+**Manual CMS deploy trap:** `wrangler pages deploy apps/cms/dist` publishes whatever is already in `dist`. If that folder was built without `VITE_CLERK_PUBLISHABLE_KEY`, production shows “CMS belum dikonfigurasi”. Always rebuild with the env vars (or run `deploy-cms.yml` / Pages CI) before deploying.
 
 **Setup sekali:** GitHub → Settings → Environments → buat `production` → Mandatory reviewers (opsional tapi disarankan) + secrets environment-scoped jika ingin memisahkan dari repo secrets.
 
@@ -159,6 +161,14 @@ packages/shared/   # types, roles, zod schemas
 ```
 
 Legacy Next monolit di root (`src/`, `wrangler.toml` OpenNext) tetap ada untuk referensi / migrasi UI; **jangan** deploy OpenNext ke Free.
+
+## Workers Free — kuota harian 100k (error 1027)
+
+Akun Free: **100.000 request Worker / hari** (reset 00:00 UTC). Melebihi → Cloudflare `429` / `error code: 1027` (tanpa CORS), CMS menampilkan “Tidak dapat terhubung…”.
+
+- CMS list pages harus **tidak** memasukkan `getToken` Clerk yang berubah tiap render ke `useEffect` deps (lihat `useCmsGetToken`) — loop refetch bisa menghabiskan kuota dalam jam.
+- Cek dashboard: Workers & Pages → Metrics. Path yang sering di-hammer: `/api/v1/ekstrakurikuler`.
+- Mitigasi sementara: tutup tab CMS yang looping; tunggu reset UTC; atau upgrade **Workers Paid**.
 
 ## Legacy: OpenNext + Workers Paid
 

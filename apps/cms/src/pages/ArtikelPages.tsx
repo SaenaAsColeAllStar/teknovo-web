@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import { useEffect, useState } from "react";
@@ -18,6 +17,7 @@ import {
 import type { ArtikelSiswa, ArtikelSiswaListItem, ArtikelSiswaStatus } from "@/types/artikel-siswa";
 import type { Kategori } from "@/types/kategori";
 
+import { useCmsGetToken } from "../lib/use-cms-get-token";
 import { onRouterRefresh } from "../shims/next-navigation";
 
 const STATUS_LABEL: Record<ArtikelSiswaStatus, string> = {
@@ -29,7 +29,7 @@ const STATUS_LABEL: Record<ArtikelSiswaStatus, string> = {
 
 /** Mirrors `src/app/(dashboard)/dashboard/artikel/page.tsx`, fetched client-side. */
 export function ArtikelListPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { role, canWriteArtikel } = useCmsRole();
   const isSiswa = role === "siswa";
   const [items, setItems] = useState<ArtikelSiswaListItem[]>([]);
@@ -38,6 +38,7 @@ export function ArtikelListPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -70,7 +71,7 @@ export function ArtikelListPage() {
       cancelled = true;
       unsubscribe();
     };
-  }, [getToken, isSiswa]);
+  }, [getToken, isLoaded, isSiswa]);
 
   return (
     <div className="space-y-6">
@@ -184,7 +185,7 @@ export function ArtikelListPage() {
 /** Mirrors `dashboard/artikel/baru/page.tsx` + `dashboard/artikel/[id]/edit/page.tsx`. */
 export function ArtikelFormPage({ mode }: { mode: "create" | "edit" }) {
   const { id } = useParams();
-  const { getToken, isLoaded } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const [kategori, setKategori] = useState<Kategori[]>([]);
   const [artikel, setArtikel] = useState<ArtikelSiswa | null>(null);
   const [error, setError] = useState<string | null>(null);

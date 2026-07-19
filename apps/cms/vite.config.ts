@@ -25,6 +25,11 @@ export default defineConfig(({ mode }) => {
       env.NEXT_PUBLIC_API_URL ||
       "https://cf.smkteknovo.sch.id/api",
   );
+  // Prefer VITE_*; accept Next-era name if someone builds from monorepo .env.local.
+  const clerkPk =
+    env.VITE_CLERK_PUBLISHABLE_KEY ||
+    env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    "";
   const r2Url =
     env.VITE_R2_PUBLIC_URL || env.PUBLIC_R2_URL || "https://r2.ctos.web.id";
   const appUrl = "https://cms.smkteknovo.sch.id";
@@ -64,9 +69,15 @@ export default defineConfig(({ mode }) => {
       "process.env.API_URL": JSON.stringify(apiBase),
       "process.env.R2_PUBLIC_URL": JSON.stringify(r2Url),
       "process.env.NEXT_PUBLIC_APP_URL": JSON.stringify(appUrl),
-      // Keep import.meta.env.VITE_API_URL in sync when only PUBLIC_API_URL was set.
+      // Keep import.meta.env.VITE_* in sync when only PUBLIC_/NEXT_PUBLIC_ were set.
       "import.meta.env.VITE_API_URL": JSON.stringify(apiBase),
       "import.meta.env.VITE_WEB_ORIGIN": JSON.stringify(webOrigin),
+      ...(clerkPk
+        ? {
+            "import.meta.env.VITE_CLERK_PUBLISHABLE_KEY":
+              JSON.stringify(clerkPk),
+          }
+        : {}),
     },
     server: {
       port: 5173,

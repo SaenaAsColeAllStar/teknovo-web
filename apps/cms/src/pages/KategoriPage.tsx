@@ -1,20 +1,21 @@
-import { useAuth } from "@clerk/react";
 import { useEffect, useState } from "react";
 
 import { KategoriManager } from "@/components/dashboard/kategori/KategoriManager";
 import { ApiClientError, fetchKategoriListCms } from "@/lib/api-client";
 import type { Kategori } from "@/types/kategori";
 
+import { useCmsGetToken } from "../lib/use-cms-get-token";
 import { onRouterRefresh } from "../shims/next-navigation";
 
 /** Mirrors `src/app/(dashboard)/dashboard/kategori/page.tsx`, fetched client-side. */
 export function KategoriPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const [items, setItems] = useState<Kategori[]>([]);
   const [listError, setListError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -40,7 +41,7 @@ export function KategoriPage() {
       cancelled = true;
       unsubscribe();
     };
-  }, [getToken]);
+  }, [getToken, isLoaded]);
 
   return (
     <div className="space-y-6">

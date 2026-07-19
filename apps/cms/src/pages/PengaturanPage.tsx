@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/react";
 import { useEffect, useState } from "react";
 
 import { PengaturanForm } from "@/components/dashboard/pengaturan/PengaturanForm";
@@ -8,6 +7,8 @@ import {
   PENGATURAN_SITUS_PUBLIK_ID,
   type PengaturanSitusPublikData,
 } from "@/lib/pengaturan-situs-publik-defaults";
+
+import { useCmsGetToken } from "../lib/use-cms-get-token";
 
 function defaultsData(): PengaturanSitusPublikData {
   return {
@@ -19,12 +20,13 @@ function defaultsData(): PengaturanSitusPublikData {
 
 /** Mirrors `src/app/(dashboard)/dashboard/pengaturan/page.tsx`, fetched client-side. */
 export function PengaturanPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const [initial, setInitial] = useState<PengaturanSitusPublikData>(defaultsData);
   const [loadNote, setLoadNote] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -52,7 +54,7 @@ export function PengaturanPage() {
     return () => {
       cancelled = true;
     };
-  }, [getToken]);
+  }, [getToken, isLoaded]);
 
   return (
     <div className="space-y-6">

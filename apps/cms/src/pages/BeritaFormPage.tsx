@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -12,10 +11,12 @@ import {
 import type { Berita } from "@/types/berita";
 import type { Kategori } from "@/types/kategori";
 
+import { useCmsGetToken } from "../lib/use-cms-get-token";
+
 /** Mirrors `dashboard/berita/baru/page.tsx` + `dashboard/berita/[id]/edit/page.tsx`. */
 export function BeritaFormPage({ mode }: { mode: "create" | "edit" }) {
   const { id } = useParams();
-  const { getToken, isLoaded } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const [kategori, setKategori] = useState<Kategori[]>([]);
   const [berita, setBerita] = useState<Berita | null>(null);
   const [error, setError] = useState<string | null>(null);

@@ -81,6 +81,16 @@ function parseRetryAfterSec(res: Response): number | undefined {
   return Number.isFinite(sec) && sec > 0 ? sec : undefined;
 }
 
+function bodyLooksLikeWorkersFreeCap(body: unknown): boolean {
+  if (typeof body === "string") {
+    return body.includes("1027") || /rate limited/i.test(body);
+  }
+  if (body && typeof body === "object" && "error" in body) {
+    return bodyLooksLikeWorkersFreeCap((body as { error: unknown }).error);
+  }
+  return false;
+}
+
 function apiErrorMessage(status: number, body: unknown): string {
   if (
     body &&
@@ -93,11 +103,17 @@ function apiErrorMessage(status: number, body: unknown): string {
   ) {
     return (body.error as { message: string }).message;
   }
+  if (status === 429 || bodyLooksLikeWorkersFreeCap(body)) {
+    return "API Worker kuota harian habis atau rate-limited (Cloudflare 1027 / 429). Tutup tab CMS yang refetch, lalu coba lagi setelah 00:00 UTC atau upgrade Workers Paid.";
+  }
   if (status === 503) return "D1/API tidak tersedia. Deploy Workers + jalankan migrasi D1.";
   if (status === 401 || status === 403) return "Sesi tidak valid. Masuk ulang lalu coba lagi.";
   if (status === 404) {
     // Prefer Worker body ("Route tidak ditemukan.") so mis-prefixed URLs are obvious.
     return "Data atau endpoint tidak ditemukan. Periksa VITE_API_URL / PUBLIC_API_URL (CMS: …/api).";
+  }
+  if (status === 500 || status === 502 || status === 504) {
+    return `API error ${status}. Cek D1 migrasi (fasilitas/ekstrakurikuler) dan log Worker teknovo-cms-api.`;
   }
   return `Permintaan API gagal (${status}).`;
 }
@@ -122,15 +138,20 @@ async function request<T>(
       headers,
     });
   } catch {
-    throw new ApiClientError("Tidak dapat terhubung ke API CMS (D1/api-web)", 503);
+    // Browser often surfaces Cloudflare edge 1027 (no CORS) as a network failure.
+    throw new ApiClientError(
+      "Tidak dapat terhubung ke API CMS. Sering karena Workers Free kuota harian (error 1027), CORS/CMS_ORIGIN, atau VITE_API_URL salah.",
+      503,
+    );
   }
 
   if (!res.ok) {
     let body: unknown;
+    const text = await res.text().catch(() => "");
     try {
-      body = await res.json();
+      body = text ? JSON.parse(text) : undefined;
     } catch {
-      body = undefined;
+      body = text || undefined;
     }
     throw new ApiClientError(
       apiErrorMessage(res.status, body),

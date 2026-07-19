@@ -1,7 +1,6 @@
-import { useAuth } from "@clerk/react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -12,6 +11,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { ApiClientError, fetchBeritaListCms } from "@/lib/api-client";
 import type { BeritaListItem, BeritaStatus } from "@/types/berita";
 
+import { useCmsGetToken } from "../lib/use-cms-get-token";
 import { onRouterRefresh } from "../shims/next-navigation";
 
 const STATUS_LABEL: Record<BeritaStatus, string> = {
@@ -22,14 +22,12 @@ const STATUS_LABEL: Record<BeritaStatus, string> = {
 
 /** Mirrors `src/app/(dashboard)/dashboard/berita/page.tsx`, fetched client-side. */
 export function BeritaListPage() {
-  const { getToken, isLoaded } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { canWrite } = useCmsRole();
   const [items, setItems] = useState<BeritaListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const getTokenRef = useRef(getToken);
-  getTokenRef.current = getToken;
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -40,7 +38,7 @@ export function BeritaListPage() {
       setLoading(true);
       setError(null);
       try {
-        const token = await getTokenRef.current();
+        const token = await getToken();
         if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
         const res = await fetchBeritaListCms(token, {
           page: 1,
@@ -79,7 +77,7 @@ export function BeritaListPage() {
       unsubscribe();
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [isLoaded]);
+  }, [getToken, isLoaded]);
 
   return (
     <div className="space-y-6">

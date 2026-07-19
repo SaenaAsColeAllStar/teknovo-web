@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -15,9 +14,11 @@ import {
   type SiteMediaCatalogItem,
 } from "@/lib/api-client";
 
+import { useCmsGetToken } from "../lib/use-cms-get-token";
+
 /** Mirrors dashboard media + Super Admin site media registry. */
 export function MediaPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { canManageSiteMedia, canUploadMedia } = useCmsRole();
   const [items, setItems] = useState<SiteMediaCatalogItem[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export function MediaPage() {
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!canManageSiteMedia) return;
+    if (!isLoaded || !canManageSiteMedia) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -57,7 +58,7 @@ export function MediaPage() {
     return () => {
       cancelled = true;
     };
-  }, [canManageSiteMedia, getToken]);
+  }, [canManageSiteMedia, getToken, isLoaded]);
 
   async function saveKey(mediaKey: string) {
     const url = edits[mediaKey]?.trim();

@@ -75,9 +75,22 @@ pnpm --filter @teknovo/cms dev   # http://localhost:5173
 
 ## Deploy (CLI)
 
+Vite **inlines** `VITE_*` at build time. Never deploy a `dist` that was built
+without `VITE_CLERK_PUBLISHABLE_KEY` — that replaces production and shows
+“CMS belum dikonfigurasi”. Prefer GitHub `deploy-cms.yml` (uses
+`secrets.VITE_CLERK_PUBLISHABLE_KEY`) or Cloudflare Pages builds with the
+dashboard vars above.
+
 ```bash
+# Local / emergency — export keys first (or use apps/cms/.env)
+export VITE_CLERK_PUBLISHABLE_KEY=pk_live_…
+export VITE_API_URL=https://cf.smkteknovo.sch.id/api
+pnpm --filter @teknovo/cms build
+# Confirm: rg -q 'pk_' apps/cms/dist/assets/*.js
+npx wrangler pages deploy apps/cms/dist --project-name=teknovo-cms
+
+# Or (same filter script — still needs env in the shell / .env):
 pnpm --filter @teknovo/cms deploy
-# = vite build + wrangler pages deploy dist --project-name=teknovo-cms
 ```
 
 ## Clerk

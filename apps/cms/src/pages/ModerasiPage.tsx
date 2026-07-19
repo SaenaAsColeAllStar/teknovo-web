@@ -1,4 +1,3 @@
-import { useAuth } from "@clerk/react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -10,17 +9,19 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { ApiClientError, fetchArtikelSiswaListCms } from "@/lib/api-client";
 import type { ArtikelSiswaListItem } from "@/types/artikel-siswa";
 
+import { useCmsGetToken } from "../lib/use-cms-get-token";
 import { onRouterRefresh } from "../shims/next-navigation";
 
 /** Mirrors `src/app/(dashboard)/dashboard/moderasi/page.tsx`, fetched client-side. */
 export function ModerasiPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { canModerate } = useCmsRole();
   const [items, setItems] = useState<ArtikelSiswaListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -50,7 +51,7 @@ export function ModerasiPage() {
       cancelled = true;
       unsubscribe();
     };
-  }, [getToken]);
+  }, [getToken, isLoaded]);
 
   return (
     <div className="space-y-6">

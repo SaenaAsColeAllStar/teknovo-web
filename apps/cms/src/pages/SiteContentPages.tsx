@@ -1,6 +1,5 @@
 "use client";
 
-import { useAuth } from "@clerk/react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -42,6 +41,7 @@ import {
   type PrestasiListItem,
 } from "@/lib/api-client";
 
+import { useCmsGetToken } from "../lib/use-cms-get-token";
 import { onRouterRefresh } from "../shims/next-navigation";
 
 const selectClassName =
@@ -64,13 +64,14 @@ function arrayToLines(value: string[] | undefined): string {
 /* ─── Fasilitas ─────────────────────────────────────────────────── */
 
 export function FasilitasListPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { canManageSiteContent } = useCmsRole();
   const [items, setItems] = useState<FasilitasListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -93,8 +94,12 @@ export function FasilitasListPage() {
       }
     }
     void load();
-    return onRouterRefresh(() => void load());
-  }, [getToken]);
+    const unsubscribe = onRouterRefresh(() => void load());
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [getToken, isLoaded]);
 
   return (
     <div className="space-y-6">
@@ -184,7 +189,7 @@ export function FasilitasListPage() {
 export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { canManageSiteContent } = useCmsRole();
   const [initial, setInitial] = useState<Fasilitas | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -205,7 +210,7 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
   );
 
   useEffect(() => {
-    if (mode !== "edit" || !id) return;
+    if (!isLoaded || mode !== "edit" || !id) return;
     let cancelled = false;
     async function load() {
       try {
@@ -239,7 +244,7 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
     return () => {
       cancelled = true;
     };
-  }, [mode, id, getToken]);
+  }, [mode, id, getToken, isLoaded]);
 
   async function save(nextStatus: "DRAFT" | "PUBLISHED") {
     if (!canManageSiteContent) {
@@ -475,13 +480,14 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
 /* ─── Ekstrakurikuler ───────────────────────────────────────────── */
 
 export function EkstrakurikulerListPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { canManageSiteContent } = useCmsRole();
   const [items, setItems] = useState<EkstrakurikulerListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -501,8 +507,12 @@ export function EkstrakurikulerListPage() {
       }
     }
     void load();
-    return onRouterRefresh(() => void load());
-  }, [getToken]);
+    const unsubscribe = onRouterRefresh(() => void load());
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [getToken, isLoaded]);
 
   return (
     <div className="space-y-6">
@@ -576,7 +586,7 @@ export function EkstrakurikulerFormPage({
 }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { canManageSiteContent } = useCmsRole();
   const [initial, setInitial] = useState<Ekstrakurikuler | null>(null);
   const [loading, setLoading] = useState(mode === "edit");
@@ -600,7 +610,7 @@ export function EkstrakurikulerFormPage({
   );
 
   useEffect(() => {
-    if (mode !== "edit" || !id) return;
+    if (!isLoaded || mode !== "edit" || !id) return;
     let cancelled = false;
     async function load() {
       try {
@@ -630,7 +640,7 @@ export function EkstrakurikulerFormPage({
     return () => {
       cancelled = true;
     };
-  }, [mode, id, getToken]);
+  }, [mode, id, getToken, isLoaded]);
 
   async function save(nextStatus: "DRAFT" | "PUBLISHED") {
     if (!canManageSiteContent) return;
@@ -857,13 +867,14 @@ export function EkstrakurikulerFormPage({
 /* ─── Prestasi ──────────────────────────────────────────────────── */
 
 export function PrestasiListPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { canManageSiteContent } = useCmsRole();
   const [items, setItems] = useState<PrestasiListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
@@ -883,8 +894,12 @@ export function PrestasiListPage() {
       }
     }
     void load();
-    return onRouterRefresh(() => void load());
-  }, [getToken]);
+    const unsubscribe = onRouterRefresh(() => void load());
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
+  }, [getToken, isLoaded]);
 
   return (
     <div className="space-y-6">
@@ -954,7 +969,7 @@ export function PrestasiListPage() {
 export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useCmsGetToken();
   const { canManageSiteContent } = useCmsRole();
   const [initial, setInitial] = useState<Prestasi | null>(null);
   const [loading, setLoading] = useState(mode === "edit");
@@ -973,7 +988,7 @@ export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
   );
 
   useEffect(() => {
-    if (mode !== "edit" || !id) return;
+    if (!isLoaded || mode !== "edit" || !id) return;
     let cancelled = false;
     async function load() {
       try {
@@ -998,7 +1013,7 @@ export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
     return () => {
       cancelled = true;
     };
-  }, [mode, id, getToken]);
+  }, [mode, id, getToken, isLoaded]);
 
   async function save(nextStatus: "DRAFT" | "PUBLISHED") {
     if (!canManageSiteContent) return;
