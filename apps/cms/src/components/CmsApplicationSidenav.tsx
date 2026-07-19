@@ -1,6 +1,7 @@
 import { useAuth } from "@clerk/react";
 import {
   BookOpen,
+  Building2,
   ChevronDown,
   CircleHelp,
   Download,
@@ -13,6 +14,7 @@ import {
   Settings,
   ShieldCheck,
   Tags,
+  Trophy,
   UserPlus,
   Users,
   X,
@@ -64,13 +66,51 @@ type NavGroup = {
 
 type NavEntry = NavLeaf | NavGroup;
 
-function pathActive(pathname: string, href: string): boolean {
+/**
+ * Active when exact match, or prefix match if no longer sibling href claims the path
+ * (so `/berita/baru` highlights "Berita baru", not also "Berita").
+ */
+function pathActive(
+  pathname: string,
+  href: string,
+  siblingHrefs: readonly string[] = [],
+): boolean {
   if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
+  if (pathname === href) return true;
+  if (!pathname.startsWith(`${href}/`)) return false;
+  return !siblingHrefs.some(
+    (other) =>
+      other !== href &&
+      other.length > href.length &&
+      (pathname === other || pathname.startsWith(`${other}/`)),
+  );
 }
 
 function groupActive(pathname: string, children: NavChild[]): boolean {
-  return children.some((c) => pathActive(pathname, c.href));
+  const hrefs = children.map((c) => c.href);
+  return children.some((c) => pathActive(pathname, c.href, hrefs));
+}
+
+function childIcon(id: string): ReactNode {
+  if (id === "moderasi") {
+    return <ShieldCheck className="size-3.5 shrink-0 opacity-70" aria-hidden />;
+  }
+  if (id.startsWith("artikel")) {
+    return <PenLine className="size-3.5 shrink-0 opacity-70" aria-hidden />;
+  }
+  if (id === "kategori") {
+    return <Tags className="size-3.5 shrink-0 opacity-70" aria-hidden />;
+  }
+  if (id === "media") {
+    return <ImageIcon className="size-3.5 shrink-0 opacity-70" aria-hidden />;
+  }
+  if (id === "prestasi") {
+    return <Trophy className="size-3.5 shrink-0 opacity-70" aria-hidden />;
+  }
+  if (id === "fasilitas" || id === "ekstrakurikuler") {
+    return <Building2 className="size-3.5 shrink-0 opacity-70" aria-hidden />;
+  }
+  return <FileText className="size-3.5 shrink-0 opacity-70" aria-hidden />;
 }
 
 export type CmsApplicationSidenavProps = {
@@ -105,6 +145,7 @@ export function CmsApplicationSidenav({
   const [alertVisible, setAlertVisible] = useState(true);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     konten: true,
+    profil: true,
   });
 
   const alertTitleId = useId();
@@ -130,6 +171,7 @@ export function CmsApplicationSidenav({
     };
   }, [getToken, canViewModerasi]);
 
+  /** Editorial: berita, artikel, moderasi, kategori */
   const kontenChildren: NavChild[] = [];
   if (canAccessBeritaSekolah) {
     kontenChildren.push({ id: "berita", label: "Berita", href: "/berita" });
@@ -163,13 +205,16 @@ export function CmsApplicationSidenav({
   }
   kontenChildren.push({ id: "kategori", label: "Kategori", href: "/kategori" });
 
+  /** Site / school profile content + media library */
+  const profilChildren: NavChild[] = [];
   if (canManageSiteContent) {
-    kontenChildren.push(
+    profilChildren.push(
       { id: "fasilitas", label: "Fasilitas", href: "/fasilitas" },
       { id: "ekstrakurikuler", label: "Ekstrakurikuler", href: "/ekstrakurikuler" },
       { id: "prestasi", label: "Prestasi", href: "/prestasi" },
     );
   }
+  profilChildren.push({ id: "media", label: "Media", href: "/media" });
 
   const primaryNav: NavEntry[] = [
     {
@@ -188,11 +233,12 @@ export function CmsApplicationSidenav({
       children: kontenChildren,
     },
     {
-      kind: "link",
-      id: "media",
-      label: "Media",
-      href: "/media",
-      icon: <ImageIcon className="size-4 shrink-0" aria-hidden />,
+      kind: "group",
+      id: "profil",
+      label: "Profil sekolah",
+      icon: <Building2 className="size-4 shrink-0" aria-hidden />,
+      defaultOpen: true,
+      children: profilChildren,
     },
   ];
 
@@ -214,20 +260,21 @@ export function CmsApplicationSidenav({
     onNavigate?.();
   }
 
+  /** Soft brand rail — avoids a solid blue fill that looked like an orphan bar. */
   const rowClass = (active: boolean) =>
     cn(
-      "flex w-full items-center gap-2 px-3 py-2 text-sm font-medium transition-colors [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-current",
+      "flex w-full items-center gap-2 border-l-2 px-3 py-2 text-sm font-medium transition-colors [&_svg]:size-4 [&_svg]:shrink-0 [&_svg]:stroke-current",
       active
-        ? "bg-[color:var(--color-brand)] text-white"
-        : "text-[color:var(--color-body)] hover:bg-[color:var(--color-neutral-soft)] hover:text-[color:var(--color-heading)]",
+        ? "border-[color:var(--color-brand)] bg-[color:var(--color-brand)]/8 text-[color:var(--color-brand)]"
+        : "border-transparent text-[color:var(--color-body)] hover:bg-[color:var(--color-neutral-soft)] hover:text-[color:var(--color-heading)]",
     );
 
   const childRowClass = (active: boolean) =>
     cn(
-      "flex w-full items-center gap-2 py-1.5 pl-9 pr-3 text-sm font-medium transition-colors",
+      "flex w-full items-center gap-2 border-l-2 py-1.5 pl-9 pr-3 text-sm font-medium transition-colors",
       active
-        ? "bg-[color:var(--color-neutral-soft)] text-[color:var(--color-heading)]"
-        : "text-[color:var(--color-body)] hover:bg-[color:var(--color-neutral-soft)] hover:text-[color:var(--color-heading)]",
+        ? "border-[color:var(--color-brand)] bg-[color:var(--color-neutral-soft)] text-[color:var(--color-heading)]"
+        : "border-transparent text-[color:var(--color-body)] hover:bg-[color:var(--color-neutral-soft)] hover:text-[color:var(--color-heading)]",
     );
 
   return (
@@ -288,14 +335,16 @@ export function CmsApplicationSidenav({
 
             const expanded = openGroups[entry.id] ?? entry.defaultOpen ?? false;
             const active = groupActive(pathname, entry.children);
+            const childHrefs = entry.children.map((c) => c.href);
             return (
               <div key={entry.id} className="flex flex-col gap-0.5">
                 <button
                   type="button"
                   className={cn(
                     rowClass(active && !expanded),
-                    active && expanded &&
-                      "bg-[color:var(--color-neutral-soft)] text-[color:var(--color-heading)]",
+                    active &&
+                      expanded &&
+                      "border-transparent bg-[color:var(--color-neutral-soft)] text-[color:var(--color-heading)]",
                   )}
                   aria-expanded={expanded}
                   onClick={() => toggleGroup(entry.id)}
@@ -315,7 +364,11 @@ export function CmsApplicationSidenav({
                 {expanded ? (
                   <div className="flex flex-col gap-0.5 pb-1" role="group">
                     {entry.children.map((child) => {
-                      const childActive = pathActive(pathname, child.href);
+                      const childActive = pathActive(
+                        pathname,
+                        child.href,
+                        childHrefs,
+                      );
                       return (
                         <Link
                           key={child.id}
@@ -324,15 +377,7 @@ export function CmsApplicationSidenav({
                           className={childRowClass(childActive)}
                           aria-current={childActive ? "page" : undefined}
                         >
-                          {child.id === "moderasi" ? (
-                            <ShieldCheck className="size-3.5 shrink-0 opacity-70" aria-hidden />
-                          ) : child.id.startsWith("artikel") ? (
-                            <PenLine className="size-3.5 shrink-0 opacity-70" aria-hidden />
-                          ) : child.id === "kategori" ? (
-                            <Tags className="size-3.5 shrink-0 opacity-70" aria-hidden />
-                          ) : (
-                            <FileText className="size-3.5 shrink-0 opacity-70" aria-hidden />
-                          )}
+                          {childIcon(child.id)}
                           <span className="min-w-0 flex-1 truncate">
                             {child.label}
                           </span>
@@ -461,9 +506,9 @@ function NavBadge({
   return (
     <span
       className={cn(
-        "inline-flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold leading-none",
+        "inline-flex size-5 shrink-0 items-center justify-center text-[10px] font-semibold leading-none",
         active
-          ? "bg-white/20 text-white"
+          ? "bg-[color:var(--color-brand)]/15 text-[color:var(--color-brand)]"
           : "bg-[color:var(--color-brand)] text-white",
       )}
       aria-label={`${value} item`}

@@ -34,6 +34,8 @@ cd apps/api
 npx wrangler secret put CLERK_SECRET_KEY
 npx wrangler secret put CLERK_WEBHOOK_SECRET
 npx wrangler secret put GITHUB_REBUILD_TOKEN
+# Apply any pending D1 migrations before/after deploy (creates site_media, etc.)
+pnpm d1:migrate:remote
 pnpm deploy
 ```
 
@@ -41,4 +43,12 @@ pnpm deploy
 
 - `DB` → D1 `teknovo-article`
 - `CMS_BUCKET` → R2 `teknovo`
-- vars: `R2_PUBLIC_URL`, `CMS_ORIGIN`, `WEB_ORIGIN`
+- vars: `R2_PUBLIC_URL`, `CMS_ORIGIN`, `WEB_ORIGIN`, `ENVIRONMENT=production`
+
+Local: set `ENVIRONMENT=development` in `.dev.vars` for localhost CORS.
+
+## Tests
+
+```bash
+pnpm --filter @teknovo/api test
+```
