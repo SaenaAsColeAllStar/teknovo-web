@@ -119,10 +119,12 @@ if (typeof window !== "undefined" && !window[FLAG]) {
   document.addEventListener("astro:before-preparation", onBeforePreparation);
   document.addEventListener("astro:after-swap", () => {
     syncAfterSwap();
+    restoreTransitionVisibility();
     scheduleRestoreAfterNav();
   });
   document.addEventListener("astro:page-load", () => {
     syncAfterSwap();
+    restoreTransitionVisibility();
     scheduleRestoreAfterNav();
   });
 
@@ -135,4 +137,7 @@ if (typeof window !== "undefined" && !window[FLAG]) {
   window.addEventListener("pageshow", () => {
     restoreTransitionVisibility();
   });
+
+  // Cold load / late script: clear any stuck VT state immediately.
+  restoreTransitionVisibility();
 }

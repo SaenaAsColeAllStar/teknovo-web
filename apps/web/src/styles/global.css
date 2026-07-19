@@ -91,12 +91,15 @@ html {
 
 /**
  * After an interrupted View Transition, scoped nodes can remain non-interactive
- * ghosts. Keep the live DOM main slot paintable (main no longer uses a named
- * VT group; this is a belt-and-suspenders default).
+ * ghosts. Force the live main + hero paintable even if inline styles or VT
+ * leftover state try to hide them (matches blank-home + footer-only bug).
+ * `!important` beats Astro fallback / Framer leftover inline opacity on these
+ * shells — child menus still animate their own opacity normally.
  */
-.public-page-main {
-  opacity: 1;
-  visibility: visible;
+.public-page-main,
+#beranda {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 body {

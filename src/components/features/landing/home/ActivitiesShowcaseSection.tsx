@@ -102,13 +102,17 @@ const MATRIX_SEEDS: readonly MatrixSeed[] = [
 ] as const;
 
 /**
- * Etalase program beranda — matriks 3×3 program & ekstrakurikuler.
+ * Build showcase matrix rows (Astro SSG / Next RSC). Never call from a
+ * `client:*` island — that re-fetches the API on every hydrate and can
+ * rate-limit + suspend the whole HomePage tree (blank main + dead nav).
  */
-export async function ActivitiesShowcaseSection(): Promise<ReactElement> {
+export async function getActivitiesShowcaseItems(): Promise<
+  ActivitiesShowcaseItem[]
+> {
   const ekskulCards = await getEkskulPublikCards();
   const bySlug = new Map(ekskulCards.map((c) => [c.slug, c]));
 
-  const items: ActivitiesShowcaseItem[] = MATRIX_SEEDS.map((seed) => {
+  return MATRIX_SEEDS.map((seed) => {
     const live = seed.slug ? bySlug.get(seed.slug) : undefined;
     return {
       id: seed.id,
@@ -118,6 +122,14 @@ export async function ActivitiesShowcaseSection(): Promise<ReactElement> {
       iconKey: seed.iconKey,
     };
   });
+}
 
+/**
+ * Etalase program beranda — matriks 3×3 program & ekstrakurikuler.
+ * Async RSC only (Next `(site)/page`). Astro must use
+ * `getActivitiesShowcaseItems` + `ActivitiesShowcaseSectionClient`.
+ */
+export async function ActivitiesShowcaseSection(): Promise<ReactElement> {
+  const items = await getActivitiesShowcaseItems();
   return <ActivitiesShowcaseSectionClient items={items} />;
 }

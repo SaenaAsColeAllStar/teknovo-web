@@ -75,7 +75,13 @@ const ogTitle = title.includes("TEKNOVO") ? title : `${title} | TEKNOVO`;
 ---
 
 <!doctype html>
-<html lang="id" class="h-full antialiased" transition:animate="none">
+{/*
+    Do NOT put transition:animate / transition:name on <html> or <main>.
+    Even transition:animate="none" still assigns view-transition-name; the UA
+    hides that live node during VT. If the transition is skipped (tab hidden),
+    the page can stay invisible while the footer (root group) still paints.
+  */}
+<html lang="id" class="h-full antialiased">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -162,11 +168,11 @@ const ogTitle = title.includes("TEKNOVO") ? title : `${title} | TEKNOVO`;
       island. Nesting page islands inside PublicChrome caused ClientRouter
       remount hydration #418/#424 and wiped main while footer still painted.
 
-      Do NOT put transition:animate / transition:name on main. Even
+      Do NOT put transition:animate / transition:name on html or main. Even
       transition:animate="none" still assigns a view-transition-name and the UA
       hides that live DOM node during VT (old pseudo gets opacity:0). When VT is
-      skipped (tab hidden), main can stay invisible while the footer (root group)
-      still paints — the live blank-homepage bug.
+      skipped (tab hidden), the scoped node can stay invisible while the footer
+      (root group) still paints — the live blank-homepage bug.
     */}
     <PublicSiteRuntime client:load />
     <PublicNavbarIsland
