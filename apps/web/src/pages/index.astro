@@ -1,6 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import { HomePage } from "../site/HomePage";
+import { LocalSeoJsonLd } from "@/components/features/landing/local-seo/LocalSeoJsonLd";
 import { getPublishedArtikelSiswaCards } from "@/services/artikel-berita-publik";
 import { getPublishedBeritaKegiatanCards } from "@/services/berita-kegiatan-publik";
 import { getLandingPublicStats } from "@/services/landing-stats";
@@ -23,6 +24,8 @@ const seo = getLocalSeoPageConfig("home");
   description={seo.description}
   preloadImages={[LANDING_MEDIA.hero.bg01Webp]}
 >
+  <!-- JSON-LD must not hydrate inside a React island (script tag ≠ text mismatch). -->
+  <LocalSeoJsonLd pageId="home" includeWebSite includeFaq useGraph />
   <HomePage
     client:load
     stats={stats}

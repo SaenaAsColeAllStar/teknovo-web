@@ -29,9 +29,9 @@ const SLIDES = LANDING_MEDIA.hero.slides;
  * Hero beranda full-bleed: foto edge-to-edge, overlay nav pin di atas section,
  * watermark, anchor kiri (judul + lede + CTA), carousel thumb kanan-bawah.
  *
- * Astro note: `HomePage` is its own island, so LazyMotion from `PublicChrome`
- * does not apply here — this tree must carry its own `LazyMotion` or `m.*`
- * nodes stay at `initial` (opacity 0) after hydration.
+ * Astro note: `HomePage` is its own island (sibling of chrome), so LazyMotion
+ * from the navbar island does not apply here — this tree must carry its own
+ * `LazyMotion` or `m.*` nodes stay at `initial` after hydration.
  */
 export function HeroSection({
   mainNav,

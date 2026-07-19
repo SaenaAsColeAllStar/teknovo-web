@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Copy, Link2 } from "lucide-react";
+import { Copy, Link2, MessageCircle, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import {
   CMS_INVITE_EXPIRY_DEFAULT,
@@ -28,8 +28,13 @@ import { Label } from "@/components/ui/label";
 import {
   ApiClientError,
   createCmsUser,
+  resendCmsInvitation,
   type CmsUserListItem,
 } from "@/lib/api-client";
+import {
+  buildWhatsAppInviteMessage,
+  buildWhatsAppInviteUrl,
+} from "@/lib/whatsapp-invite";
 
 const selectClass =
   "flex h-10 w-full rounded-none border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 disabled:opacity-50";
@@ -43,10 +48,13 @@ const EXPIRY_LABEL: Record<CmsInviteExpiryDays, string> = {
 };
 
 export type InviteSuccess = {
+  invitationId: string;
   email: string;
   role: CmsRole;
   expiresAt: string | null;
+  expiresInDays: number | null;
   url: string | null;
+  notified: boolean;
 };
 
 type Props = {
@@ -70,11 +78,13 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
 
   const [email, setEmail] = useState("");
   const [nama, setNama] = useState("");
+  const [phone, setPhone] = useState("");
   const [role, setRole] = useState<CmsRole>(defaultRole);
   const [expiresInDays, setExpiresInDays] = useState<CmsInviteExpiryDays>(
     CMS_INVITE_EXPIRY_DEFAULT,
   );
   const [busy, setBusy] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [success, setSuccess] = useState<InviteSuccess | null>(null);
 
   useEffect(() => {
@@ -83,7 +93,9 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
     setExpiresInDays(CMS_INVITE_EXPIRY_DEFAULT);
     setEmail("");
     setNama("");
+    setPhone("");
     setSuccess(null);
+    setFormError(null);
     setBusy(false);
   }, [open, defaultRole]);
 
@@ -96,15 +108,18 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
     e.preventDefault();
     const emailTrim = email.trim();
     if (!emailTrim || !emailTrim.includes("@")) {
+      setFormError("Email tidak valid.");
       toast.error("Email tidak valid.");
       return;
     }
     if (createOptions.length === 0) {
+      setFormError("Anda tidak dapat mengundang pengguna.");
       toast.error("Anda tidak dapat mengundang pengguna.");
       return;
     }
 
     setBusy(true);
+    setFormError(null);
     try {
       const token = await getToken();
       if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
@@ -126,19 +141,26 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
         return;
       }
       setSuccess({
+        invitationId: created.id,
         email: created.email ?? emailTrim,
         role,
         expiresAt: created.expiresAt ?? null,
+        expiresInDays: created.expiresInDays ?? expiresInDays,
         url: created.url ?? null,
+        notified: created.notified !== false,
       });
       onInvited?.(created);
-      toast.success("Undangan dikirim", {
-        description: `Email undangan Clerk dikirim ke ${created.email ?? emailTrim}.`,
+      toast.success("Undangan dibuat", {
+        description:
+          "Clerk diminta mengirim email. Cek spam, tunggu 1–2 menit, atau bagikan tautan / WhatsApp.",
       });
     } catch (err) {
-      toast.error(
-        err instanceof ApiClientError ? err.message : "Gagal mengirim undangan.",
-      );
+      const message =
+        err instanceof ApiClientError
+          ? err.message
+          : "Gagal mengirim undangan.";
+      setFormError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -151,6 +173,55 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
       toast.success("Tautan undangan disalin");
     } catch {
       toast.error("Gagal menyalin tautan.");
+    }
+  }
+
+  function openWhatsApp() {
+    if (!success?.url) {
+      toast.error("Tautan undangan belum tersedia dari Clerk.");
+      return;
+    }
+    const message = buildWhatsAppInviteMessage({
+      inviteUrl: success.url,
+      role: success.role,
+      email: success.email,
+      expiresAt: success.expiresAt,
+      expiresInDays: success.expiresInDays,
+    });
+    const href = buildWhatsAppInviteUrl(message, phone);
+    window.open(href, "_blank", "noopener,noreferrer");
+  }
+
+  async function onResend() {
+    if (!success?.invitationId) return;
+    setBusy(true);
+    setFormError(null);
+    try {
+      const token = await getToken();
+      if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
+      const created = await resendCmsInvitation(success.invitationId, token);
+      setSuccess({
+        invitationId: created.id,
+        email: created.email ?? success.email,
+        role: (created.role as CmsRole) ?? success.role,
+        expiresAt: created.expiresAt ?? null,
+        expiresInDays: created.expiresInDays ?? success.expiresInDays,
+        url: created.url ?? null,
+        notified: created.notified !== false,
+      });
+      onInvited?.(created);
+      toast.success("Undangan dikirim ulang", {
+        description: "Email Clerk baru diminta. Bagikan tautan jika perlu.",
+      });
+    } catch (err) {
+      const message =
+        err instanceof ApiClientError
+          ? err.message
+          : "Gagal mengirim ulang undangan.";
+      setFormError(message);
+      toast.error(message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -168,11 +239,11 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
       >
         <DialogHeader>
           <DialogTitle>
-            {success ? "Undangan terkirim" : "Undang tim"}
+            {success ? "Undangan dibuat" : "Undang tim"}
           </DialogTitle>
           <DialogDescription>
             {success
-              ? "Tinjau status undangan. Setelah diterima, tetapkan atau sesuaikan peran di tab Pengguna."
+              ? "Bagikan tautan jika email lambat atau tidak sampai. Setelah diterima, sesuaikan peran di tab Pengguna bila perlu."
               : actorHint}
           </DialogDescription>
         </DialogHeader>
@@ -198,6 +269,14 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
                   Menunggu
                 </dd>
               </div>
+              <div className="flex justify-between gap-3">
+                <dt className="text-[color:var(--color-body-subtle)]">Email Clerk</dt>
+                <dd className="text-right text-[color:var(--color-heading)]">
+                  {success.notified
+                    ? "Diminta kirim (bisa 1–2 menit / spam)"
+                    : "Tidak diminta"}
+                </dd>
+              </div>
               {success.expiresAt ? (
                 <div className="flex justify-between gap-3">
                   <dt className="text-[color:var(--color-body-subtle)]">
@@ -210,9 +289,25 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
               ) : null}
             </dl>
 
+            <div className="space-y-2 border border-[color:var(--color-border)] p-3 text-xs text-[color:var(--color-body)]">
+              <p className="font-medium text-[color:var(--color-heading)]">
+                Email belum masuk?
+              </p>
+              <ul className="list-disc space-y-1 pl-4">
+                <li>Tunggu 1–2 menit, lalu cek folder spam/promosi.</li>
+                <li>
+                  Pastikan Clerk Dashboard → Email aktif (lihat Bantuan).
+                </li>
+                <li>
+                  Bagikan <strong>tautan undangan</strong> atau kirim via WhatsApp
+                  di bawah.
+                </li>
+              </ul>
+            </div>
+
             {success.url ? (
               <div className="space-y-2">
-                <Label htmlFor="invite-url">Tautan undangan</Label>
+                <Label htmlFor="invite-url">Tautan undangan (utama)</Label>
                 <div className="flex gap-2">
                   <Input
                     id="invite-url"
@@ -232,20 +327,68 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
                 </div>
                 <p className="flex items-start gap-1.5 text-xs text-[color:var(--color-body-subtle)]">
                   <Link2 className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                  Email sudah dikirim. Tautan ini bisa dibagikan manual jika
-                  perlu.
+                  Salin tautan ini jika email Clerk terlambat atau tidak sampai.
                 </p>
               </div>
             ) : (
               <p className="text-sm text-[color:var(--color-body)]">
-                Email undangan telah dikirim. Cek tab Undangan untuk status.
+                Clerk belum mengembalikan tautan undangan. Cek tab Undangan atau
+                kirim ulang.
               </p>
             )}
 
-            <DialogFooter>
-              <Button type="button" onClick={() => onOpenChange(false)}>
-                Selesai
-              </Button>
+            {formError ? (
+              <p
+                role="alert"
+                className="border border-[color:var(--color-danger)]/25 bg-[color:var(--color-danger)]/5 px-3 py-2 text-sm text-[color:var(--color-danger)]"
+              >
+                {formError}
+              </p>
+            ) : null}
+
+            <DialogFooter className="flex-col gap-2 sm:flex-col">
+              <div className="flex w-full flex-wrap gap-2">
+                <Button
+                  type="button"
+                  className="flex-1 gap-2"
+                  disabled={!success.url || busy}
+                  onClick={openWhatsApp}
+                >
+                  <MessageCircle className="size-4" aria-hidden />
+                  Kirim via WhatsApp
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1 gap-2"
+                  disabled={busy || !success.url}
+                  onClick={() => void copyUrl()}
+                >
+                  <Copy className="size-4" aria-hidden />
+                  Salin tautan
+                </Button>
+              </div>
+              <div className="flex w-full flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1 gap-2"
+                  disabled={busy}
+                  onClick={() => void onResend()}
+                >
+                  <RefreshCw className="size-4" aria-hidden />
+                  {busy ? "Mengirim…" : "Kirim ulang undangan"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="flex-1"
+                  disabled={busy}
+                  onClick={() => onOpenChange(false)}
+                >
+                  Selesai
+                </Button>
+              </div>
             </DialogFooter>
           </div>
         ) : (
@@ -276,6 +419,24 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
               />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="invite-phone">
+                WhatsApp (opsional)
+              </Label>
+              <Input
+                id="invite-phone"
+                type="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="08… atau 62…"
+                disabled={busy}
+              />
+              <p className="text-xs text-[color:var(--color-body-subtle)]">
+                Setelah undangan dibuat, tombol WhatsApp membuka chat dengan
+                nomor ini (atau pemilih kontak jika kosong).
+              </p>
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="invite-role">Peran</Label>
               <select
                 id="invite-role"
@@ -298,7 +459,9 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
                 className={selectClass}
                 value={expiresInDays}
                 onChange={(e) =>
-                  setExpiresInDays(Number(e.target.value) as CmsInviteExpiryDays)
+                  setExpiresInDays(
+                    Number(e.target.value) as CmsInviteExpiryDays,
+                  )
                 }
                 disabled={busy}
               >
@@ -310,9 +473,19 @@ export function InviteTeamModal({ open, onOpenChange, onInvited }: Props) {
               </select>
               <p className="text-xs text-[color:var(--color-body-subtle)]">
                 Setelah masa berlaku habis, tautan undangan tidak bisa dipakai.
-                Default 7 hari.
+                Default 7 hari. Email dikirim oleh Clerk (bukan SMTP sekolah).
               </p>
             </div>
+
+            {formError ? (
+              <p
+                role="alert"
+                className="border border-[color:var(--color-danger)]/25 bg-[color:var(--color-danger)]/5 px-3 py-2 text-sm text-[color:var(--color-danger)]"
+              >
+                {formError}
+              </p>
+            ) : null}
+
             <DialogFooter>
               <Button
                 type="button"

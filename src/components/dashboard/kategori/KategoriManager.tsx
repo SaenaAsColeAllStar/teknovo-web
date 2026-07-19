@@ -81,7 +81,7 @@ export function KategoriManager({ initial, listError }: Props) {
     }
     if (!apiReady) {
       toast.error("API belum dikonfigurasi", {
-        description: "Set API_URL / NEXT_PUBLIC_API_URL (lihat .env.example).",
+        description: "Set VITE_API_URL (CMS) atau API_URL lokal (lihat .env.example).",
       });
       return;
     }

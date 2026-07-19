@@ -104,8 +104,8 @@ export function FasilitasListPage() {
             Fasilitas
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            Kelola halaman fasilitas dan tautan navbar. Setelah publish, situs
-            publik di-rebuild.
+            Kelola halaman fasilitas yang tampil di situs publik. Setelah terbit,
+            situs di-rebuild otomatis.
           </p>
         </div>
         {canManageSiteContent ? (
@@ -316,7 +316,7 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
             {mode === "create" ? "Fasilitas baru" : "Edit fasilitas"}
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            Nav label muncul di navbar grup Fasilitas setelah publish + rebuild.
+            Label navigasi muncul di grup Fasilitas setelah konten diterbitkan.
           </p>
         </div>
         <Button asChild size="sm" variant="secondary">
@@ -512,7 +512,7 @@ export function EkstrakurikulerListPage() {
             Ekstrakurikuler
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            Unit ekskul di halaman kesiswaan.
+            Unit ekstrakurikuler di halaman kesiswaan.
           </p>
         </div>
         {canManageSiteContent ? (

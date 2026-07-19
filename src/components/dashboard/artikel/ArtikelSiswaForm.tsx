@@ -92,7 +92,7 @@ export function ArtikelSiswaForm({ mode, initial, kategori }: Props) {
     if (!apiReady) {
       toast.error("API belum dikonfigurasi", {
         description:
-          "Set API_URL / NEXT_PUBLIC_API_URL ke base URL api-web (lihat .env.example).",
+          "Set VITE_API_URL (CMS) ke base API, misalnya https://cf.smkteknovo.sch.id/api.",
       });
       return;
     }

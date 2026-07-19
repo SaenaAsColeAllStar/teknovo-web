@@ -11,8 +11,8 @@ const PROOF_POINTS: ReadonlyArray<{
 }> = [
   {
     icon: <FileText className="size-4" aria-hidden />,
-    metric: "500+ publikasi konten",
-    detail: "Berita dan artikel sekolah dikelola lewat CMS sebelum tayang publik.",
+    metric: "Berita & artikel sekolah",
+    detail: "Konten resmi dikelola redaksi sebelum tayang di situs publik.",
   },
   {
     icon: <Images className="size-4" aria-hidden />,
@@ -22,7 +22,7 @@ const PROOF_POINTS: ReadonlyArray<{
   {
     icon: <ShieldCheck className="size-4" aria-hidden />,
     metric: "Akses berbasis peran",
-    detail: "Admin, editor, dan viewer dengan batas yang jelas untuk tim sekolah.",
+    detail: "Super Admin, Admin, Siswa, dan Viewer dengan batas yang jelas.",
   },
 ];
 
@@ -38,12 +38,12 @@ export function AuthSocialProofPanel({ className }: AuthSocialProofPanelProps): 
   return (
     <div className={cn("flex w-full flex-col items-start text-left", className)}>
       <h2 className="text-3xl font-bold leading-tight tracking-tight text-[color:var(--color-heading)] sm:text-4xl xl:text-[2.75rem] xl:leading-[1.15]">
-        Dipercaya 200+ guru &amp; staf di CMS {BRAND_SHORT}
+        CMS konten untuk tim SMK {BRAND_SHORT}
       </h2>
 
       <p className="mt-4 max-w-md text-base leading-relaxed text-[color:var(--color-body)] sm:text-[1.05rem]">
-        Platform editorial SMK {BRAND_SHORT} membantu tim sekolah mengelola berita, media, dan
-        publikasi akademik dengan aman — terkoordinasi, dan siap tayang ke situs publik.
+        Kelola berita, media, dan publikasi sekolah dengan aman — terkoordinasi
+        redaksi, lalu siap tayang ke situs publik.
       </p>
 
       <ul className="mt-10 space-y-6 sm:mt-12">

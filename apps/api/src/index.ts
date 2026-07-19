@@ -17,6 +17,9 @@ import {
 import { usersRoutes } from "./routes/users";
 import type { AppEnv } from "./lib/http";
 import {
+  cmsReadLimit,
+  cmsWriteLimit,
+  hasBearerAuth,
   hookLimit,
   mediaLimit,
   publicReadLimit,
@@ -57,6 +60,7 @@ app.use("*", async (c, next) => {
 });
 
 // Rate limits (CF-Connecting-IP). Per-isolate sliding window — see DEPLOY.md.
+// Bearer CMS traffic uses separate higher buckets so dashboard ≠ public GET quota.
 // OPTIONS skipped by method checks below.
 app.use("/api/*", async (c, next) => {
   if (c.req.method === "OPTIONS") return next();
@@ -68,10 +72,11 @@ app.use("/api/*", async (c, next) => {
   if (path.startsWith("/api/cms/media")) {
     return mediaLimit(c, next);
   }
+  const authed = hasBearerAuth(c);
   if (c.req.method === "GET" || c.req.method === "HEAD") {
-    return publicReadLimit(c, next);
+    return (authed ? cmsReadLimit : publicReadLimit)(c, next);
   }
-  return writeLimit(c, next);
+  return (authed ? cmsWriteLimit : writeLimit)(c, next);
 });
 
 app.get("/api/health", (c) =>

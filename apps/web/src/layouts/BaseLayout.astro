@@ -1,6 +1,8 @@
 ---
 import { ClientRouter } from "astro:transitions";
-import { PublicChrome } from "../components/PublicChrome";
+import { PublicFooterIsland } from "../components/PublicFooterIsland";
+import { PublicNavbarIsland } from "../components/PublicNavbarIsland";
+import { PublicSiteRuntime } from "../components/PublicSiteRuntime";
 import { getPublicSiteMainNav } from "@/services/public-site-nav-publik";
 import "../styles/global.css";
 
@@ -154,11 +156,11 @@ const ogTitle = title.includes("TEKNOVO") ? title : `${title} | TEKNOVO`;
     <!-- Persistent Lenis ↔ ClientRouter sync + VT blank-main failsafe. -->
     <script src="../scripts/lenis-page-nav.ts"></script>
   </head>
-  <body class="bg-surface font-sans text-body min-h-full">
+  <body class="flex min-h-full flex-col bg-surface font-sans text-body text-foreground">
     {/*
-      Do not transition:persist PublicChrome: it wraps page <slot /> as React children.
-      Persisting would keep Lenis/ClickSpark but risk stale nested islands / children.
-      Remount re-inits providers; navbar stays visually stable via view-transition-name.
+      Chrome islands are SIBLINGS of page main — never wrap <slot /> in a React
+      island. Nesting page islands inside PublicChrome caused ClientRouter
+      remount hydration #418/#424 and wiped main while footer still painted.
 
       Do NOT put transition:animate / transition:name on main. Even
       transition:animate="none" still assigns a view-transition-name and the UA
@@ -166,16 +168,16 @@ const ogTitle = title.includes("TEKNOVO") ? title : `${title} | TEKNOVO`;
       skipped (tab hidden), main can stay invisible while the footer (root group)
       still paints — the live blank-homepage bug.
     */}
-    <PublicChrome
+    <PublicSiteRuntime client:load />
+    <PublicNavbarIsland
       client:load
-      hideNavbar={hideNavbar}
-      hideFooter={hideFooter}
+      hidden={hideNavbar}
       pathname={pathname}
       mainNav={mainNav}
-    >
-      <div class="public-page-main">
-        <slot />
-      </div>
-    </PublicChrome>
+    />
+    <main class="public-page-main min-w-0 flex-1 overflow-x-clip">
+      <slot />
+    </main>
+    {hideFooter ? null : <PublicFooterIsland client:load />}
   </body>
 </html>

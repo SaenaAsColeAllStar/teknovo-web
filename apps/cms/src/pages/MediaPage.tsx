@@ -111,8 +111,8 @@ export function MediaPage() {
               Media situs publik
             </h1>
             <p className="text-sm text-[color:var(--color-body)]">
-              Super Admin dapat mengganti URL media landing/brand yang dipakai{" "}
-              <code>apps/web</code>. Setelah simpan, API memicu rebuild Pages.
+              Ganti URL foto/logo yang dipakai di situs publik. Setelah disimpan,
+              situs di-rebuild otomatis.
             </p>
           </div>
           {error ? (

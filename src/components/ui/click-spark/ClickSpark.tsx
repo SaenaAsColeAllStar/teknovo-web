@@ -236,6 +236,28 @@ export function ClickSpark({
     return () => document.removeEventListener("click", handleClick, true);
   }, [sparkCount, startAnimating]);
 
+  const canvas = (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: "fixed",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        zIndex: 9999,
+        display: "block",
+        userSelect: "none",
+        pointerEvents: "none",
+      }}
+      aria-hidden
+    />
+  );
+
+  // Overlay-only mode (Astro PublicSiteRuntime) — no layout wrapper around page.
+  if (children == null) {
+    return canvas;
+  }
+
   return (
     <div
       className={className}
@@ -247,20 +269,7 @@ export function ClickSpark({
       }}
     >
       {children}
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "fixed",
-          inset: 0,
-          width: "100%",
-          height: "100%",
-          zIndex: 9999,
-          display: "block",
-          userSelect: "none",
-          pointerEvents: "none",
-        }}
-        aria-hidden
-      />
+      {canvas}
     </div>
   );
 }

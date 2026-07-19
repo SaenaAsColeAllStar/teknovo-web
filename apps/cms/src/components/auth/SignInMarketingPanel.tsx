@@ -21,8 +21,8 @@ const FEATURES: ReadonlyArray<{
   },
   {
     icon: <ShieldCheck className="size-[18px]" aria-hidden />,
-    title: "Akses aman untuk staf",
-    description: "Masuk dengan email atau SSO yang dikonfigurasi di Clerk.",
+    title: "Akses sesuai peran",
+    description: "Masuk dengan email undangan — Super Admin, Admin, Siswa, atau Viewer.",
   },
 ];
 
@@ -43,8 +43,8 @@ export function SignInMarketingPanel({ className }: SignInMarketingPanelProps): 
       </h2>
 
       <p className="mt-4 max-w-md text-base leading-relaxed text-[color:var(--color-body)] sm:text-[1.05rem]">
-        Portal editorial untuk guru dan staf — kelola berita, artikel, media, dan
-        moderasi sebelum konten tayang di situs SMK Teknologi &amp; Vokasional.
+        Ruang kerja editorial SMK {BRAND_SHORT} untuk guru dan staf — kelola berita,
+        artikel, media, dan moderasi sebelum konten tayang di situs sekolah.
       </p>
 
       <ul className="mt-8 space-y-5 sm:mt-10">

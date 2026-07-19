@@ -71,7 +71,7 @@ export function PengaturanForm({ initial }: Props) {
   async function onSubmit(values: PengaturanSitusPublikPatchInput) {
     if (!apiReady) {
       toast.error("API belum dikonfigurasi", {
-        description: "Set API_URL / NEXT_PUBLIC_API_URL ke api-web.",
+        description: "Set VITE_API_URL (CMS) ke base API.",
       });
       return;
     }

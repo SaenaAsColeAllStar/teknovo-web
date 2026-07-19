@@ -102,10 +102,15 @@ function childIcon(id: string): ReactNode {
   if (id === "media") {
     return <ImageIcon className="size-3.5 shrink-0 opacity-70" aria-hidden />;
   }
-  if (id === "prestasi") {
+  if (id === "prestasi" || id === "prestasi-baru") {
     return <Trophy className="size-3.5 shrink-0 opacity-70" aria-hidden />;
   }
-  if (id === "fasilitas" || id === "ekstrakurikuler") {
+  if (
+    id === "fasilitas" ||
+    id === "fasilitas-baru" ||
+    id === "ekstrakurikuler" ||
+    id === "ekstrakurikuler-baru"
+  ) {
     return <Building2 className="size-3.5 shrink-0 opacity-70" aria-hidden />;
   }
   return <FileText className="size-3.5 shrink-0 opacity-70" aria-hidden />;
@@ -128,7 +133,7 @@ export function CmsApplicationSidenav({
 }: CmsApplicationSidenavProps): ReactElement {
   const location = useLocation();
   const pathname = location.pathname;
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useAuth();
   const {
     role,
     canManageSettings,
@@ -151,9 +156,10 @@ export function CmsApplicationSidenav({
   const alertTitleId = useId();
 
   useEffect(() => {
+    if (!isLoaded || !canViewModerasi) return;
     let cancelled = false;
     async function load() {
-      if (!isApiConfigured() || !canViewModerasi) return;
+      if (!isApiConfigured()) return;
       try {
         const token = await getToken();
         if (!token || cancelled) return;
@@ -169,7 +175,8 @@ export function CmsApplicationSidenav({
     return () => {
       cancelled = true;
     };
-  }, [getToken, canViewModerasi]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- shared analytics cache
+  }, [isLoaded, canViewModerasi]);
 
   /** Editorial: berita, artikel, moderasi, kategori */
   const kontenChildren: NavChild[] = [];
@@ -210,8 +217,23 @@ export function CmsApplicationSidenav({
   if (canManageSiteContent) {
     profilChildren.push(
       { id: "fasilitas", label: "Fasilitas", href: "/fasilitas" },
+      {
+        id: "fasilitas-baru",
+        label: "Fasilitas baru",
+        href: "/fasilitas/baru",
+      },
       { id: "ekstrakurikuler", label: "Ekstrakurikuler", href: "/ekstrakurikuler" },
+      {
+        id: "ekstrakurikuler-baru",
+        label: "Unit baru",
+        href: "/ekstrakurikuler/baru",
+      },
       { id: "prestasi", label: "Prestasi", href: "/prestasi" },
+      {
+        id: "prestasi-baru",
+        label: "Prestasi baru",
+        href: "/prestasi/baru",
+      },
     );
   }
   profilChildren.push({ id: "media", label: "Media", href: "/media" });
@@ -408,17 +430,6 @@ export function CmsApplicationSidenav({
             <BookOpen className="size-4 shrink-0" aria-hidden />
             <span className="min-w-0 flex-1 truncate">Dokumentasi</span>
           </Link>
-          <Link
-            to={HELP_HREF}
-            onClick={handleNav}
-            className={rowClass(pathActive(pathname, HELP_HREF))}
-            aria-current={
-              pathActive(pathname, HELP_HREF) ? "page" : undefined
-            }
-          >
-            <CircleHelp className="size-4 shrink-0" aria-hidden />
-            <span className="min-w-0 flex-1 truncate">Bantuan</span>
-          </Link>
         </nav>
 
         {alertVisible ? (
@@ -452,8 +463,8 @@ export function CmsApplicationSidenav({
               </div>
               <p className="mt-2 text-xs leading-relaxed text-[color:var(--color-body)]">
                 {isSiswa
-                  ? "Tulis artikel di Artikel baru, simpan draft, lalu kirim ke REVIEW. Redaksi akan menyetujui sebelum tampil di situs. Cover dan gambar lewat Media."
-                  : "Buat berita sekolah atau artikel siswa dari Buat konten. Artikel siswa butuh REVIEW → approve Super Admin. Cover lewat Media; konten terbit memicu rebuild situs publik."}
+                  ? "Tulis di Artikel baru, simpan draf, lalu kirim ke moderasi. Cover dan gambar lewat Media."
+                  : "Buat berita atau artikel dari Buat konten di bilah atas. Artikel siswa perlu disetujui Super Admin di Moderasi sebelum tampil di situs."}
               </p>
               <Button asChild className="mt-3 w-full justify-center text-xs" size="sm">
                 <Link

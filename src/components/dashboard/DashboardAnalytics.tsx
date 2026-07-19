@@ -48,12 +48,13 @@ export function DashboardAnalytics({
   canAccessBerita,
   canViewModerasi,
 }: Props) {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useAuth();
   const [data, setData] = useState<CmsAnalyticsOverview>(empty);
   const [loading, setLoading] = useState(true);
   const apiReady = isApiConfigured();
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       if (!apiReady) {
@@ -75,25 +76,27 @@ export function DashboardAnalytics({
     return () => {
       cancelled = true;
     };
-  }, [apiReady, getToken]);
+    // Mount once auth is ready; fetchCmsAnalytics dedupes concurrent chrome calls.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid getToken identity churn
+  }, [apiReady, isLoaded]);
 
   const chartData = useMemo(
     () => [
-      { name: "Published", value: data.beritaPublished },
-      { name: "Draft", value: data.beritaDraft },
-      { name: "Archived", value: data.beritaArchived },
-      { name: "Artikel PUB", value: data.artikelPublished },
-      { name: "REVIEW", value: data.artikelReview },
+      { name: "Berita terbit", value: data.beritaPublished },
+      { name: "Berita draf", value: data.beritaDraft },
+      { name: "Berita arsip", value: data.beritaArchived },
+      { name: "Artikel terbit", value: data.artikelPublished },
+      { name: "Menunggu review", value: data.artikelReview },
     ],
     [data],
   );
 
   const sourceLabel =
     data.source === "api"
-      ? "dari /v1/analytics/overview"
+      ? "Data langsung dari server"
       : data.source === "aggregate"
-        ? "agregasi daftar CMS"
-        : "API tidak tersedia";
+        ? "Ringkasan dari daftar konten"
+        : "Data belum tersedia";
 
   return (
     <div className="space-y-4">
@@ -122,7 +125,7 @@ export function DashboardAnalytics({
               ? (["Berita", data.beritaTotal] as const)
               : null,
             ["Artikel siswa", data.artikelTotal] as const,
-            ["Antrian REVIEW", data.artikelReview] as const,
+            ["Menunggu review", data.artikelReview] as const,
             ["Kategori", data.kategoriTotal] as const,
           ] as const
         )
@@ -147,8 +150,7 @@ export function DashboardAnalytics({
           <CardHeader>
             <CardTitle className="text-base">Status konten</CardTitle>
             <CardDescription>
-              Perbandingan cepat berita & artikel (sample hingga 100 item bila
-              agregasi).
+              Perbandingan cepat berita sekolah dan artikel siswa.
             </CardDescription>
           </CardHeader>
           <CardContent className="h-56 w-full">
@@ -165,8 +167,8 @@ export function DashboardAnalytics({
             ) : (
               <p className="text-sm text-[color:var(--color-body)]">
                 {apiReady
-                  ? "Belum ada data chart (API offline atau kosong)."
-                  : "Set API_URL untuk menampilkan analytics."}
+                  ? "Belum ada data untuk ditampilkan."
+                  : "Konfigurasi VITE_API_URL belum tersedia."}
               </p>
             )}
           </CardContent>

@@ -1,9 +1,17 @@
+import { ArrowLeft } from "lucide-react";
 import type { ReactElement, ReactNode } from "react";
 
 import { AuthSplitLayout } from "./AuthSplitLayout";
 import { SignInLoginIllustration } from "./SignInLoginIllustration";
 import { BRAND_LOGO_SRC, BRAND_SHORT } from "@/lib/branding";
 import { cn } from "@/lib/utils";
+
+/** Public marketing site — override with `VITE_WEB_ORIGIN` on Pages if needed. */
+export const CMS_WEB_ORIGIN = (
+  (import.meta.env.VITE_WEB_ORIGIN as string | undefined) ||
+  (import.meta.env.PUBLIC_SITE_URL as string | undefined) ||
+  "https://smkteknovo.sch.id"
+).replace(/\/$/, "");
 
 export type SignInViewProps = {
   heading: string;
@@ -26,6 +34,7 @@ export function SignInView({
   className,
 }: SignInViewProps): ReactElement {
   const illustration = <SignInLoginIllustration className="w-full" />;
+  const webHost = CMS_WEB_ORIGIN.replace(/^https?:\/\//, "");
 
   return (
     <AuthSplitLayout
@@ -36,7 +45,16 @@ export function SignInView({
       }
     >
       <div className="w-full max-w-2xl rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-6 shadow-md sm:p-8">
-        <div className="inline-flex items-center gap-2.5">
+        <a
+          href={CMS_WEB_ORIGIN}
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-[color:var(--color-body)] underline-offset-2 hover:text-[color:var(--color-brand)] hover:underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20"
+        >
+          <ArrowLeft className="size-3.5 shrink-0" aria-hidden />
+          Kembali ke situs
+          <span className="text-[color:var(--color-body-subtle)]">· {webHost}</span>
+        </a>
+
+        <div className="mt-5 inline-flex items-center gap-2.5">
           <span
             className={cn(
               "inline-flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full",
@@ -71,7 +89,7 @@ export function SignInView({
             role="status"
             className="mt-5 border border-[color:var(--color-brand)]/25 bg-[color:var(--color-brand)]/5 px-3 py-2 text-sm text-[color:var(--color-heading)]"
           >
-            Akses hanya via undangan Super Admin
+            CMS undangan saja — minta Super Admin atau Admin sekolah mengirim undangan.
           </p>
         ) : null}
 

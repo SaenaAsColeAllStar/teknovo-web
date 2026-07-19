@@ -119,8 +119,17 @@ Setelah masuk, redirect ke `/` (dashboard CMS).
 2. **Configure → SSO connections → Google**
    - Enable Google for **sign-in**. Prefer blocking new accounts via OAuth if the
      dashboard offers “sign in only” / disable “sign up with Google”.
-3. Invitations: CMS memakai Clerk Backend `invitations.createInvitation` (email) bila
-   form Pengguna dikirim tanpa password; atau `users.createUser` bila password ≥8 diisi.
+3. Invitations: CMS memakai Clerk Backend `invitations.createInvitation`
+   (`notify: true`, `redirectUrl` = `CMS_ORIGIN/sign-in`, `expiresInDays`) bila
+   form Pengguna dikirim tanpa password; atau `users.createUser` bila password ≥8
+   diisi. Setelah sukses, UI menampilkan **salin tautan** + **Kirim via WhatsApp**
+   (deep-link `wa.me`, tanpa Twilio). Kirim ulang = revoke + create undangan baru.
+4. **Email delivery checklist (Clerk Dashboard)**
+   - Emails / templates: invitation template enabled
+   - Production instance (dev emails often delayed or Dashboard-only)
+   - Allowed redirect: `https://cms.smkteknovo.sch.id/sign-in`
+   - Email address identifier enabled; public sign-up restricted
+   - If email lambat: bagikan `invitation.url` lewat salin/WhatsApp; cek spam 1–2 menit
 
 ### Google OAuth (wajib untuk tombol Google)
 

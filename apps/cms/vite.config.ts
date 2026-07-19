@@ -28,6 +28,11 @@ export default defineConfig(({ mode }) => {
   const r2Url =
     env.VITE_R2_PUBLIC_URL || env.PUBLIC_R2_URL || "https://r2.ctos.web.id";
   const appUrl = "https://cms.smkteknovo.sch.id";
+  const webOrigin = (
+    env.VITE_WEB_ORIGIN ||
+    env.PUBLIC_SITE_URL ||
+    "https://smkteknovo.sch.id"
+  ).replace(/\/$/, "");
 
   return {
     plugins: [react(), tailwindcss()],
@@ -61,6 +66,7 @@ export default defineConfig(({ mode }) => {
       "process.env.NEXT_PUBLIC_APP_URL": JSON.stringify(appUrl),
       // Keep import.meta.env.VITE_API_URL in sync when only PUBLIC_API_URL was set.
       "import.meta.env.VITE_API_URL": JSON.stringify(apiBase),
+      "import.meta.env.VITE_WEB_ORIGIN": JSON.stringify(webOrigin),
     },
     server: {
       port: 5173,

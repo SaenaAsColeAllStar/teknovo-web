@@ -98,9 +98,10 @@ const SOCIAL_ICONS = {
  * Footer pemasaran situs publik — band merek + empat kolom sitemap + baris hak cipta.
  * Dipakai lewat `PublicFooter` di `PublicSiteLayout`.
  */
-export function PublicMarketingFooter(): ReactElement {
-  const year = new Date().getFullYear();
+/** Build-time year — avoid `new Date()` during render (SSR/client hydration drift). */
+const COPYRIGHT_YEAR = new Date().getFullYear();
 
+export function PublicMarketingFooter(): ReactElement {
   return (
     <footer
       id="kontak"
@@ -168,7 +169,8 @@ export function PublicMarketingFooter(): ReactElement {
 
         {/* Copyright row */}
         <div className="border-t border-border-default pt-8 text-center text-sm text-body-subtle">
-          © {year} SMK {BRAND_SHORT}. {BRAND_SCHOOL_FULL}. Hak cipta dilindungi.
+          © {COPYRIGHT_YEAR} SMK {BRAND_SHORT}. {BRAND_SCHOOL_FULL}. Hak cipta
+          dilindungi.
         </div>
       </div>
     </footer>

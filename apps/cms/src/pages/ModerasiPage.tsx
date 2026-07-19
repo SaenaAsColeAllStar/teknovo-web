@@ -60,8 +60,7 @@ export function ModerasiPage() {
             Moderasi
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            Antrian artikel siswa berstatus <code>REVIEW</code>. Setujui / tolak hanya
-            untuk peran <strong>admin</strong>.
+            Antrian artikel siswa yang menunggu persetujuan Super Admin.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -77,7 +76,7 @@ export function ModerasiPage() {
           role="status"
           className="border border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)] px-4 py-3 text-sm text-[color:var(--color-body)]"
         >
-          Anda dapat melihat antrian. Hanya <code>admin</code> yang dapat menyetujui atau
+          Anda dapat melihat antrian. Hanya Super Admin yang dapat menyetujui atau
           menolak.
         </div>
       ) : null}

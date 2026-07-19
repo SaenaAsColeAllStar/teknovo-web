@@ -5,6 +5,7 @@ import {
   akademikFrameShellClass,
   akademikSoftPlateClass,
 } from "@/components/features/landing/AkademikBlueprintFrame";
+import { AkademikHashRedirect } from "@/components/features/landing/AkademikHashRedirect";
 import { AkademikIconGlyph } from "@/components/features/landing/AkademikIconGlyph";
 import { AkademikFooterCta } from "@/components/features/landing/AkademikFooterCta";
 import { AkademikLearnMoreLink } from "@/components/features/landing/AkademikLearnMoreLink";
@@ -38,6 +39,9 @@ function FormalParagraph({ children }: { children: ReactNode }): ReactElement {
 
 export function AkademikKurikulumContent(): ReactElement {
   return (
+    <>
+      <AkademikHashRedirect />
+
     <AkademikPageShell title={AKADEMIK_KURIKULUM_PAGE_TITLE} lede={AKADEMIK_KURIKULUM_PAGE_LEDE}>
       <MotionInView as="div" className="mt-14 space-y-10" delay={0.06}>
         <header className="max-w-2xl">
@@ -156,5 +160,6 @@ export function AkademikKurikulumContent(): ReactElement {
 
       <AkademikFooterCta />
     </AkademikPageShell>
+    </>
   );
 }

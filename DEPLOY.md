@@ -113,7 +113,7 @@ Local CORS: set `ENVIRONMENT=development` in `apps/api/.dev.vars` so localhost o
 
 ## Security notes (API)
 
-- **Rate limits** (per Worker isolate, `CF-Connecting-IP`): hooks/webhooks 5/min, media 20/min, public GET 120/min, writes 40/min. Counters reset on cold start — not a global cluster limit.
+- **Rate limits** (per Worker isolate, `CF-Connecting-IP`): hooks/webhooks 5/min, media 20/min, anonymous GET 120/min, CMS Bearer GET 600/min, anonymous writes 40/min, CMS Bearer writes 120/min. Counters reset on cold start — not a global cluster limit.
 - **Pages** (`apps/web`, `apps/cms`) ship CSP / HSTS / frame deny via `public/_headers`.
 - **API Worker** adds `X-Content-Type-Options`, `X-Frame-Options`, CSP `default-src 'none'`, and echoes `X-Request-Id`.
 - **HTML** (artikel/berita TipTap): `isomorphic-dompurify` allowlist on write (`nodejs_compat`).

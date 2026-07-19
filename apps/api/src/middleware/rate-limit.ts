@@ -26,6 +26,14 @@ function clientIp(c: { req: { header: (name: string) => string | undefined } }):
   return "unknown";
 }
 
+/** CMS SPA / dashboard calls send Clerk JWT as `Authorization: Bearer …`. */
+export function hasBearerAuth(c: {
+  req: { header: (name: string) => string | undefined };
+}): boolean {
+  const auth = c.req.header("Authorization")?.trim() ?? "";
+  return /^Bearer\s+\S+/i.test(auth);
+}
+
 function pruneIfNeeded(): void {
   if (buckets.size <= MAX_KEYS) return;
   const now = Date.now();
@@ -77,17 +85,34 @@ export function rateLimit(opts: RateLimitOptions): MiddlewareHandler<AppEnv> {
   };
 }
 
-/** Public reads (berita, kategori, artikel published, health). */
+/** Anonymous public reads (berita published, kategori, health, Astro SSR). */
 export const publicReadLimit = rateLimit({
   prefix: "get",
   limit: 120,
   windowMs: 60_000,
 });
 
-/** Authenticated CMS writes, analytics, webhooks. */
+/**
+ * Authenticated CMS reads (Bearer). Separate bucket + higher ceiling so dashboard
+ * navigation does not starve public GETs (or vice versa) on a shared NAT IP.
+ */
+export const cmsReadLimit = rateLimit({
+  prefix: "cms-get",
+  limit: 600,
+  windowMs: 60_000,
+});
+
+/** Unauthenticated / anonymous writes (rare). */
 export const writeLimit = rateLimit({
   prefix: "write",
   limit: 40,
+  windowMs: 60_000,
+});
+
+/** Authenticated CMS writes (PATCH/POST/DELETE with Bearer). */
+export const cmsWriteLimit = rateLimit({
+  prefix: "cms-write",
+  limit: 120,
   windowMs: 60_000,
 });
 

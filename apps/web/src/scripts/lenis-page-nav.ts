@@ -1,7 +1,7 @@
 /**
  * Persistent Lenis ↔ ClientRouter coordinator + View Transition failsafe.
  *
- * Lives outside React islands: PublicChrome remounts on every swap, so
+ * Lives outside React islands: chrome islands remount on every swap, so
  * SmoothScrollProvider listeners can miss `astro:before-preparation` /
  * `astro:after-swap`. This module script runs once and stays registered.
  *
@@ -88,11 +88,11 @@ function restoreTransitionVisibility(): void {
   document.documentElement.removeAttribute("data-astro-transition");
 
   const nodes = document.querySelectorAll<HTMLElement>(
-    ".public-page-main, .public-marketing-navbar, [data-astro-transition-scope]",
+    ".public-page-main, .public-marketing-navbar, #beranda, [data-astro-transition-scope]",
   );
 
   for (const el of nodes) {
-    for (const anim of el.getAnimations({ subtree: false })) {
+    for (const anim of el.getAnimations({ subtree: true })) {
       try {
         anim.cancel();
       } catch {
@@ -101,6 +101,11 @@ function restoreTransitionVisibility(): void {
     }
     el.style.removeProperty("opacity");
     el.style.removeProperty("visibility");
+    // Framer / VT may leave opacity on wrappers; force paint on the live main slot.
+    if (el.classList.contains("public-page-main") || el.id === "beranda") {
+      el.style.setProperty("opacity", "1");
+      el.style.setProperty("visibility", "visible");
+    }
   }
 }
 

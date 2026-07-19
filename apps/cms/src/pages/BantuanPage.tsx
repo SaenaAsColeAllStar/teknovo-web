@@ -18,7 +18,7 @@ const HELP_MAILTO = `mailto:${CONTACT.email}?subject=${encodeURIComponent(
 
 /**
  * Static in-app help + terms — no live CMS data.
- * Route: `/bantuan` (sidenav “Bantuan” and “Bantuan & ketentuan”).
+ * Route: `/bantuan` (footer “Bantuan & ketentuan”).
  */
 export function BantuanPage() {
   useEffect(() => {
@@ -212,6 +212,44 @@ export function BantuanPage() {
           <CardContent className="text-sm text-[color:var(--color-body)]">
             Gunakan lupa kata sandi di halaman masuk. CMS undangan saja — akun baru
             hanya lewat <strong>Undang tim</strong>, bukan daftar mandiri.
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">
+              Email undangan belum masuk / lambat?
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm text-[color:var(--color-body)]">
+            <p>
+              Email dikirim oleh <strong>Clerk</strong> (bukan SMTP sekolah).
+              Setelah undang, tunggu 1–2 menit dan cek folder spam/promosi. Anda
+              juga bisa <strong>salin tautan</strong> atau{" "}
+              <strong>Kirim via WhatsApp</strong> dari modal / tab Undangan.
+            </p>
+            <p className="font-medium text-[color:var(--color-heading)]">
+              Checklist Clerk Dashboard (Super Admin teknis):
+            </p>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>
+                <strong>Emails</strong> / Customization → pastikan template{" "}
+                <code>Invitation</code> aktif dan pengiriman email tidak
+                dinonaktifkan.
+              </li>
+              <li>
+                Instance <strong>Production</strong> (development sering menunda
+                atau hanya menampilkan email di Dashboard).
+              </li>
+              <li>
+                <strong>Domains / Paths</strong> — izinkan redirect{" "}
+                <code>https://cms.smkteknovo.sch.id/sign-in</code> (dan origin
+                CMS).
+              </li>
+              <li>
+                <strong>User &amp; authentication → Email address</strong>{" "}
+                enabled; Restrictions = invite-only / sign-up tertutup.
+              </li>
+            </ul>
           </CardContent>
         </Card>
       </section>

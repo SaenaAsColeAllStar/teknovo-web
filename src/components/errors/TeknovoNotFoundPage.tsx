@@ -81,11 +81,11 @@ export function TeknovoNotFoundPage({
             </PublicSiteLink>
 
             <h1 className="max-w-xl text-balance text-3xl font-bold tracking-tight text-heading sm:text-4xl xl:text-5xl xl:leading-[1.12]">
-              404 / Halaman tidak ditemukan
+              Halaman tidak ditemukan
             </h1>
             <p className="mt-4 max-w-md text-pretty text-sm leading-relaxed text-body sm:text-base">
-              Maaf, alamat yang Anda buka tidak tersedia atau telah dipindahkan.
-              Muat ulang halaman, atau kembali lewat tautan di bawah.
+              Alamat yang Anda buka tidak tersedia atau telah dipindahkan.
+              Gunakan tautan di bawah untuk kembali ke situs SMK Teknovo.
             </p>
 
             <nav

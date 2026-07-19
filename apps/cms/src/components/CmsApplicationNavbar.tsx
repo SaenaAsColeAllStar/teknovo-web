@@ -135,7 +135,7 @@ export function CmsApplicationNavbar({
 }: CmsApplicationNavbarProps): ReactElement {
   const headerRef = useRef<HTMLElement>(null);
   const searchId = useId();
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useAuth();
   const { user } = useUser();
   const { signOut, openUserProfile } = useClerk();
   const { role, canWrite, canWriteArtikel, canAccessBeritaSekolah, canViewModerasi } =
@@ -179,8 +179,8 @@ export function CmsApplicationNavbar({
         href: "/artikel/baru",
         label: "Artikel siswa",
         detail: canCreateBerita
-          ? "Channel ekskul · alur REVIEW"
-          : "Kirim untuk moderasi redaksi",
+          ? "Ekstrakurikuler · perlu moderasi"
+          : "Kirim untuk dimoderasi redaksi",
         icon: <PenLine className="size-3.5" aria-hidden />,
       });
     }
@@ -247,6 +247,7 @@ export function CmsApplicationNavbar({
   }, [metricsOpen, searchOpen]);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       if (!isApiConfigured()) return;
@@ -267,7 +268,9 @@ export function CmsApplicationNavbar({
     return () => {
       cancelled = true;
     };
-  }, [getToken]);
+    // fetchCmsAnalytics caches/dedupes; avoid getToken identity re-fetches.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoaded]);
 
   useEffect(() => {
     if (!profileOpen && !createOpen && !notifOpen) return;

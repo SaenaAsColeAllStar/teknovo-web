@@ -1,6 +1,5 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { AkademikHashRedirect } from "@/components/features/landing/AkademikHashRedirect";
 import { AkademikPengajarPageContent } from "@/components/features/landing/AkademikPengajarPageContent";
 import {
   AKADEMIK_PENGAJAR_PAGE_LEDE,
@@ -9,6 +8,5 @@ import {
 ---
 
 <BaseLayout title={AKADEMIK_PENGAJAR_PAGE_TITLE} description={AKADEMIK_PENGAJAR_PAGE_LEDE}>
-  <AkademikHashRedirect client:load />
   <AkademikPengajarPageContent client:load />
 </BaseLayout>

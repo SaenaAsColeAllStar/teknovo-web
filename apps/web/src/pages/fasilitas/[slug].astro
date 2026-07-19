@@ -48,7 +48,7 @@ const description = isLms
       <FasilitasAbsensiDigitalPage client:load />
     ) : (
       <>
-        {isLms ? <LmsJsonLd client:load pageId="fasilitas-lms" /> : null}
+        {isLms ? <LmsJsonLd pageId="fasilitas-lms" /> : null}
         <FasilitasDetailPage
           client:load
           slug={typedSlug}

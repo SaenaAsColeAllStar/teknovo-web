@@ -4,43 +4,50 @@ import { Link, useParams } from "react-router-dom";
 
 import { BeritaForm } from "@/components/dashboard/berita/BeritaForm";
 import { Button } from "@/components/ui/button";
-import { ApiClientError, fetchBeritaById, fetchKategoriList } from "@/lib/api-client";
+import {
+  ApiClientError,
+  fetchBeritaById,
+  fetchKategoriListCms,
+} from "@/lib/api-client";
 import type { Berita } from "@/types/berita";
 import type { Kategori } from "@/types/kategori";
 
 /** Mirrors `dashboard/berita/baru/page.tsx` + `dashboard/berita/[id]/edit/page.tsx`. */
 export function BeritaFormPage({ mode }: { mode: "create" | "edit" }) {
   const { id } = useParams();
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useAuth();
   const [kategori, setKategori] = useState<Kategori[]>([]);
   const [berita, setBerita] = useState<Berita | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
       setError(null);
       try {
+        const token = await getToken();
+        if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
         if (mode === "edit" && id) {
-          const token = await getToken();
-          if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
           const [row, cats] = await Promise.all([
             fetchBeritaById(id, token),
-            fetchKategoriList(),
+            fetchKategoriListCms(token),
           ]);
           if (cancelled) return;
           setBerita(row);
-          setKategori(cats);
+          setKategori(cats.data);
         } else {
-          const cats = await fetchKategoriList();
+          const cats = await fetchKategoriListCms(token);
           if (cancelled) return;
-          setKategori(cats);
+          setKategori(cats.data);
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiClientError ? err.message : "Gagal memuat berita.");
+          setError(
+            err instanceof ApiClientError ? err.message : "Gagal memuat berita.",
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -50,7 +57,7 @@ export function BeritaFormPage({ mode }: { mode: "create" | "edit" }) {
     return () => {
       cancelled = true;
     };
-  }, [mode, id, getToken]);
+  }, [mode, id, getToken, isLoaded]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -60,16 +67,9 @@ export function BeritaFormPage({ mode }: { mode: "create" | "edit" }) {
             {mode === "create" ? "Berita baru" : "Edit berita"}
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            {mode === "create" ? (
-              <>
-                Form Zod + TipTap Starter Kit → <code>POST /v1/berita</code>.
-              </>
-            ) : (
-              <>
-                Muat via <code>GET /v1/berita/id/:id</code>, simpan via{" "}
-                <code>PATCH /v1/berita/:id</code>.
-              </>
-            )}
+            {mode === "create"
+              ? "Tulis pengumuman atau kegiatan sekolah, lalu simpan draf atau terbitkan."
+              : "Perbarui isi, cover, SEO, lalu simpan atau terbitkan ulang."}
           </p>
         </div>
         <Button asChild size="sm" variant="secondary">

@@ -1,5 +1,2 @@
-/* Cloudflare Pages — SPA fallback */
-[[redirects]]
-from = "/*"
-to = "/index.html"
-status = 200
+# Cloudflare Pages — SPA fallback (static _redirects format, not wrangler TOML)
+/*    /index.html   200

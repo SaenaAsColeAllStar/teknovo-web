@@ -49,13 +49,13 @@ export const BERITA_BLOG_SECTION_LEDE =
 export const BERITA_BLOG_AUTHOR_FALLBACK = "Humas sekolah" as const;
 
 export const BERITA_EMPTY_TERBARU =
-  "Belum ada berita yang dipublikasikan. Artikel siswa dan berita kegiatan resmi akan tampil di sini setelah redaksi dan persetujuan publikasi selesai." as const;
+  "Belum ada berita terbit. Pengumuman dan kegiatan resmi akan tampil di sini setelah redaksi memublikasikan." as const;
 
 export const BERITA_EMPTY_KEGIATAN =
-  "Belum ada berita kegiatan yang dipublikasikan. Entri resmi sekolah akan tampil di sini setelah mendapat persetujuan Kepala Sekolah." as const;
+  "Belum ada berita kegiatan. Entri resmi sekolah akan tampil setelah mendapat persetujuan publikasi." as const;
 
 export const BERITA_EMPTY_KEGIATAN_CROSS =
-  "Belum ada berita kegiatan yang terbit. Entri juga tampil di daftar berita terbaru setelah dipublikasikan." as const;
+  "Belum ada berita kegiatan terbit. Entri juga muncul di berita terbaru setelah dipublikasikan." as const;
 
 export const BERITA_ARTIKEL_KONTEN_FALLBACK =
   "Isi lengkap artikel akan ditampilkan setelah redaksi mempublikasikan dokumen ini." as const;

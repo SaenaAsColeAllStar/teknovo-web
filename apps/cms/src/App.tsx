@@ -55,8 +55,13 @@ export function App() {
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/sso-callback" element={<SsoCallbackPage />} />
+          {/*
+            Catch-all for the authenticated SPA. ProtectedApp owns its own <Routes>
+            and resets route context so create paths (`/berita/baru`, …) match the
+            full pathname (not a splat remainder).
+          */}
           <Route
-            path="/*"
+            path="*"
             element={
               <Suspense fallback={<AuthLoading />}>
                 <ProtectedApp />

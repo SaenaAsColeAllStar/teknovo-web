@@ -13,7 +13,7 @@ import {
   ApiClientError,
   fetchArtikelSiswaById,
   fetchArtikelSiswaListCms,
-  fetchKategoriList,
+  fetchKategoriListCms,
 } from "@/lib/api-client";
 import type { ArtikelSiswa, ArtikelSiswaListItem, ArtikelSiswaStatus } from "@/types/artikel-siswa";
 import type { Kategori } from "@/types/kategori";
@@ -21,10 +21,10 @@ import type { Kategori } from "@/types/kategori";
 import { onRouterRefresh } from "../shims/next-navigation";
 
 const STATUS_LABEL: Record<ArtikelSiswaStatus, string> = {
-  DRAFT: "Draft",
-  REVIEW: "Review",
-  PUBLISHED: "Published",
-  ARCHIVED: "Archived",
+  DRAFT: "Draf",
+  REVIEW: "Menunggu review",
+  PUBLISHED: "Terbit",
+  ARCHIVED: "Arsip",
 };
 
 /** Mirrors `src/app/(dashboard)/dashboard/artikel/page.tsx`, fetched client-side. */
@@ -81,8 +81,8 @@ export function ArtikelListPage() {
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
             {isSiswa
-              ? "Tulis dan kirim artikel ekstrakurikuler untuk dimoderasi admin."
-              : "Channel artikel siswa (ekskul). Publik hanya menampilkan status PUBLISHED."}
+              ? "Tulis artikel ekstrakurikuler, lalu kirim ke redaksi untuk ditinjau."
+              : "Artikel ekstrakurikuler siswa. Hanya yang disetujui yang tampil di situs publik."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -112,8 +112,8 @@ export function ArtikelListPage() {
             </CardTitle>
             <CardDescription>
               {isSiswa
-                ? "Buat draft lalu kirim ke moderasi (status REVIEW)."
-                : "Pastikan api-web melayani GET /v1/artikel-siswa."}
+                ? "Buat draf, lalu kirim ke moderasi agar redaksi dapat meninjau."
+                : "Belum ada artikel. Siswa dapat menulis dari menu Artikel baru."}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -184,36 +184,39 @@ export function ArtikelListPage() {
 /** Mirrors `dashboard/artikel/baru/page.tsx` + `dashboard/artikel/[id]/edit/page.tsx`. */
 export function ArtikelFormPage({ mode }: { mode: "create" | "edit" }) {
   const { id } = useParams();
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useAuth();
   const [kategori, setKategori] = useState<Kategori[]>([]);
   const [artikel, setArtikel] = useState<ArtikelSiswa | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
       setError(null);
       try {
+        const token = await getToken();
+        if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
         if (mode === "edit" && id) {
-          const token = await getToken();
-          if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
           const [row, cats] = await Promise.all([
             fetchArtikelSiswaById(id, token),
-            fetchKategoriList(),
+            fetchKategoriListCms(token),
           ]);
           if (cancelled) return;
           setArtikel(row);
-          setKategori(cats);
+          setKategori(cats.data);
         } else {
-          const cats = await fetchKategoriList();
+          const cats = await fetchKategoriListCms(token);
           if (cancelled) return;
-          setKategori(cats);
+          setKategori(cats.data);
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof ApiClientError ? err.message : "Gagal memuat artikel.");
+          setError(
+            err instanceof ApiClientError ? err.message : "Gagal memuat artikel.",
+          );
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -223,7 +226,7 @@ export function ArtikelFormPage({ mode }: { mode: "create" | "edit" }) {
     return () => {
       cancelled = true;
     };
-  }, [mode, id, getToken]);
+  }, [mode, id, getToken, isLoaded]);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -233,17 +236,9 @@ export function ArtikelFormPage({ mode }: { mode: "create" | "edit" }) {
             {mode === "create" ? "Artikel siswa baru" : "Edit artikel siswa"}
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            {mode === "create" ? (
-              <>
-                TipTap → <code>POST /v1/artikel-siswa</code>. Siswa mengirim status{" "}
-                <code>REVIEW</code> untuk moderasi.
-              </>
-            ) : (
-              <>
-                <code>GET /v1/artikel-siswa/id/:id</code> →{" "}
-                <code>PATCH /v1/artikel-siswa/:id</code>.
-              </>
-            )}
+            {mode === "create"
+              ? "Tulis artikel ekstrakurikuler, simpan draf, lalu kirim ke moderasi."
+              : "Perbarui artikel, lalu simpan atau kirim ulang ke review."}
           </p>
         </div>
         <Button asChild size="sm" variant="secondary">

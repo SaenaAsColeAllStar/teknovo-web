@@ -25,12 +25,17 @@ import {
   deleteCmsUser,
   fetchCmsInvitations,
   fetchCmsUsers,
+  resendCmsInvitation,
   revokeCmsInvitation,
   updateCmsUser,
   type CmsInvitationListItem,
   type CmsUserListItem,
 } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import {
+  buildWhatsAppInviteMessage,
+  buildWhatsAppInviteUrl,
+} from "@/lib/whatsapp-invite";
 
 const selectClass =
   "flex h-10 w-full rounded-none border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 disabled:opacity-50";
@@ -266,6 +271,55 @@ export function PenggunaManager({ currentUserId }: Props) {
     }
   }
 
+  function openInviteWhatsApp(invite: CmsInvitationListItem) {
+    if (!invite.url) {
+      toast.error("Tautan undangan tidak tersedia.");
+      return;
+    }
+    const message = buildWhatsAppInviteMessage({
+      inviteUrl: invite.url,
+      role: invite.role,
+      email: invite.email,
+      expiresAt: invite.expiresAt,
+      expiresInDays: invite.expiresInDays,
+    });
+    window.open(
+      buildWhatsAppInviteUrl(message),
+      "_blank",
+      "noopener,noreferrer",
+    );
+  }
+
+  async function onResend(invite: CmsInvitationListItem) {
+    if (invite.status !== "pending") return;
+    if (
+      !window.confirm(
+        `Kirim ulang undangan ke ${invite.email}? Undangan lama akan dibatalkan dan diganti tautan baru.`,
+      )
+    ) {
+      return;
+    }
+    setBusy(true);
+    try {
+      const token = await getToken();
+      if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
+      await resendCmsInvitation(invite.id, token);
+      toast.success("Undangan dikirim ulang", {
+        description: "Email Clerk baru diminta. Bagikan tautan jika perlu.",
+      });
+      await loadInvitations();
+    } catch (err) {
+      toast.error(
+        err instanceof ApiClientError
+          ? err.message
+          : "Gagal mengirim ulang undangan.",
+      );
+      await loadInvitations();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const actorLabel =
     actorRole === "admin"
       ? "Super Admin dapat mengundang Super Admin, Admin, Siswa, dan Viewer. Setelah diterima, sesuaikan peran di daftar pengguna."
@@ -279,7 +333,7 @@ export function PenggunaManager({ currentUserId }: Props) {
             Pengguna
           </h1>
           <p className="mt-1 text-sm text-[color:var(--color-body)]">
-            Kelola akun CMS via undangan Clerk (tanpa daftar publik). {actorLabel}
+            Kelola akun CMS lewat undangan (tanpa daftar publik). {actorLabel}
           </p>
         </div>
         <Button
@@ -489,15 +543,35 @@ export function PenggunaManager({ currentUserId }: Props) {
                         <td className="px-6 py-3">
                           <div className="flex flex-wrap gap-2">
                             {invite.url && invite.status === "pending" ? (
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                disabled={busy}
-                                onClick={() => void copyInviteUrl(invite.url!)}
-                              >
-                                Salin tautan
-                              </Button>
+                              <>
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  disabled={busy}
+                                  onClick={() => void copyInviteUrl(invite.url!)}
+                                >
+                                  Salin tautan
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  disabled={busy}
+                                  onClick={() => openInviteWhatsApp(invite)}
+                                >
+                                  WhatsApp
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="secondary"
+                                  size="sm"
+                                  disabled={busy}
+                                  onClick={() => void onResend(invite)}
+                                >
+                                  Kirim ulang
+                                </Button>
+                              </>
                             ) : null}
                             <Button
                               type="button"

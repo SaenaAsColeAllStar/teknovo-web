@@ -41,7 +41,7 @@ export function PengaturanPage() {
       } catch {
         if (!cancelled) {
           setLoadNote(
-            "API pengaturan belum tersedia — menampilkan default lokal. Simpan akan gagal sampai api-web mengimplementasikan PATCH /v1/pengaturan.",
+            "Gagal memuat pengaturan — menampilkan nilai default. Coba muat ulang, atau hubungi Super Admin jika berlanjut.",
           );
         }
       } finally {

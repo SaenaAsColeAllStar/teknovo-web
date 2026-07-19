@@ -10,6 +10,7 @@ const items = await getPublishedFasilitasItems();
 ---
 
 <BaseLayout title={seo.title} description={seo.description}>
-  <LmsJsonLd client:load pageId="fasilitas-hub" />
+  <!-- SSR-only: avoid hydrating <script type="application/ld+json"> in a client island. -->
+  <LmsJsonLd pageId="fasilitas-hub" />
   <FasilitasHubPage client:load items={items} />
 </BaseLayout>

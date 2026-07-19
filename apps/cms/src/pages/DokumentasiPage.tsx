@@ -154,21 +154,21 @@ export function DokumentasiPage() {
               <tbody className="text-[color:var(--color-body)]">
                 <tr className="border-b border-[color:var(--color-border)]">
                   <td className="py-2 pr-3 font-medium">Super Admin</td>
-                  <td className="py-2 pr-3">CRUD + publish</td>
-                  <td className="py-2 pr-3">CRUD + approve</td>
+                  <td className="py-2 pr-3">Kelola + terbitkan</td>
+                  <td className="py-2 pr-3">Kelola + setujui</td>
                   <td className="py-2">Pengaturan, undang tim</td>
                 </tr>
                 <tr className="border-b border-[color:var(--color-border)]">
                   <td className="py-2 pr-3 font-medium">Admin</td>
-                  <td className="py-2 pr-3">CRUD + publish</td>
-                  <td className="py-2 pr-3">CRUD, lihat antrian</td>
+                  <td className="py-2 pr-3">Kelola + terbitkan</td>
+                  <td className="py-2 pr-3">Kelola, lihat antrian</td>
                   <td className="py-2">Undang Siswa</td>
                 </tr>
                 <tr className="border-b border-[color:var(--color-border)]">
                   <td className="py-2 pr-3 font-medium">Siswa</td>
                   <td className="py-2 pr-3">Tidak</td>
-                  <td className="py-2 pr-3">CRUD milik sendiri</td>
-                  <td className="py-2">Upload media</td>
+                  <td className="py-2 pr-3">Kelola milik sendiri</td>
+                  <td className="py-2">Unggah media</td>
                 </tr>
                 <tr>
                   <td className="py-2 pr-3 font-medium">Viewer</td>
@@ -179,9 +179,8 @@ export function DokumentasiPage() {
               </tbody>
             </table>
             <p className="mt-3 text-xs text-[color:var(--color-body-subtle)]">
-              Role disimpan di Clerk <code>publicMetadata.role</code> (
-              <code>admin</code> | <code>editor</code> | <code>siswa</code> |{" "}
-              <code>viewer</code>). CMS invite-only — tidak ada daftar publik.
+              Peran disimpan di akun undangan. CMS undangan saja — tidak ada daftar
+              publik.
             </p>
           </CardContent>
         </Card>

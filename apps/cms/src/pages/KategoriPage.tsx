@@ -49,7 +49,7 @@ export function KategoriPage() {
           Kategori
         </h1>
         <p className="text-sm text-[color:var(--color-body)]">
-          CRUD terhadap <code>GET/POST/PATCH/DELETE /v1/kategori</code> (api-web).
+          Atur label kategori untuk mengelompokkan berita dan artikel.
         </p>
       </div>
       {loading ? (

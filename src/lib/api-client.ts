@@ -66,10 +66,19 @@ export class ApiClientError extends Error {
     message: string,
     public status: number,
     public body?: unknown,
+    /** Seconds from `Retry-After` when status is 429. */
+    public retryAfterSec?: number,
   ) {
     super(message);
     this.name = "ApiClientError";
   }
+}
+
+function parseRetryAfterSec(res: Response): number | undefined {
+  const raw = res.headers.get("Retry-After")?.trim();
+  if (!raw) return undefined;
+  const sec = Number.parseInt(raw, 10);
+  return Number.isFinite(sec) && sec > 0 ? sec : undefined;
 }
 
 function apiErrorMessage(status: number, body: unknown): string {
@@ -123,7 +132,12 @@ async function request<T>(
     } catch {
       body = undefined;
     }
-    throw new ApiClientError(apiErrorMessage(res.status, body), res.status, body);
+    throw new ApiClientError(
+      apiErrorMessage(res.status, body),
+      res.status,
+      body,
+      parseRetryAfterSec(res),
+    );
   }
 
   if (res.status === 204) {
@@ -131,6 +145,61 @@ async function request<T>(
   }
 
   return (await res.json()) as T;
+}
+
+/** Short-lived GET cache + in-flight dedupe (CMS Strict Mode + shared chrome). */
+type GetCacheEntry<T> = {
+  at: number;
+  value?: T;
+  inflight?: Promise<T>;
+};
+
+function getCachedOrFetch<T>(
+  store: Map<string, GetCacheEntry<T>>,
+  key: string,
+  staleMs: number,
+  force: boolean,
+  fetchFn: () => Promise<T>,
+): Promise<T> {
+  const now = Date.now();
+  const existing = store.get(key);
+  if (!force && existing?.value !== undefined && now - existing.at < staleMs) {
+    return Promise.resolve(existing.value);
+  }
+  if (!force && existing?.inflight) {
+    return existing.inflight;
+  }
+
+  const inflight = fetchFn()
+    .then((value) => {
+      store.set(key, { at: Date.now(), value });
+      return value;
+    })
+    .catch((err) => {
+      const cur = store.get(key);
+      if (cur?.inflight === inflight) store.delete(key);
+      throw err;
+    });
+
+  store.set(key, { at: now, inflight, value: existing?.value });
+  return inflight;
+}
+
+const beritaListCache = new Map<string, GetCacheEntry<ApiListResponse<BeritaListItem>>>();
+const analyticsCache = new Map<string, GetCacheEntry<CmsAnalyticsOverview>>();
+
+const BERITA_LIST_STALE_MS = 30_000;
+const ANALYTICS_STALE_MS = 60_000;
+
+function tokenCacheKey(token: string): string {
+  // Enough to separate sessions without storing the full JWT in Map keys long-term.
+  return token.slice(0, 24);
+}
+
+/** Drop CMS list/analytics caches after writes so lists stay fresh. */
+export function invalidateCmsReadCaches(): void {
+  beritaListCache.clear();
+  analyticsCache.clear();
 }
 
 export type BeritaListParams = {
@@ -293,7 +362,7 @@ export type KategoriFormValues = z.infer<typeof kategoriFormSchema>;
 /** CMS: list berita (all statuses unless filtered). Requires Clerk Bearer token. */
 export async function fetchBeritaListCms(
   token: string,
-  params?: BeritaListParams,
+  params?: BeritaListParams & { force?: boolean },
 ): Promise<ApiListResponse<BeritaListItem>> {
   const qs = new URLSearchParams();
   if (params?.page) qs.set("page", String(params.page));
@@ -301,9 +370,17 @@ export async function fetchBeritaListCms(
   if (params?.kategori) qs.set("kategori", params.kategori);
   if (params?.status) qs.set("status", params.status);
   const q = qs.toString();
-  return request<ApiListResponse<BeritaListItem>>(
-    `/v1/berita${q ? `?${q}` : ""}`,
-    { token, cache: "no-store" },
+  const cacheKey = `${tokenCacheKey(token)}:${q}`;
+  return getCachedOrFetch(
+    beritaListCache,
+    cacheKey,
+    BERITA_LIST_STALE_MS,
+    Boolean(params?.force),
+    () =>
+      request<ApiListResponse<BeritaListItem>>(
+        `/v1/berita${q ? `?${q}` : ""}`,
+        { token, cache: "no-store" },
+      ),
   );
 }
 
@@ -328,6 +405,7 @@ export async function createBerita(
     token,
     body: JSON.stringify(body),
   });
+  invalidateCmsReadCaches();
   return data.data;
 }
 
@@ -342,14 +420,16 @@ export async function updateBerita(
     token,
     body: JSON.stringify(body),
   });
+  invalidateCmsReadCaches();
   return data.data;
 }
 
 export async function deleteBerita(id: string, token: string): Promise<void> {
-  await request<void>(`/v1/berita/${id}`, {
+  await request<ApiOk<{ deleted: boolean }>>(`/v1/berita/${id}`, {
     method: "DELETE",
     token,
   });
+  invalidateCmsReadCaches();
 }
 
 function normalizeBeritaPayload(values: BeritaFormValues) {
@@ -652,6 +732,8 @@ export type CmsUserListItem = {
   role: "admin" | "editor" | "viewer" | "siswa";
   createdAt: string;
   invited?: boolean;
+  /** True when Clerk was asked to email the invitation (`notify: true`). */
+  notified?: boolean;
   status?: string;
   expiresAt?: string | null;
   expiresInDays?: number | null;
@@ -739,6 +821,18 @@ export async function revokeCmsInvitation(
   return data.data;
 }
 
+/** Revoke pending invite + create a fresh one (Clerk has no native resend). */
+export async function resendCmsInvitation(
+  id: string,
+  token: string,
+): Promise<CmsUserListItem> {
+  const data = await request<ApiOk<CmsUserListItem>>(
+    `/v1/users/invitations/${id}/resend`,
+    { method: "POST", token },
+  );
+  return data.data;
+}
+
 export async function updateCmsUser(
   id: string,
   values: CmsUserPatchInput,
@@ -765,42 +859,59 @@ export async function deleteCmsUser(
 /** Prefer dedicated analytics endpoint; fall back to aggregating list queries. */
 export async function fetchCmsAnalytics(
   token: string,
+  opts?: { force?: boolean },
 ): Promise<CmsAnalyticsOverview> {
-  try {
-    const data = await request<ApiOk<CmsAnalyticsOverview>>(
-      "/v1/analytics/overview",
-      { token, cache: "no-store" },
-    );
-    return { ...data.data, source: "api" };
-  } catch {
-    /* aggregate below */
-  }
+  const cacheKey = tokenCacheKey(token);
+  return getCachedOrFetch(
+    analyticsCache,
+    cacheKey,
+    ANALYTICS_STALE_MS,
+    Boolean(opts?.force),
+    async () => {
+      try {
+        const data = await request<ApiOk<CmsAnalyticsOverview>>(
+          "/v1/analytics/overview",
+          { token, cache: "no-store" },
+        );
+        return { ...data.data, source: "api" as const };
+      } catch (err) {
+        // Never stampede list endpoints after rate-limit / auth failures.
+        if (
+          err instanceof ApiClientError &&
+          (err.status === 429 || err.status === 401 || err.status === 403)
+        ) {
+          return emptyAnalytics("unavailable");
+        }
+        /* aggregate below for missing endpoint / transient errors */
+      }
 
-  try {
-    const [beritaAll, artikelAll, kategoriAll] = await Promise.all([
-      fetchBeritaListCms(token, { limit: 100 }),
-      fetchArtikelSiswaListCms(token, { limit: 100 }),
-      fetchKategoriListCms(token),
-    ]);
+      try {
+        const [beritaAll, artikelAll, kategoriAll] = await Promise.all([
+          fetchBeritaListCms(token, { limit: 100, force: true }),
+          fetchArtikelSiswaListCms(token, { limit: 100 }),
+          fetchKategoriListCms(token),
+        ]);
 
-    const berita = beritaAll.data;
-    const artikel = artikelAll.data;
-    const kategori = kategoriAll.data;
+        const berita = beritaAll.data;
+        const artikel = artikelAll.data;
+        const kategori = kategoriAll.data;
 
-    return {
-      beritaTotal: beritaAll.meta?.total ?? berita.length,
-      beritaPublished: berita.filter((b) => b.status === "PUBLISHED").length,
-      beritaDraft: berita.filter((b) => b.status === "DRAFT").length,
-      beritaArchived: berita.filter((b) => b.status === "ARCHIVED").length,
-      artikelTotal: artikelAll.meta?.total ?? artikel.length,
-      artikelReview: artikel.filter((a) => a.status === "REVIEW").length,
-      artikelPublished: artikel.filter((a) => a.status === "PUBLISHED").length,
-      kategoriTotal: kategoriAll.meta?.total ?? kategori.length,
-      source: "aggregate",
-    };
-  } catch {
-    return emptyAnalytics("unavailable");
-  }
+        return {
+          beritaTotal: beritaAll.meta?.total ?? berita.length,
+          beritaPublished: berita.filter((b) => b.status === "PUBLISHED").length,
+          beritaDraft: berita.filter((b) => b.status === "DRAFT").length,
+          beritaArchived: berita.filter((b) => b.status === "ARCHIVED").length,
+          artikelTotal: artikelAll.meta?.total ?? artikel.length,
+          artikelReview: artikel.filter((a) => a.status === "REVIEW").length,
+          artikelPublished: artikel.filter((a) => a.status === "PUBLISHED").length,
+          kategoriTotal: kategoriAll.meta?.total ?? kategori.length,
+          source: "aggregate" as const,
+        };
+      } catch {
+        return emptyAnalytics("unavailable");
+      }
+    },
+  );
 }
 
 function emptyAnalytics(

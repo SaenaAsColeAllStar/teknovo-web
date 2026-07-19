@@ -575,13 +575,8 @@ export function SignInForm({ className }: { className?: string }): ReactElement 
       inviteOnlyBanner={inviteOnlyBanner}
       subtitle={
         <>
-          Masuk dengan email undangan Anda. Belum punya akun?{" "}
-          <Link
-            to="/sign-up"
-            className="font-medium text-[color:var(--color-brand)] underline-offset-2 hover:underline"
-          >
-            Daftar
-          </Link>
+          Masuk dengan email dan kata sandi dari undangan sekolah. Belum punya
+          akun? Hubungi Super Admin atau Admin untuk diundang.
         </>
       }
     >

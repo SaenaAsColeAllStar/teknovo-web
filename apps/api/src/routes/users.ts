@@ -245,6 +245,128 @@ function toInvitationListItem(invitation: Invitation): CmsInvitationListItem {
   };
 }
 
+/** Absolute CMS origin for invitation `redirectUrl` (must be on Clerk allowlist). */
+function resolveCmsOrigin(env: Env): string {
+  return (env.CMS_ORIGIN || "https://cms.smkteknovo.sch.id").replace(/\/$/, "");
+}
+
+function inviteRedirectUrl(env: Env): string {
+  return `${resolveCmsOrigin(env)}/sign-in`;
+}
+
+/** Map Clerk invitation errors to actionable Indonesian admin messages. */
+function mapClerkInvitationError(err: unknown): {
+  code: string;
+  message: string;
+  status: ContentfulStatusCode;
+} {
+  const blob = clerkErrorBlob(err);
+  const items = clerkErrors(err);
+
+  if (isClerkConflict(err)) {
+    return {
+      code: "CONFLICT",
+      message:
+        "Email sudah terdaftar atau undangan masih aktif. Batalkan undangan lama di tab Undangan, lalu kirim ulang — atau salin tautan yang sudah ada.",
+      status: 409,
+    };
+  }
+
+  if (
+    items.some((e) => e.code === "rate_limit_exceeded") ||
+    blob.includes("rate limit") ||
+    blob.includes("too many")
+  ) {
+    return {
+      code: "RATE_LIMIT",
+      message:
+        "Batas undangan Clerk tercapai (maks. ~100/jam). Tunggu sebentar, atau bagikan tautan undangan lewat WhatsApp/salin tautan.",
+      status: 429,
+    };
+  }
+
+  if (
+    blob.includes("redirect") ||
+    blob.includes("redirect_url") ||
+    blob.includes("forbidden_origin") ||
+    blob.includes("not allowed")
+  ) {
+    return {
+      code: "REDIRECT_URL",
+      message:
+        "redirectUrl undangan ditolak Clerk. Di Clerk Dashboard → Domains / Paths, izinkan https://cms.smkteknovo.sch.id/sign-in (dan origin CMS).",
+      status: 400,
+    };
+  }
+
+  if (
+    blob.includes("email") &&
+    (blob.includes("disabled") ||
+      blob.includes("not enabled") ||
+      blob.includes("deliver") ||
+      blob.includes("smtp"))
+  ) {
+    return {
+      code: "EMAIL_DISABLED",
+      message:
+        "Pengiriman email Clerk belum aktif/tersedia. Aktifkan Email di Dashboard, atau bagikan tautan undangan lewat WhatsApp / salin tautan.",
+      status: 502,
+    };
+  }
+
+  return {
+    code: "CLERK",
+    message: clerkErrorMessage(err),
+    status: 502,
+  };
+}
+
+type CreateCmsInvitationParams = {
+  clerk: ClerkClient;
+  env: Env;
+  email: string;
+  role: CmsRole;
+  expiresInDays: number;
+  nama?: string | null;
+};
+
+async function createCmsInvitation({
+  clerk,
+  env,
+  email,
+  role,
+  expiresInDays,
+  nama,
+}: CreateCmsInvitationParams) {
+  const publicMetadata: { role: CmsRole; expiresInDays: number } = {
+    role,
+    expiresInDays,
+  };
+  const invitation = await clerk.invitations.createInvitation({
+    emailAddress: email,
+    publicMetadata,
+    notify: true,
+    ignoreExisting: false,
+    expiresInDays,
+    redirectUrl: inviteRedirectUrl(env),
+    templateSlug: "invitation",
+  });
+  const item = toInvitationListItem(invitation);
+  return {
+    id: invitation.id,
+    email: invitation.emailAddress,
+    name: nama?.trim() || null,
+    role,
+    createdAt: item.createdAt,
+    invited: true as const,
+    notified: true as const,
+    status: item.status,
+    expiresAt: item.expiresAt,
+    expiresInDays: item.expiresInDays,
+    url: item.url,
+  };
+}
+
 /** Editors only see siswa invitations; Super Admin sees all. */
 function filterInvitationsForActor(
   actorRole: CmsRole,
@@ -450,46 +572,18 @@ usersRoutes.post("/", async (c) => {
 
     // No password → Clerk invitation (user sets password on accept).
     try {
-      publicMetadata.expiresInDays = expiresInDays;
-      const cmsOrigin = (c.env.CMS_ORIGIN || "https://cms.smkteknovo.sch.id").replace(
-        /\/$/,
-        "",
-      );
-      const invitation = await clerk.invitations.createInvitation({
-        emailAddress: email,
-        publicMetadata,
-        notify: true,
-        ignoreExisting: false,
+      const created = await createCmsInvitation({
+        clerk,
+        env: c.env,
+        email,
+        role,
         expiresInDays,
-        redirectUrl: `${cmsOrigin}/sign-in`,
+        nama,
       });
-      const item = toInvitationListItem(invitation);
-      return okJson(
-        c,
-        {
-          id: invitation.id,
-          email: invitation.emailAddress,
-          name: nama?.trim() || null,
-          role,
-          createdAt: item.createdAt,
-          invited: true as const,
-          status: item.status,
-          expiresAt: item.expiresAt,
-          expiresInDays: item.expiresInDays,
-          url: item.url,
-        },
-        201,
-      );
+      return okJson(c, created, 201);
     } catch (err) {
-      if (isClerkConflict(err)) {
-        return errJson(
-          c,
-          "CONFLICT",
-          "Email sudah terdaftar atau undangan masih aktif.",
-          409,
-        );
-      }
-      return errJson(c, "CLERK", clerkErrorMessage(err), 502);
+      const mapped = mapClerkInvitationError(err);
+      return errJson(c, mapped.code, mapped.message, mapped.status);
     }
   } catch (err) {
     return handleApiError(c, err);
@@ -549,6 +643,17 @@ usersRoutes.get("/invitations", async (c) => {
   }
 });
 
+async function findInvitationById(
+  clerk: ClerkClient,
+  invitationId: string,
+): Promise<Invitation | null> {
+  const listed = await clerk.invitations.getInvitationList({
+    query: invitationId,
+    limit: 10,
+  });
+  return listed.data.find((inv) => inv.id === invitationId) ?? null;
+}
+
 usersRoutes.post("/invitations/:id/revoke", async (c) => {
   try {
     const session = await requireCmsUserManager(c.req.raw, c.env);
@@ -559,11 +664,7 @@ usersRoutes.post("/invitations/:id/revoke", async (c) => {
     }
 
     try {
-      const listed = await clerk.invitations.getInvitationList({
-        query: invitationId,
-        limit: 10,
-      });
-      const existing = listed.data.find((inv) => inv.id === invitationId);
+      const existing = await findInvitationById(clerk, invitationId);
       if (!existing) {
         return errJson(c, "NOT_FOUND", "Undangan tidak ditemukan.", 404);
       }
@@ -589,6 +690,96 @@ usersRoutes.post("/invitations/:id/revoke", async (c) => {
 
       const revoked = await clerk.invitations.revokeInvitation(invitationId);
       return okJson(c, toInvitationListItem(revoked));
+    } catch (err) {
+      if (err instanceof CmsAuthError) throw err;
+      const msg = clerkErrorMessage(err).toLowerCase();
+      if (msg.includes("not found") || msg.includes("couldn't find")) {
+        return errJson(c, "NOT_FOUND", "Undangan tidak ditemukan.", 404);
+      }
+      return errJson(c, "CLERK", clerkErrorMessage(err), 502);
+    }
+  } catch (err) {
+    return handleApiError(c, err);
+  }
+});
+
+/**
+ * Resend = revoke pending invitation + create a fresh one with notify:true.
+ * Clerk has no dedicated "resend email" API.
+ */
+usersRoutes.post("/invitations/:id/resend", async (c) => {
+  try {
+    const session = await requireCmsUserManager(c.req.raw, c.env);
+    const invitationId = c.req.param("id");
+    const clerk = requireClerk(c.env);
+    if (!clerk) {
+      return errJson(c, "UNCONFIGURED", "CLERK_SECRET_KEY belum dikonfigurasi.", 503);
+    }
+
+    try {
+      const existing = await findInvitationById(clerk, invitationId);
+      if (!existing) {
+        return errJson(c, "NOT_FOUND", "Undangan tidak ditemukan.", 404);
+      }
+
+      const existingRole = parseCmsRole(existing.publicMetadata);
+      if (session.role === "editor" && existingRole !== "siswa") {
+        throw new CmsAuthError(
+          "Admin hanya dapat mengirim ulang undangan Siswa.",
+          403,
+        );
+      }
+      assertCanAssign(session.role, existingRole);
+
+      if (existing.status === "revoked" || existing.revoked) {
+        return errJson(
+          c,
+          "CONFLICT",
+          "Undangan sudah dibatalkan. Buat undangan baru dari Undang tim.",
+          409,
+        );
+      }
+      if (existing.status === "accepted") {
+        return errJson(
+          c,
+          "CONFLICT",
+          "Undangan sudah diterima; tidak perlu dikirim ulang.",
+          409,
+        );
+      }
+      if (existing.status === "expired") {
+        return errJson(
+          c,
+          "CONFLICT",
+          "Undangan kedaluwarsa. Buat undangan baru dari Undang tim.",
+          409,
+        );
+      }
+
+      const expiresInDays =
+        readInviteExpiresInDays(existing.publicMetadata) ??
+        CMS_INVITE_EXPIRY_DEFAULT;
+
+      await clerk.invitations.revokeInvitation(invitationId);
+
+      try {
+        const created = await createCmsInvitation({
+          clerk,
+          env: c.env,
+          email: existing.emailAddress,
+          role: existingRole,
+          expiresInDays,
+        });
+        return okJson(c, created, 201);
+      } catch (createErr) {
+        const mapped = mapClerkInvitationError(createErr);
+        return errJson(
+          c,
+          mapped.code,
+          `Undangan lama dibatalkan, tetapi pengiriman ulang gagal: ${mapped.message}`,
+          mapped.status,
+        );
+      }
     } catch (err) {
       if (err instanceof CmsAuthError) throw err;
       const msg = clerkErrorMessage(err).toLowerCase();

@@ -1,6 +1,6 @@
 "use client";
 
-import { m, type Transition } from "framer-motion";
+import { LazyMotion, domAnimation, m, type Transition } from "framer-motion";
 import type { ReactElement, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
@@ -25,6 +25,10 @@ export type MotionInViewProps = {
   once?: boolean;
 };
 
+/**
+ * Scroll-reveal wrapper. Carries its own LazyMotion so Astro page islands
+ * (siblings of chrome, not nested under PublicMotionProvider) still animate.
+ */
 export function MotionInView({
   as = "div",
   children,
@@ -44,17 +48,18 @@ export function MotionInView({
   };
 
   return (
-    <Component
-      id={id}
-      className={cn(className)}
-      /* Jangan sembunyikan dengan opacity:0 — tanpa JS/hydration konten tetap terbaca & SEO aman. */
-      initial={{ y: 20 }}
-      whileInView={{ y: 0 }}
-      viewport={{ once, margin: "-64px 0px -64px 0px" }}
-      transition={transition}
-    >
-      {children}
-    </Component>
+    <LazyMotion features={domAnimation}>
+      <Component
+        id={id}
+        className={cn(className)}
+        /* Jangan sembunyikan dengan opacity:0 — tanpa JS/hydration konten tetap terbaca & SEO aman. */
+        initial={{ y: 20 }}
+        whileInView={{ y: 0 }}
+        viewport={{ once, margin: "-64px 0px -64px 0px" }}
+        transition={transition}
+      >
+        {children}
+      </Component>
+    </LazyMotion>
   );
 }
-

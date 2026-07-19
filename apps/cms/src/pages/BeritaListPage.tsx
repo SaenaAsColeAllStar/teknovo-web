@@ -1,8 +1,9 @@
 import { useAuth } from "@clerk/react";
 import { format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "sonner";
 
 import { useCmsRole } from "@/components/dashboard/CmsRoleProvider";
 import { BeritaListRefresh } from "@/components/dashboard/berita/BeritaListRefresh";
@@ -14,48 +15,71 @@ import type { BeritaListItem, BeritaStatus } from "@/types/berita";
 import { onRouterRefresh } from "../shims/next-navigation";
 
 const STATUS_LABEL: Record<BeritaStatus, string> = {
-  DRAFT: "Draft",
-  PUBLISHED: "Published",
-  ARCHIVED: "Archived",
+  DRAFT: "Draf",
+  PUBLISHED: "Terbit",
+  ARCHIVED: "Arsip",
 };
 
 /** Mirrors `src/app/(dashboard)/dashboard/berita/page.tsx`, fetched client-side. */
 export function BeritaListPage() {
-  const { getToken } = useAuth();
+  const { getToken, isLoaded } = useAuth();
   const { canWrite } = useCmsRole();
   const [items, setItems] = useState<BeritaListItem[]>([]);
   const [total, setTotal] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const getTokenRef = useRef(getToken);
+  getTokenRef.current = getToken;
 
   useEffect(() => {
+    if (!isLoaded) return;
     let cancelled = false;
-    async function load() {
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
+
+    async function load(force: boolean) {
       setLoading(true);
       setError(null);
       try {
-        const token = await getToken();
+        const token = await getTokenRef.current();
         if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
-        const res = await fetchBeritaListCms(token, { page: 1, limit: 50 });
+        const res = await fetchBeritaListCms(token, {
+          page: 1,
+          limit: 50,
+          force,
+        });
         if (cancelled) return;
         setItems(res.data);
         setTotal(res.meta.total);
       } catch (err) {
         if (cancelled) return;
-        setError(
-          err instanceof ApiClientError ? err.message : "Gagal memuat daftar berita.",
-        );
+        const message =
+          err instanceof ApiClientError
+            ? err.message
+            : "Gagal memuat daftar berita.";
+        setError(message);
+        if (err instanceof ApiClientError && err.status === 429) {
+          const waitSec = err.retryAfterSec ?? 12;
+          toast.error(message, {
+            duration: Math.min(60_000, waitSec * 1000),
+          });
+          if (retryTimer) clearTimeout(retryTimer);
+          retryTimer = setTimeout(() => {
+            if (!cancelled) void load(true);
+          }, waitSec * 1000);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
-    void load();
-    const unsubscribe = onRouterRefresh(() => void load());
+
+    void load(false);
+    const unsubscribe = onRouterRefresh(() => void load(true));
     return () => {
       cancelled = true;
       unsubscribe();
+      if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [getToken]);
+  }, [isLoaded]);
 
   return (
     <div className="space-y-6">
@@ -65,7 +89,7 @@ export function BeritaListPage() {
             Berita
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            CRUD terhadap <code>GET/POST/PATCH/DELETE /v1/berita</code> (api-web).
+            Kelola berita sekolah untuk situs publik smkteknovo.sch.id.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -92,8 +116,8 @@ export function BeritaListPage() {
           <CardHeader>
             <CardTitle>Belum ada berita</CardTitle>
             <CardDescription>
-              Buat artikel pertama, atau pastikan api-web mengembalikan data dari{" "}
-              <code>GET /v1/berita</code>.
+              Belum ada entri. Klik <strong>Berita baru</strong> untuk menulis
+              pengumuman atau kegiatan sekolah.
             </CardDescription>
           </CardHeader>
         </Card>
