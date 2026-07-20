@@ -2,17 +2,18 @@ import { Hono } from "hono";
 import { fasilitasFormSchema } from "@teknovo/shared";
 import { requireCmsSession, requireCmsSiteContentWriter } from "../auth/cms-auth";
 import {
-  d1CreateFasilitas,
-  d1DeleteFasilitas,
-  d1GetFasilitasById,
-  d1GetFasilitasBySlug,
-  d1ListFasilitas,
-  d1UpdateFasilitas,
-} from "../lib/d1/fasilitas-repo";
+  createFasilitas,
+  deleteFasilitas,
+  getFasilitasById,
+  getFasilitasBySlug,
+  listFasilitas,
+  updateFasilitas,
+} from "../lib/data/fasilitas";
 import {
   shouldRebuildForSiteContentStatus,
   triggerWebRebuild,
 } from "../lib/rebuild-web";
+import { scheduleBackground } from "../lib/runtime";
 import {
   errJson,
   handleApiError,
@@ -38,7 +39,7 @@ fasilitasRoutes.get("/", async (c) => {
       await requireCmsSession(c.req.raw, c.env);
     }
 
-    const result = await d1ListFasilitas(c.env.DB, {
+    const result = await listFasilitas(c.env, {
       status: status ?? undefined,
       page,
       limit,
@@ -68,13 +69,14 @@ fasilitasRoutes.post("/", async (c) => {
       );
     }
 
-    const created = await d1CreateFasilitas(c.env.DB, {
+    const created = await createFasilitas(c.env, {
       ...parsed.data,
       coverUrl: parsed.data.coverUrl || undefined,
     });
 
     if (shouldRebuildForSiteContentStatus(created.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `fasilitas:create:${created.slug}`),
       );
     }
@@ -88,7 +90,7 @@ fasilitasRoutes.post("/", async (c) => {
 fasilitasRoutes.get("/id/:id", async (c) => {
   try {
     await requireCmsSession(c.req.raw, c.env);
-    const item = await d1GetFasilitasById(c.env.DB, c.req.param("id"));
+    const item = await getFasilitasById(c.env, c.req.param("id"));
     if (!item) return errJson(c, "NOT_FOUND", "Fasilitas tidak ditemukan.", 404);
     return okJson(c, item);
   } catch (err) {
@@ -99,7 +101,7 @@ fasilitasRoutes.get("/id/:id", async (c) => {
 fasilitasRoutes.get("/:key", async (c) => {
   try {
     const key = c.req.param("key");
-    const byId = await d1GetFasilitasById(c.env.DB, key);
+    const byId = await getFasilitasById(c.env, key);
     if (byId) {
       if (byId.status !== "PUBLISHED") {
         await requireCmsSession(c.req.raw, c.env);
@@ -108,7 +110,7 @@ fasilitasRoutes.get("/:key", async (c) => {
     }
     const publishedOnly =
       !c.req.header("Authorization")?.startsWith("Bearer ");
-    const bySlug = await d1GetFasilitasBySlug(c.env.DB, key, publishedOnly);
+    const bySlug = await getFasilitasBySlug(c.env, key, publishedOnly);
     if (!bySlug) {
       return errJson(c, "NOT_FOUND", "Fasilitas tidak ditemukan.", 404);
     }
@@ -126,8 +128,8 @@ fasilitasRoutes.patch("/:key", async (c) => {
     await requireCmsSiteContentWriter(c.req.raw, c.env);
     const key = c.req.param("key");
     const existing =
-      (await d1GetFasilitasById(c.env.DB, key)) ??
-      (await d1GetFasilitasBySlug(c.env.DB, key, false));
+      (await getFasilitasById(c.env, key)) ??
+      (await getFasilitasBySlug(c.env, key, false));
     if (!existing) {
       return errJson(c, "NOT_FOUND", "Fasilitas tidak ditemukan.", 404);
     }
@@ -143,7 +145,7 @@ fasilitasRoutes.patch("/:key", async (c) => {
       );
     }
 
-    const updated = await d1UpdateFasilitas(c.env.DB, existing.id, {
+    const updated = await updateFasilitas(c.env, existing.id, {
       ...parsed.data,
       coverUrl: parsed.data.coverUrl || undefined,
     });
@@ -153,7 +155,8 @@ fasilitasRoutes.patch("/:key", async (c) => {
       (shouldRebuildForSiteContentStatus(updated.status) ||
         shouldRebuildForSiteContentStatus(existing.status))
     ) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `fasilitas:update:${updated.slug}`),
       );
     }
@@ -169,14 +172,15 @@ fasilitasRoutes.delete("/:key", async (c) => {
     await requireCmsSiteContentWriter(c.req.raw, c.env);
     const key = c.req.param("key");
     const existing =
-      (await d1GetFasilitasById(c.env.DB, key)) ??
-      (await d1GetFasilitasBySlug(c.env.DB, key, false));
+      (await getFasilitasById(c.env, key)) ??
+      (await getFasilitasBySlug(c.env, key, false));
     if (!existing) {
       return errJson(c, "NOT_FOUND", "Fasilitas tidak ditemukan.", 404);
     }
-    await d1DeleteFasilitas(c.env.DB, existing.id);
+    await deleteFasilitas(c.env, existing.id);
     if (shouldRebuildForSiteContentStatus(existing.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `fasilitas:delete:${existing.slug}`),
       );
     }

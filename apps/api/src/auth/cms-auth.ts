@@ -68,9 +68,11 @@ function sessionFromRole(
   };
 }
 
+import type { ClerkEnv } from "../lib/http";
+
 export async function resolveCmsSession(
   request: Request,
-  env: Env,
+  env: ClerkEnv,
 ): Promise<CmsSession | null> {
   const header = request.headers.get("Authorization");
   if (!header?.startsWith("Bearer ")) return null;
@@ -100,14 +102,14 @@ export async function resolveCmsSession(
 
 export async function requireCmsSession(
   request: Request,
-  env: Env,
+  env: ClerkEnv,
 ): Promise<CmsSession> {
   const cms = await resolveCmsSession(request, env);
   if (!cms) throw new CmsAuthError("Sesi tidak valid. Masuk ulang.", 401);
   return cms;
 }
 
-export async function requireCmsWriter(request: Request, env: Env) {
+export async function requireCmsWriter(request: Request, env: ClerkEnv) {
   const cms = await requireCmsSession(request, env);
   if (!cms.canWrite) {
     throw new CmsAuthError(
@@ -118,7 +120,7 @@ export async function requireCmsWriter(request: Request, env: Env) {
   return cms;
 }
 
-export async function requireCmsArtikelWriter(request: Request, env: Env) {
+export async function requireCmsArtikelWriter(request: Request, env: ClerkEnv) {
   const cms = await requireCmsSession(request, env);
   if (!cms.canWriteArtikel) {
     throw new CmsAuthError("Peran viewer hanya dapat membaca.", 403);
@@ -126,7 +128,7 @@ export async function requireCmsArtikelWriter(request: Request, env: Env) {
   return cms;
 }
 
-export async function requireCmsMediaUploader(request: Request, env: Env) {
+export async function requireCmsMediaUploader(request: Request, env: ClerkEnv) {
   const cms = await requireCmsSession(request, env);
   if (!cms.canUploadMedia) {
     throw new CmsAuthError("Peran viewer tidak dapat mengunggah media.", 403);
@@ -134,7 +136,7 @@ export async function requireCmsMediaUploader(request: Request, env: Env) {
   return cms;
 }
 
-export async function requireCmsModerator(request: Request, env: Env) {
+export async function requireCmsModerator(request: Request, env: ClerkEnv) {
   const cms = await requireCmsSession(request, env);
   if (!cms.canModerate) {
     throw new CmsAuthError(
@@ -145,7 +147,7 @@ export async function requireCmsModerator(request: Request, env: Env) {
   return cms;
 }
 
-export async function requireCmsAdmin(request: Request, env: Env) {
+export async function requireCmsAdmin(request: Request, env: ClerkEnv) {
   const cms = await requireCmsSession(request, env);
   if (!cms.canManageSettings) {
     throw new CmsAuthError("Hanya admin yang dapat mengakses pengaturan.", 403);
@@ -154,7 +156,7 @@ export async function requireCmsAdmin(request: Request, env: Env) {
 }
 
 /** Super Admin or Admin (`editor`) — invite-only user management. */
-export async function requireCmsUserManager(request: Request, env: Env) {
+export async function requireCmsUserManager(request: Request, env: ClerkEnv) {
   const cms = await requireCmsSession(request, env);
   if (!cms.canManageUsers) {
     throw new CmsAuthError(
@@ -168,7 +170,7 @@ export async function requireCmsUserManager(request: Request, env: Env) {
 /** Super Admin or Admin — fasilitas / ekstrakurikuler / prestasi. */
 export async function requireCmsSiteContentWriter(
   request: Request,
-  env: Env,
+  env: ClerkEnv,
 ) {
   const cms = await requireCmsSession(request, env);
   if (!cms.canManageSiteContent) {
@@ -183,7 +185,7 @@ export async function requireCmsSiteContentWriter(
 /** Super Admin only — landing / brand media registry. */
 export async function requireCmsSiteMediaManager(
   request: Request,
-  env: Env,
+  env: ClerkEnv,
 ) {
   const cms = await requireCmsSession(request, env);
   if (!cms.canManageSiteMedia) {

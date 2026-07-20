@@ -12,6 +12,14 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — API route dual-runtime (PRP Fase 4)
+
+- Thin data adapters (`apps/api/src/lib/data/*`): `hasPrisma(env)` → Prisma repos; else D1. Media: `hasMinio(env)` → MinIO S3 SDK; else R2.
+- Shared `mountApiRoutes` — Node `server.ts` mounts the same `/api/v1/*`, `/api/cms/media`, `/api/webhook` as Worker.
+- `scheduleBackground` for rebuild hooks (Worker `waitUntil` / Node fire-and-forget); Clerk auth accepts Node bindings.
+- Smoke: `pnpm --filter @teknovo/api smoke:node` (health + kategori/berita list + MinIO put/list/delete + auth 401). Unit: `runtime.test.ts`.
+- Production remains Worker + D1 + R2 until Fase 8 Tunnel cutover.
+
 ### Added — API Prisma repos (PRP Fase 3)
 
 - Prisma repository layer mirroring D1 (`apps/api/src/lib/prisma/*`): kategori, berita, artikel, fasilitas, ekstrakurikuler, prestasi, site-media, pengaturan, analytics; users stub (Clerk until Platform DB).

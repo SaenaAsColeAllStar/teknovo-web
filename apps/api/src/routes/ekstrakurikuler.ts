@@ -2,18 +2,19 @@ import { Hono } from "hono";
 import { ekstrakurikulerFormSchema } from "@teknovo/shared";
 import { requireCmsSession, requireCmsSiteContentWriter } from "../auth/cms-auth";
 import {
-  d1CreateEkstrakurikuler,
-  d1DeleteEkstrakurikuler,
-  d1GetEkstrakurikulerById,
-  d1GetEkstrakurikulerBySlug,
-  d1ListEkstrakurikuler,
-  d1ListEkstrakurikulerFull,
-  d1UpdateEkstrakurikuler,
-} from "../lib/d1/ekstrakurikuler-repo";
+  createEkstrakurikuler,
+  deleteEkstrakurikuler,
+  getEkstrakurikulerById,
+  getEkstrakurikulerBySlug,
+  listEkstrakurikuler,
+  listEkstrakurikulerFull,
+  updateEkstrakurikuler,
+} from "../lib/data/ekstrakurikuler";
 import {
   shouldRebuildForSiteContentStatus,
   triggerWebRebuild,
 } from "../lib/rebuild-web";
+import { scheduleBackground } from "../lib/runtime";
 import {
   errJson,
   handleApiError,
@@ -41,7 +42,7 @@ ekstrakurikulerRoutes.get("/", async (c) => {
     }
 
     if (full && status === "PUBLISHED") {
-      const items = await d1ListEkstrakurikulerFull(c.env.DB, "PUBLISHED");
+      const items = await listEkstrakurikulerFull(c.env, "PUBLISHED");
       return okListJson(c, items, {
         page: 1,
         limit: items.length,
@@ -49,7 +50,7 @@ ekstrakurikulerRoutes.get("/", async (c) => {
       });
     }
 
-    const result = await d1ListEkstrakurikuler(c.env.DB, {
+    const result = await listEkstrakurikuler(c.env, {
       status: status ?? undefined,
       page,
       limit,
@@ -79,7 +80,7 @@ ekstrakurikulerRoutes.post("/", async (c) => {
       );
     }
 
-    const created = await d1CreateEkstrakurikuler(c.env.DB, {
+    const created = await createEkstrakurikuler(c.env, {
       ...parsed.data,
       previewUrl: parsed.data.previewUrl || undefined,
       jadwalRingkas: parsed.data.jadwalRingkas || undefined,
@@ -88,7 +89,8 @@ ekstrakurikulerRoutes.post("/", async (c) => {
     });
 
     if (shouldRebuildForSiteContentStatus(created.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `ekstrakurikuler:create:${created.slug}`),
       );
     }
@@ -102,7 +104,7 @@ ekstrakurikulerRoutes.post("/", async (c) => {
 ekstrakurikulerRoutes.get("/id/:id", async (c) => {
   try {
     await requireCmsSession(c.req.raw, c.env);
-    const item = await d1GetEkstrakurikulerById(c.env.DB, c.req.param("id"));
+    const item = await getEkstrakurikulerById(c.env, c.req.param("id"));
     if (!item) {
       return errJson(c, "NOT_FOUND", "Ekstrakurikuler tidak ditemukan.", 404);
     }
@@ -115,7 +117,7 @@ ekstrakurikulerRoutes.get("/id/:id", async (c) => {
 ekstrakurikulerRoutes.get("/:key", async (c) => {
   try {
     const key = c.req.param("key");
-    const byId = await d1GetEkstrakurikulerById(c.env.DB, key);
+    const byId = await getEkstrakurikulerById(c.env, key);
     if (byId) {
       if (byId.status !== "PUBLISHED") {
         await requireCmsSession(c.req.raw, c.env);
@@ -124,8 +126,8 @@ ekstrakurikulerRoutes.get("/:key", async (c) => {
     }
     const publishedOnly =
       !c.req.header("Authorization")?.startsWith("Bearer ");
-    const bySlug = await d1GetEkstrakurikulerBySlug(
-      c.env.DB,
+    const bySlug = await getEkstrakurikulerBySlug(
+      c.env,
       key,
       publishedOnly,
     );
@@ -146,8 +148,8 @@ ekstrakurikulerRoutes.patch("/:key", async (c) => {
     await requireCmsSiteContentWriter(c.req.raw, c.env);
     const key = c.req.param("key");
     const existing =
-      (await d1GetEkstrakurikulerById(c.env.DB, key)) ??
-      (await d1GetEkstrakurikulerBySlug(c.env.DB, key, false));
+      (await getEkstrakurikulerById(c.env, key)) ??
+      (await getEkstrakurikulerBySlug(c.env, key, false));
     if (!existing) {
       return errJson(c, "NOT_FOUND", "Ekstrakurikuler tidak ditemukan.", 404);
     }
@@ -163,7 +165,7 @@ ekstrakurikulerRoutes.patch("/:key", async (c) => {
       );
     }
 
-    const updated = await d1UpdateEkstrakurikuler(c.env.DB, existing.id, {
+    const updated = await updateEkstrakurikuler(c.env, existing.id, {
       ...parsed.data,
       previewUrl: parsed.data.previewUrl || undefined,
       jadwalRingkas: parsed.data.jadwalRingkas || undefined,
@@ -176,7 +178,8 @@ ekstrakurikulerRoutes.patch("/:key", async (c) => {
       (shouldRebuildForSiteContentStatus(updated.status) ||
         shouldRebuildForSiteContentStatus(existing.status))
     ) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `ekstrakurikuler:update:${updated.slug}`),
       );
     }
@@ -192,14 +195,15 @@ ekstrakurikulerRoutes.delete("/:key", async (c) => {
     await requireCmsSiteContentWriter(c.req.raw, c.env);
     const key = c.req.param("key");
     const existing =
-      (await d1GetEkstrakurikulerById(c.env.DB, key)) ??
-      (await d1GetEkstrakurikulerBySlug(c.env.DB, key, false));
+      (await getEkstrakurikulerById(c.env, key)) ??
+      (await getEkstrakurikulerBySlug(c.env, key, false));
     if (!existing) {
       return errJson(c, "NOT_FOUND", "Ekstrakurikuler tidak ditemukan.", 404);
     }
-    await d1DeleteEkstrakurikuler(c.env.DB, existing.id);
+    await deleteEkstrakurikuler(c.env, existing.id);
     if (shouldRebuildForSiteContentStatus(existing.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `ekstrakurikuler:delete:${existing.slug}`),
       );
     }

@@ -6,19 +6,20 @@ import {
   requireCmsSession,
 } from "../auth/cms-auth";
 import {
-  d1ApproveArtikel,
-  d1CreateArtikel,
-  d1DeleteArtikel,
-  d1GetArtikelById,
-  d1GetArtikelBySlug,
-  d1ListArtikel,
-  d1RejectArtikel,
-  d1UpdateArtikel,
-} from "../lib/d1/artikel-repo";
+  approveArtikel,
+  createArtikel,
+  deleteArtikel,
+  getArtikelById,
+  getArtikelBySlug,
+  listArtikel,
+  rejectArtikel,
+  updateArtikel,
+} from "../lib/data/artikel";
 import {
   shouldRebuildForArtikelStatus,
   triggerWebRebuild,
 } from "../lib/rebuild-web";
+import { scheduleBackground } from "../lib/runtime";
 import {
   errJson,
   handleApiError,
@@ -49,7 +50,7 @@ artikelRoutes.get("/", async (c) => {
       if (mine) mineUserId = session.userId;
     }
 
-    const result = await d1ListArtikel(c.env.DB, {
+    const result = await listArtikel(c.env, {
       status: status ?? undefined,
       page,
       limit,
@@ -86,7 +87,7 @@ artikelRoutes.post("/", async (c) => {
       status = "REVIEW";
     }
 
-    const created = await d1CreateArtikel(c.env.DB, {
+    const created = await createArtikel(c.env, {
       ...parsed.data,
       status,
       konten: sanitizeArtikelHtml(parsed.data.konten),
@@ -103,7 +104,8 @@ artikelRoutes.post("/", async (c) => {
     });
 
     if (shouldRebuildForArtikelStatus(created.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `artikel:create:${created.slug}`),
       );
     }
@@ -117,7 +119,7 @@ artikelRoutes.post("/", async (c) => {
 artikelRoutes.get("/id/:id", async (c) => {
   try {
     await requireCmsSession(c.req.raw, c.env);
-    const item = await d1GetArtikelById(c.env.DB, c.req.param("id"));
+    const item = await getArtikelById(c.env, c.req.param("id"));
     if (!item) return errJson(c, "NOT_FOUND", "Artikel tidak ditemukan.", 404);
     return okJson(c, item);
   } catch (err) {
@@ -128,11 +130,11 @@ artikelRoutes.get("/id/:id", async (c) => {
 artikelRoutes.get("/:id", async (c) => {
   try {
     const id = c.req.param("id");
-    let item = await d1GetArtikelById(c.env.DB, id);
+    let item = await getArtikelById(c.env, id);
     if (!item) {
       const publishedOnly =
         !c.req.header("Authorization")?.startsWith("Bearer ");
-      item = await d1GetArtikelBySlug(c.env.DB, id, publishedOnly);
+      item = await getArtikelBySlug(c.env, id, publishedOnly);
     }
     if (!item) return errJson(c, "NOT_FOUND", "Artikel tidak ditemukan.", 404);
     if (item.status !== "PUBLISHED") {
@@ -147,7 +149,7 @@ artikelRoutes.get("/:id", async (c) => {
 artikelRoutes.patch("/:id", async (c) => {
   try {
     const session = await requireCmsArtikelWriter(c.req.raw, c.env);
-    const existing = await d1GetArtikelById(c.env.DB, c.req.param("id"));
+    const existing = await getArtikelById(c.env, c.req.param("id"));
     if (!existing) return errJson(c, "NOT_FOUND", "Artikel tidak ditemukan.", 404);
     if (
       session.role === "siswa" &&
@@ -174,7 +176,7 @@ artikelRoutes.patch("/:id", async (c) => {
       status = "REVIEW";
     }
 
-    const updated = await d1UpdateArtikel(c.env.DB, existing.id, {
+    const updated = await updateArtikel(c.env, existing.id, {
       ...parsed.data,
       status,
       konten: sanitizeArtikelHtml(parsed.data.konten),
@@ -194,7 +196,8 @@ artikelRoutes.patch("/:id", async (c) => {
       (shouldRebuildForArtikelStatus(updated.status) ||
         shouldRebuildForArtikelStatus(existing.status))
     ) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `artikel:update:${updated.slug}`),
       );
     }
@@ -208,7 +211,7 @@ artikelRoutes.patch("/:id", async (c) => {
 artikelRoutes.delete("/:id", async (c) => {
   try {
     const session = await requireCmsArtikelWriter(c.req.raw, c.env);
-    const existing = await d1GetArtikelById(c.env.DB, c.req.param("id"));
+    const existing = await getArtikelById(c.env, c.req.param("id"));
     if (!existing) return errJson(c, "NOT_FOUND", "Artikel tidak ditemukan.", 404);
     if (
       session.role === "siswa" &&
@@ -217,9 +220,10 @@ artikelRoutes.delete("/:id", async (c) => {
     ) {
       return errJson(c, "FORBIDDEN", "Hanya milik sendiri.", 403);
     }
-    await d1DeleteArtikel(c.env.DB, existing.id);
+    await deleteArtikel(c.env, existing.id);
     if (shouldRebuildForArtikelStatus(existing.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `artikel:delete:${existing.slug}`),
       );
     }
@@ -232,7 +236,7 @@ artikelRoutes.delete("/:id", async (c) => {
 artikelRoutes.post("/:id/approve", async (c) => {
   try {
     await requireCmsModerator(c.req.raw, c.env);
-    const updated = await d1ApproveArtikel(c.env.DB, c.req.param("id"));
+    const updated = await approveArtikel(c.env, c.req.param("id"));
     if (!updated) {
       return errJson(
         c,
@@ -241,9 +245,10 @@ artikelRoutes.post("/:id/approve", async (c) => {
         409,
       );
     }
-    c.executionCtx.waitUntil(
-      triggerWebRebuild(c.env, `artikel:approve:${updated.slug}`),
-    );
+    scheduleBackground(
+        c,
+        triggerWebRebuild(c.env, `artikel:approve:${updated.slug}`),
+      );
     return okJson(c, updated);
   } catch (err) {
     return handleApiError(c, err);
@@ -256,8 +261,8 @@ artikelRoutes.post("/:id/reject", async (c) => {
     const body = (await c.req.json().catch(() => ({}))) as {
       reason?: string;
     };
-    const updated = await d1RejectArtikel(
-      c.env.DB,
+    const updated = await rejectArtikel(
+      c.env,
       c.req.param("id"),
       body.reason,
     );

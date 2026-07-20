@@ -392,21 +392,27 @@ Tambahan Fase 2 (hardening): global `onError` / Express body-parser error handle
 
 Catatan Fase 3:
 - Repos di `apps/api/src/lib/prisma/*` — mirror API `lib/d1/*` (`prisma*` vs `d1*`); Worker tetap D1.
-- Route cutover ke Prisma = **Fase 4** (Node `server.ts` belum mount content routes).
+- Route cutover ke Prisma = **Fase 4** ✅ (Node `server.ts` mounts content routes via adapters).
 - Task 3.8: CMS users tetap Clerk (`routes/users.ts`); tidak ada model `User` di tenant schema — `users-repo.ts` hanya probe/stub sampai Platform DB (Fase 10).
 - Smoke: `pnpm --filter @teknovo/api prisma:smoke` (butuh Postgres + migrate + seed).
 
 ### Fase 4: Route Integration & Testing (Hari 8-9) — P0
 
-| Task | Detail | Output |
-|---|---|---|
-| 4.1 | Update semua route imports — dari d1-repo ke prisma repo | Semua routes pakai Prisma |
-| 4.2 | Update route handlers MinIO — dari R2 binding ke S3 SDK | Semua upload/download pakai MinIO |
-| 4.3 | Test POST/PUT upload file → MinIO → simpan URL di PostgreSQL | Upload flow end-to-end |
-| 4.4 | Test GET list dengan pagination + filter | List API OK |
-| 4.5 | Test PATCH update, DELETE soft/hard | CRUD OK |
-| 4.6 | Test auth Clerk — session verify via `@clerk/backend` Node.js | Auth flow OK |
-| 4.7 | Test CORS dari domain CMS dan Web | Cross-origin OK |
+| Task | Detail | Output | Status |
+|---|---|---|---|
+| 4.1 | Update semua route imports — dari d1-repo ke prisma repo | Semua routes pakai Prisma | ✅ dual-runtime |
+| 4.2 | Update route handlers MinIO — dari R2 binding ke S3 SDK | Semua upload/download pakai MinIO | ✅ dual-runtime |
+| 4.3 | Test POST/PUT upload file → MinIO → simpan URL di PostgreSQL | Upload flow end-to-end | ✅ smoke MinIO |
+| 4.4 | Test GET list dengan pagination + filter | List API OK | ✅ |
+| 4.5 | Test PATCH update, DELETE soft/hard | CRUD OK | ✅ via adapters + prisma:smoke |
+| 4.6 | Test auth Clerk — session verify via `@clerk/backend` Node.js | Auth flow OK | ✅ 401 tanpa Bearer |
+| 4.7 | Test CORS dari domain CMS dan Web | Cross-origin OK | ✅ Express CORS (Fase 2) |
+
+Catatan Fase 4:
+- Adapter `lib/data/*` + `hasPrisma` / `hasMinio`: Node (`c.env.prisma`) → Prisma/MinIO; Worker → D1/R2.
+- `server.ts` mounts the same `/api/v1/*` routes as Worker via `mountApiRoutes`.
+- `scheduleBackground` replaces `executionCtx.waitUntil` for Node (fire-and-forget).
+- Smoke: `pnpm --filter @teknovo/api smoke:node` (Postgres + MinIO docker). Production DNS/Tunnel cutover = Fase 8+.
 
 ### Fase 5: Stored Procedures (Hari 10) — P0
 

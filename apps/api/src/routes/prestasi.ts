@@ -2,16 +2,17 @@ import { Hono } from "hono";
 import { prestasiFormSchema } from "@teknovo/shared";
 import { requireCmsSession, requireCmsSiteContentWriter } from "../auth/cms-auth";
 import {
-  d1CreatePrestasi,
-  d1DeletePrestasi,
-  d1GetPrestasiById,
-  d1ListPrestasi,
-  d1UpdatePrestasi,
-} from "../lib/d1/prestasi-repo";
+  createPrestasi,
+  deletePrestasi,
+  getPrestasiById,
+  listPrestasi,
+  updatePrestasi,
+} from "../lib/data/prestasi";
 import {
   shouldRebuildForSiteContentStatus,
   triggerWebRebuild,
 } from "../lib/rebuild-web";
+import { scheduleBackground } from "../lib/runtime";
 import {
   errJson,
   handleApiError,
@@ -37,7 +38,7 @@ prestasiRoutes.get("/", async (c) => {
       await requireCmsSession(c.req.raw, c.env);
     }
 
-    const result = await d1ListPrestasi(c.env.DB, {
+    const result = await listPrestasi(c.env, {
       status: status ?? undefined,
       page,
       limit,
@@ -67,10 +68,11 @@ prestasiRoutes.post("/", async (c) => {
       );
     }
 
-    const created = await d1CreatePrestasi(c.env.DB, parsed.data);
+    const created = await createPrestasi(c.env, parsed.data);
 
     if (shouldRebuildForSiteContentStatus(created.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `prestasi:create:${created.id}`),
       );
     }
@@ -84,7 +86,7 @@ prestasiRoutes.post("/", async (c) => {
 prestasiRoutes.get("/:id", async (c) => {
   try {
     const id = c.req.param("id");
-    const item = await d1GetPrestasiById(c.env.DB, id);
+    const item = await getPrestasiById(c.env, id);
     if (!item) return errJson(c, "NOT_FOUND", "Prestasi tidak ditemukan.", 404);
     if (item.status !== "PUBLISHED") {
       await requireCmsSession(c.req.raw, c.env);
@@ -98,7 +100,7 @@ prestasiRoutes.get("/:id", async (c) => {
 prestasiRoutes.patch("/:id", async (c) => {
   try {
     await requireCmsSiteContentWriter(c.req.raw, c.env);
-    const existing = await d1GetPrestasiById(c.env.DB, c.req.param("id"));
+    const existing = await getPrestasiById(c.env, c.req.param("id"));
     if (!existing) {
       return errJson(c, "NOT_FOUND", "Prestasi tidak ditemukan.", 404);
     }
@@ -114,14 +116,15 @@ prestasiRoutes.patch("/:id", async (c) => {
       );
     }
 
-    const updated = await d1UpdatePrestasi(c.env.DB, existing.id, parsed.data);
+    const updated = await updatePrestasi(c.env, existing.id, parsed.data);
 
     if (
       updated &&
       (shouldRebuildForSiteContentStatus(updated.status) ||
         shouldRebuildForSiteContentStatus(existing.status))
     ) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `prestasi:update:${updated.id}`),
       );
     }
@@ -135,13 +138,14 @@ prestasiRoutes.patch("/:id", async (c) => {
 prestasiRoutes.delete("/:id", async (c) => {
   try {
     await requireCmsSiteContentWriter(c.req.raw, c.env);
-    const existing = await d1GetPrestasiById(c.env.DB, c.req.param("id"));
+    const existing = await getPrestasiById(c.env, c.req.param("id"));
     if (!existing) {
       return errJson(c, "NOT_FOUND", "Prestasi tidak ditemukan.", 404);
     }
-    await d1DeletePrestasi(c.env.DB, existing.id);
+    await deletePrestasi(c.env, existing.id);
     if (shouldRebuildForSiteContentStatus(existing.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `prestasi:delete:${existing.id}`),
       );
     }

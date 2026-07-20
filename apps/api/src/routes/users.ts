@@ -25,7 +25,7 @@ import {
 } from "../lib/http";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-function requireClerk(env: Env) {
+function requireClerk(env: { CLERK_SECRET_KEY: string }) {
   if (!env.CLERK_SECRET_KEY || env.CLERK_SECRET_KEY.startsWith("GANTI_")) {
     return null;
   }
@@ -246,11 +246,11 @@ function toInvitationListItem(invitation: Invitation): CmsInvitationListItem {
 }
 
 /** Absolute CMS origin for invitation `redirectUrl` (must be on Clerk allowlist). */
-function resolveCmsOrigin(env: Env): string {
+function resolveCmsOrigin(env: { CMS_ORIGIN: string }): string {
   return (env.CMS_ORIGIN || "https://cms.smkteknovo.sch.id").replace(/\/$/, "");
 }
 
-function inviteRedirectUrl(env: Env): string {
+function inviteRedirectUrl(env: { CMS_ORIGIN: string }): string {
   return `${resolveCmsOrigin(env)}/sign-in`;
 }
 
@@ -323,7 +323,7 @@ function mapClerkInvitationError(err: unknown): {
 
 type CreateCmsInvitationParams = {
   clerk: ClerkClient;
-  env: Env;
+  env: { CMS_ORIGIN: string };
   email: string;
   role: CmsRole;
   expiresInDays: number;

@@ -7,6 +7,7 @@ import cors from "cors";
 import express from "express";
 import { Hono } from "hono";
 import { getRequestListener } from "@hono/node-server";
+import { fileURLToPath } from "node:url";
 import {
   CreateBucketCommand,
   HeadBucketCommand,
@@ -19,8 +20,9 @@ import {
   loadMinioConfig,
 } from "./lib/minio/client";
 import { disconnectPrisma, getPrisma } from "./lib/prisma/client";
-import type { NodeAppEnv, NodeBindings } from "./lib/http";
+import type { AppEnv, NodeBindings } from "./lib/http";
 import { handleApiError } from "./lib/http";
+import { mountApiRoutes } from "./lib/mount-api-routes";
 import { log } from "./lib/logger";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { securityHeadersMiddleware } from "./middleware/security-headers";
@@ -35,7 +37,7 @@ import {
 } from "./middleware/rate-limit";
 import type { ErrorRequestHandler } from "express";
 
-function buildNodeBindings(): NodeBindings {
+export function buildNodeBindings(): NodeBindings {
   const config = loadMinioConfig();
   return {
     prisma: getPrisma(),
@@ -90,8 +92,8 @@ async function ensureBucket(bindings: NodeBindings): Promise<void> {
   }
 }
 
-function createNodeHono() {
-  const app = new Hono<NodeAppEnv>();
+export function createNodeHono() {
+  const app = new Hono<AppEnv>();
 
   app.use("*", requestIdMiddleware);
   app.use("*", securityHeadersMiddleware);
@@ -121,17 +123,21 @@ function createNodeHono() {
     };
 
     try {
-      await c.env.prisma.$queryRaw`SELECT 1`;
-      checks.prisma = "ok";
+      if ("prisma" in c.env && c.env.prisma) {
+        await c.env.prisma.$queryRaw`SELECT 1`;
+        checks.prisma = "ok";
+      }
     } catch {
       checks.prisma = "error";
     }
 
     try {
-      await c.env.s3.send(
-        new HeadBucketCommand({ Bucket: c.env.MINIO_BUCKET }),
-      );
-      checks.minio = "ok";
+      if ("s3" in c.env && c.env.s3 && "MINIO_BUCKET" in c.env) {
+        await c.env.s3.send(
+          new HeadBucketCommand({ Bucket: c.env.MINIO_BUCKET }),
+        );
+        checks.minio = "ok";
+      }
     } catch {
       checks.minio = "error";
     }
@@ -150,6 +156,8 @@ function createNodeHono() {
     );
   });
 
+  mountApiRoutes(app);
+
   app.onError((err, c) => {
     log.error("unhandled", {
       requestId: c.get("requestId"),
@@ -164,8 +172,7 @@ function createNodeHono() {
         ok: false,
         error: {
           code: "NOT_FOUND",
-          message:
-            "Route tidak ditemukan. Node runtime: Prisma repos ready (Fase 3); route cutover in Fase 4. Worker path still serves D1.",
+          message: "Route tidak ditemukan.",
         },
       },
       404,
@@ -291,7 +298,13 @@ async function main() {
   process.on("SIGINT", () => void shutdown("SIGINT"));
 }
 
-main().catch((err) => {
-  console.error("[teknovo-api] failed to start:", err);
-  process.exit(1);
-});
+const isDirectRun =
+  typeof process.argv[1] === "string" &&
+  fileURLToPath(import.meta.url) === process.argv[1];
+
+if (isDirectRun) {
+  main().catch((err) => {
+    console.error("[teknovo-api] failed to start:", err);
+    process.exit(1);
+  });
+}

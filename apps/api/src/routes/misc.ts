@@ -10,19 +10,17 @@ import {
   requireCmsMediaUploader,
   CmsAuthError,
 } from "../auth/cms-auth";
-import { d1AnalyticsOverview } from "../lib/d1/analytics-repo";
+import { analyticsOverview } from "../lib/data/analytics";
 import {
-  d1CreateKategori,
-  d1DeleteKategori,
-  d1ListKategori,
-  d1UpdateKategori,
-} from "../lib/d1/kategori-repo";
-import {
-  d1GetPengaturan,
-  d1UpsertPengaturan,
-} from "../lib/d1/pengaturan-repo";
+  createKategori,
+  deleteKategori,
+  listKategori,
+  updateKategori,
+} from "../lib/data/kategori";
+import { getPengaturan, upsertPengaturan } from "../lib/data/pengaturan";
 import { log } from "../lib/logger";
 import { triggerWebRebuild } from "../lib/rebuild-web";
+import { scheduleBackground } from "../lib/runtime";
 import { safeEqualSecret } from "../lib/secrets";
 import { verifySvixSignature } from "../lib/svix-verify";
 import {
@@ -44,7 +42,7 @@ export const kategoriRoutes = new Hono<AppEnv>();
 
 kategoriRoutes.get("/", async (c) => {
   try {
-    const items = await d1ListKategori(c.env.DB);
+    const items = await listKategori(c.env);
     return okJson(c, items);
   } catch (err) {
     return handleApiError(c, err);
@@ -67,8 +65,9 @@ kategoriRoutes.post("/", async (c) => {
         400,
       );
     }
-    const created = await d1CreateKategori(c.env.DB, parsed.data);
-    c.executionCtx.waitUntil(
+    const created = await createKategori(c.env, parsed.data);
+    scheduleBackground(
+      c,
       triggerWebRebuild(c.env, `kategori:create:${created.slug}`),
     );
     return okJson(c, created, 201);
@@ -90,13 +89,14 @@ kategoriRoutes.patch("/:id", async (c) => {
         400,
       );
     }
-    const updated = await d1UpdateKategori(
-      c.env.DB,
+    const updated = await updateKategori(
+      c.env,
       c.req.param("id"),
       parsed.data,
     );
     if (!updated) return errJson(c, "NOT_FOUND", "Kategori tidak ditemukan.", 404);
-    c.executionCtx.waitUntil(
+    scheduleBackground(
+      c,
       triggerWebRebuild(c.env, `kategori:update:${updated.slug}`),
     );
     return okJson(c, updated);
@@ -108,9 +108,10 @@ kategoriRoutes.patch("/:id", async (c) => {
 kategoriRoutes.delete("/:id", async (c) => {
   try {
     await requireCmsWriter(c.req.raw, c.env);
-    const ok = await d1DeleteKategori(c.env.DB, c.req.param("id"));
+    const ok = await deleteKategori(c.env, c.req.param("id"));
     if (!ok) return errJson(c, "NOT_FOUND", "Kategori tidak ditemukan.", 404);
-    c.executionCtx.waitUntil(
+    scheduleBackground(
+      c,
       triggerWebRebuild(c.env, `kategori:delete:${c.req.param("id")}`),
     );
     return okJson(c, { deleted: true });
@@ -123,7 +124,7 @@ export const pengaturanRoutes = new Hono<AppEnv>();
 
 pengaturanRoutes.get("/", async (c) => {
   try {
-    const data = await d1GetPengaturan(c.env.DB);
+    const data = await getPengaturan(c.env);
     return okJson(c, data);
   } catch (err) {
     return handleApiError(c, err);
@@ -143,8 +144,8 @@ pengaturanRoutes.patch("/", async (c) => {
         400,
       );
     }
-    const data = await d1UpsertPengaturan(c.env.DB, parsed.data);
-    c.executionCtx.waitUntil(triggerWebRebuild(c.env, "pengaturan:update"));
+    const data = await upsertPengaturan(c.env, parsed.data);
+    scheduleBackground(c, triggerWebRebuild(c.env, "pengaturan:update"));
     return okJson(c, data);
   } catch (err) {
     return handleApiError(c, err);
@@ -156,7 +157,7 @@ export const analyticsRoutes = new Hono<AppEnv>();
 analyticsRoutes.get("/overview", async (c) => {
   try {
     await requireCmsSession(c.req.raw, c.env);
-    const data = await d1AnalyticsOverview(c.env.DB);
+    const data = await analyticsOverview(c.env);
     return okJson(c, data);
   } catch (err) {
     return handleApiError(c, err);

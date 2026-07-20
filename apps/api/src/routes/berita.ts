@@ -2,17 +2,18 @@ import { Hono } from "hono";
 import { beritaFormSchema } from "@teknovo/shared";
 import { requireCmsSession, requireCmsWriter } from "../auth/cms-auth";
 import {
-  d1CreateBerita,
-  d1DeleteBerita,
-  d1GetBeritaById,
-  d1GetBeritaBySlug,
-  d1ListBerita,
-  d1UpdateBerita,
-} from "../lib/d1/berita-repo";
+  createBerita,
+  deleteBerita,
+  getBeritaById,
+  getBeritaBySlug,
+  listBerita,
+  updateBerita,
+} from "../lib/data/berita";
 import {
   shouldRebuildForBeritaStatus,
   triggerWebRebuild,
 } from "../lib/rebuild-web";
+import { scheduleBackground } from "../lib/runtime";
 import {
   errJson,
   handleApiError,
@@ -40,7 +41,7 @@ beritaRoutes.get("/", async (c) => {
       await requireCmsSession(c.req.raw, c.env);
     }
 
-    const result = await d1ListBerita(c.env.DB, {
+    const result = await listBerita(c.env, {
       status: status ?? undefined,
       page,
       limit,
@@ -70,7 +71,7 @@ beritaRoutes.post("/", async (c) => {
       );
     }
 
-    const created = await d1CreateBerita(c.env.DB, {
+    const created = await createBerita(c.env, {
       ...parsed.data,
       konten: sanitizeArtikelHtml(parsed.data.konten),
       coverUrl: parsed.data.coverUrl || undefined,
@@ -85,7 +86,8 @@ beritaRoutes.post("/", async (c) => {
     });
 
     if (shouldRebuildForBeritaStatus(created.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `berita:create:${created.slug}`),
       );
     }
@@ -99,7 +101,7 @@ beritaRoutes.post("/", async (c) => {
 beritaRoutes.get("/id/:id", async (c) => {
   try {
     await requireCmsSession(c.req.raw, c.env);
-    const item = await d1GetBeritaById(c.env.DB, c.req.param("id"));
+    const item = await getBeritaById(c.env, c.req.param("id"));
     if (!item) return errJson(c, "NOT_FOUND", "Berita tidak ditemukan.", 404);
     return okJson(c, item);
   } catch (err) {
@@ -110,7 +112,7 @@ beritaRoutes.get("/id/:id", async (c) => {
 beritaRoutes.get("/:key", async (c) => {
   try {
     const key = c.req.param("key");
-    const byId = await d1GetBeritaById(c.env.DB, key);
+    const byId = await getBeritaById(c.env, key);
     if (byId) {
       if (byId.status !== "PUBLISHED") {
         await requireCmsSession(c.req.raw, c.env);
@@ -119,7 +121,7 @@ beritaRoutes.get("/:key", async (c) => {
     }
     const publishedOnly =
       !c.req.header("Authorization")?.startsWith("Bearer ");
-    const bySlug = await d1GetBeritaBySlug(c.env.DB, key, publishedOnly);
+    const bySlug = await getBeritaBySlug(c.env, key, publishedOnly);
     if (!bySlug) return errJson(c, "NOT_FOUND", "Berita tidak ditemukan.", 404);
     if (bySlug.status !== "PUBLISHED") {
       await requireCmsSession(c.req.raw, c.env);
@@ -135,8 +137,8 @@ beritaRoutes.patch("/:key", async (c) => {
     await requireCmsWriter(c.req.raw, c.env);
     const key = c.req.param("key");
     const existing =
-      (await d1GetBeritaById(c.env.DB, key)) ??
-      (await d1GetBeritaBySlug(c.env.DB, key, false));
+      (await getBeritaById(c.env, key)) ??
+      (await getBeritaBySlug(c.env, key, false));
     if (!existing) return errJson(c, "NOT_FOUND", "Berita tidak ditemukan.", 404);
 
     const json = await c.req.json();
@@ -150,7 +152,7 @@ beritaRoutes.patch("/:key", async (c) => {
       );
     }
 
-    const updated = await d1UpdateBerita(c.env.DB, existing.id, {
+    const updated = await updateBerita(c.env, existing.id, {
       ...parsed.data,
       konten: sanitizeArtikelHtml(parsed.data.konten),
       coverUrl: parsed.data.coverUrl || undefined,
@@ -167,7 +169,8 @@ beritaRoutes.patch("/:key", async (c) => {
       (shouldRebuildForBeritaStatus(updated.status) ||
         shouldRebuildForBeritaStatus(existing.status))
     ) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `berita:update:${updated.slug}`),
       );
     }
@@ -183,12 +186,13 @@ beritaRoutes.delete("/:key", async (c) => {
     await requireCmsWriter(c.req.raw, c.env);
     const key = c.req.param("key");
     const existing =
-      (await d1GetBeritaById(c.env.DB, key)) ??
-      (await d1GetBeritaBySlug(c.env.DB, key, false));
+      (await getBeritaById(c.env, key)) ??
+      (await getBeritaBySlug(c.env, key, false));
     if (!existing) return errJson(c, "NOT_FOUND", "Berita tidak ditemukan.", 404);
-    await d1DeleteBerita(c.env.DB, existing.id);
+    await deleteBerita(c.env, existing.id);
     if (shouldRebuildForBeritaStatus(existing.status)) {
-      c.executionCtx.waitUntil(
+      scheduleBackground(
+        c,
         triggerWebRebuild(c.env, `berita:delete:${existing.slug}`),
       );
     }

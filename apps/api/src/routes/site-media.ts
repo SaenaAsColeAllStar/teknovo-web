@@ -2,13 +2,13 @@ import { Hono } from "hono";
 import { siteMediaPatchSchema } from "@teknovo/shared";
 import { requireCmsSiteMediaManager } from "../auth/cms-auth";
 import {
-  d1DeleteSiteMedia,
-  d1GetSiteMedia,
-  d1ListSiteMedia,
-  d1UpsertSiteMedia,
   SITE_MEDIA_CATALOG,
-} from "../lib/d1/site-media-repo";
-import { r2ObjectUrl } from "../media/cms-media";
+  deleteSiteMedia,
+  getSiteMedia,
+  listSiteMedia,
+  upsertSiteMedia,
+} from "../lib/data/site-media";
+import { publicObjectUrl, scheduleBackground } from "../lib/runtime";
 import { triggerWebRebuild } from "../lib/rebuild-web";
 import {
   errJson,
@@ -19,10 +19,10 @@ import {
 
 export const siteMediaRoutes = new Hono<AppEnv>();
 
-/** Public + CMS: merged catalog with overrides from D1. */
+/** Public + CMS: merged catalog with overrides from DB. */
 siteMediaRoutes.get("/", async (c) => {
   try {
-    const overrides = await d1ListSiteMedia(c.env.DB);
+    const overrides = await listSiteMedia(c.env);
     const byKey = new Map(overrides.map((o) => [o.mediaKey, o]));
 
     const items = SITE_MEDIA_CATALOG.map((entry) => {
@@ -31,7 +31,7 @@ siteMediaRoutes.get("/", async (c) => {
         mediaKey: entry.mediaKey,
         label: override?.label ?? entry.label,
         category: entry.category,
-        url: override?.url ?? r2ObjectUrl(c.env, entry.defaultPath),
+        url: override?.url ?? publicObjectUrl(c.env, entry.defaultPath),
         defaultPath: entry.defaultPath,
         isOverride: Boolean(override),
         updatedAt: override?.updatedAt ?? null,
@@ -52,12 +52,12 @@ siteMediaRoutes.get("/:mediaKey", async (c) => {
     if (!catalog) {
       return errJson(c, "NOT_FOUND", "Media key tidak dikenal.", 404);
     }
-    const override = await d1GetSiteMedia(c.env.DB, mediaKey);
+    const override = await getSiteMedia(c.env, mediaKey);
     return okJson(c, {
       mediaKey,
       label: override?.label ?? catalog.label,
       category: catalog.category,
-      url: override?.url ?? r2ObjectUrl(c.env, catalog.defaultPath),
+      url: override?.url ?? publicObjectUrl(c.env, catalog.defaultPath),
       defaultPath: catalog.defaultPath,
       isOverride: Boolean(override),
       updatedAt: override?.updatedAt ?? null,
@@ -88,7 +88,7 @@ siteMediaRoutes.put("/:mediaKey", async (c) => {
       );
     }
 
-    const saved = await d1UpsertSiteMedia(c.env.DB, {
+    const saved = await upsertSiteMedia(c.env, {
       mediaKey,
       label: parsed.data.label?.trim() || catalog.label,
       category: catalog.category,
@@ -96,7 +96,8 @@ siteMediaRoutes.put("/:mediaKey", async (c) => {
       updatedBy: session.userId,
     });
 
-    c.executionCtx.waitUntil(
+    scheduleBackground(
+      c,
       triggerWebRebuild(c.env, `site-media:update:${mediaKey}`),
     );
 
@@ -118,13 +119,14 @@ siteMediaRoutes.delete("/:mediaKey", async (c) => {
     if (!catalog) {
       return errJson(c, "NOT_FOUND", "Media key tidak dikenal.", 404);
     }
-    await d1DeleteSiteMedia(c.env.DB, mediaKey);
-    c.executionCtx.waitUntil(
+    await deleteSiteMedia(c.env, mediaKey);
+    scheduleBackground(
+      c,
       triggerWebRebuild(c.env, `site-media:reset:${mediaKey}`),
     );
     return okJson(c, {
       deleted: true,
-      url: r2ObjectUrl(c.env, catalog.defaultPath),
+      url: publicObjectUrl(c.env, catalog.defaultPath),
     });
   } catch (err) {
     return handleApiError(c, err);

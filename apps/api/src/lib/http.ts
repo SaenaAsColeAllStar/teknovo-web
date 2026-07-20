@@ -4,17 +4,8 @@ import type { PrismaClient } from "@prisma/client";
 import type { S3Client } from "@aws-sdk/client-s3";
 import { CmsAuthError } from "../auth/cms-auth";
 
-/** Cloudflare Worker bindings (production Free path — D1 + R2). */
-export type AppEnv = {
-  Bindings: Env;
-  Variables: {
-    requestId: string;
-  };
-};
-
 /**
  * Node/VPS bindings (PRP Express path — Prisma + MinIO).
- * Kept separate so Worker `AppEnv` / routes stay typed against D1 until Fase 3–4.
  */
 export type NodeBindings = {
   prisma: PrismaClient;
@@ -31,11 +22,33 @@ export type NodeBindings = {
   REBUILD_WEB_SECRET?: string;
 };
 
-export type NodeAppEnv = {
-  Bindings: NodeBindings;
+/** Worker D1+R2 or Node Prisma+MinIO. */
+export type RuntimeBindings = Env | NodeBindings;
+
+/**
+ * Shared Hono env — Worker (D1+R2) or Node (Prisma+MinIO).
+ * Routes use `lib/data/*` + `hasPrisma` / `hasMinio` rather than touching DB/R2 directly.
+ */
+export type AppEnv = {
+  Bindings: RuntimeBindings;
   Variables: {
     requestId: string;
   };
+};
+
+/** Alias — Node and Worker share the same route typing after Fase 4. */
+export type NodeAppEnv = AppEnv;
+
+/** Minimal Clerk secret surface for auth helpers. */
+export type ClerkEnv = {
+  CLERK_SECRET_KEY: string;
+};
+
+/** GitHub rebuild dispatch env. */
+export type RebuildEnv = {
+  GITHUB_REBUILD_TOKEN?: string;
+  GITHUB_REPO?: string;
+  ENVIRONMENT?: string;
 };
 
 /** Shared helpers — accept Worker or Node Hono context. */

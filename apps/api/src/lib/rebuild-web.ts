@@ -4,6 +4,7 @@
  * Retries transient GitHub failures (2–3 attempts) before giving up.
  */
 
+import type { RebuildEnv } from "./http";
 import { log } from "./logger";
 
 const MAX_ATTEMPTS = 3;
@@ -14,7 +15,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 export async function triggerWebRebuild(
-  env: Env,
+  env: RebuildEnv,
   reason: string,
 ): Promise<{ ok: boolean; detail: string }> {
   const token = env.GITHUB_REBUILD_TOKEN;
