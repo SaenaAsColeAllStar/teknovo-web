@@ -57,13 +57,17 @@ Do during a quiet window. Have rollback commands ready.
 
 ## Phase C — Rollback → `cf.`
 
-If Node/Tunnel/MinIO/Postgres fails:
+**Full runbook:** [`ROLLBACK.md`](ROLLBACK.md) (decision tree, data plane, Platform flag, Tunnel disable, CI secrets). Quick path:
 
 1. Revert CMS: `VITE_API_URL=https://cf.smkteknovo.sch.id/api` → redeploy CMS.
 2. Revert Web: `PUBLIC_API_URL=https://cf.smkteknovo.sch.id` → rebuild web.
 3. Revert `HEALTH_CHECK_URL` (or unset → default `cf.`).
 4. Revert Clerk webhook to `https://cf.smkteknovo.sch.id/api/webhook/clerk`.
 5. Do **not** delete Tunnel or VPS — fix offline; Worker + D1 + R2 remain SoT until you cut over again.
+
+```bash
+bash scripts/ops/rollback-checklist.sh --verify-cf
+```
 
 Emergency origin without Tunnel (PRP rollback): temporarily allow Cloudflare IPs only on VPS firewall — prefer restoring Tunnel instead.
 

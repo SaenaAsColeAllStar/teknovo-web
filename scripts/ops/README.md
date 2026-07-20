@@ -7,7 +7,9 @@
 # | `setup-pm2-logrotate.sh` | pm2-logrotate: 50MB × 10 files |
 # | `backup-pg.sh` | Daily `pg_dump` → gzip |
 # | `backup-minio.sh` | Weekly MinIO mirror → tar.gz |
+# | `rollback-checklist.sh` | Print api.→cf. rollback steps; optional `--verify-cf` |
 #
 # Tunnel template: `ops/cloudflared/`
 # Cutover: `docs/CUTOVER-API-TUNNEL.md`
+# Rollback: `docs/ROLLBACK.md`
 # See `DEPLOY.md` § Zero Trust / VPS (Fase 8) and § CI/CD (Fase 9).

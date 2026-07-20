@@ -2,7 +2,7 @@
 
 Production di **Cloudflare Free** memakai tiga deploy terpisah. OpenNext monolit **tidak** dipakai di Free (lihat bagian legacy di bawah).
 
-> **PRP:** VPS path (Express + PostgreSQL + MinIO via Cloudflare Tunnel → `api.smkteknovo.sch.id`) — **Fase 8 configs/runbooks shipped**; live DNS cutover is **manual** (Super Admin). **Fase 7** migrate + **Fase 9** CI/health/VPS-deploy ready. Production clients still use `cf.smkteknovo.sch.id` (Worker + D1 + R2) until cutover. Local Node: `pnpm docker:up` + MinIO seed + `migrate:d1-to-pg:dry` + `dev:node` (see `apps/api/README.md`). Cutover: [`docs/CUTOVER-API-TUNNEL.md`](docs/CUTOVER-API-TUNNEL.md).
+> **PRP:** VPS path (Express + PostgreSQL + MinIO via Cloudflare Tunnel → `api.smkteknovo.sch.id`) — **Fase 8 configs/runbooks shipped**; live DNS cutover is **manual** (Super Admin). **Fase 7** migrate + **Fase 9** CI/health/VPS-deploy ready. Production clients still use `cf.smkteknovo.sch.id` (Worker + D1 + R2) until cutover. Local Node: `pnpm docker:up` + MinIO seed + `migrate:d1-to-pg:dry` + `dev:node` (see `apps/api/README.md`). Cutover: [`docs/CUTOVER-API-TUNNEL.md`](docs/CUTOVER-API-TUNNEL.md). Rollback: [`docs/ROLLBACK.md`](docs/ROLLBACK.md).
 
 ## Hosts
 
@@ -203,7 +203,7 @@ Optional aaPanel reverse proxy (task 8.5) only if **not** using Tunnel — prefe
 1. Parallel: smoke `https://api.smkteknovo.sch.id/api/health` while CMS/Web still use `cf.`.
 2. Switch CMS `VITE_API_URL=https://api.smkteknovo.sch.id/api` + Web `PUBLIC_API_URL=https://api.smkteknovo.sch.id` → rebuild.
 3. Set `HEALTH_CHECK_URL` to the Tunnel URL; update Clerk webhook when ready.
-4. Rollback: point env vars back to `cf.` and redeploy (Worker stays deployed).
+4. Rollback: point env vars back to `cf.` and redeploy (Worker stays deployed). Full steps (Clerk, health CI, Platform flag, data, Tunnel): [`docs/ROLLBACK.md`](docs/ROLLBACK.md) · `bash scripts/ops/rollback-checklist.sh`.
 
 **This repo does not create live tunnels/DNS** without VPS + Tunnel credentials on the operator machine.
 

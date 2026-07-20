@@ -133,7 +133,8 @@ Production clients stay on `cf.smkteknovo.sch.id` until cutover. Parallel hostna
 |----------|------|
 | Tunnel config template | `ops/cloudflared/config.yml.example` |
 | DNS / SSL notes | `ops/cloudflared/README.md` |
-| Cutover + rollback | `docs/CUTOVER-API-TUNNEL.md` |
+| Cutover | `docs/CUTOVER-API-TUNNEL.md` |
+| Rollback (`api.` → `cf.`) | `docs/ROLLBACK.md` |
 | VPS bootstrap | `scripts/ops/bootstrap-vps.sh` |
 | PM2 start / reload | `scripts/ops/pm2-start.sh`, `pm2-restart.sh` |
 

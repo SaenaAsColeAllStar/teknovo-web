@@ -492,7 +492,7 @@ Catatan Fase 8:
 - **Repo artifacts:** `ops/cloudflared/config.yml.example` + README; `scripts/ops/bootstrap-vps.sh`, `pm2-start.sh`, `pm2-restart.sh`; cutover `docs/CUTOVER-API-TUNNEL.md`; `DEPLOY.md` § Zero Trust.
 - **Runtime:** PM2 cluster menjalankan `src/server.ts` via `tsx` (sama `deploy-api-vps.yml`). Emit `dist/` ditunda — dual Worker/Node + workspace `@teknovo/shared`.
 - **Tidak** membuat tunnel/DNS live dari CI tanpa kredensial VPS; Super Admin menyelesaikan 8.1–8.3 + 8.7 di server.
-- **Cutover:** Node di belakang Tunnel **paralel** dengan Worker `cf.`; ganti `VITE_API_URL` / `PUBLIC_API_URL` hanya saat siap; rollback → `cf.`.
+- **Cutover:** Node di belakang Tunnel **paralel** dengan Worker `cf.`; ganti `VITE_API_URL` / `PUBLIC_API_URL` hanya saat siap; rollback → `cf.` (`docs/ROLLBACK.md`).
 - aaPanel reverse proxy (8.5) hanya jika Tunnel tidak dipakai.
 
 ### Fase 9: CI/CD & Monitoring (Hari 15) — P1
@@ -540,13 +540,21 @@ Catatan Fase 10:
 
 ## 12. Rollback Plan
 
-| Skenario | Tindakan |
-|---|---|
-| API error setelah deploy | `pm2 restart teknovo-api` atau rollback ke commit sebelumnya |
-| Data migrasi gagal | Kembalikan ke Worker D1 + R2, perbaiki script, ulang migrasi |
-| MinIO connection issue | Fallback: upload via API (buffer di memory sementara) |
-| Cloudflare Tunnel down | Buka sementara port VPS dengan firewall restrict IP Cloudflare |
-| Semua gagal | `wrangler deploy` — kembalikan ke Worker (kode lama masih ada) |
+**Runbook:** [`docs/ROLLBACK.md`](ROLLBACK.md) (printable checklist: `bash scripts/ops/rollback-checklist.sh`). Forward cutover: [`docs/CUTOVER-API-TUNNEL.md`](CUTOVER-API-TUNNEL.md).
+
+| Skenario | Tindakan | Status |
+|---|---|---|
+| API error setelah deploy | Soft: `pm2 restart teknovo-api` / checkout commit baik di VPS (`ROLLBACK` §1) | ✅ documented |
+| Data migrasi gagal | Tetap / kembalikan ke Worker D1 + R2; jangan hapus D1; perbaiki script, ulang migrate (`ROLLBACK` §3) | ✅ documented |
+| MinIO connection issue | Prefer restore MinIO; emergency buffer tidak durable; client rollback ke R2 jika cutover sudah jalan (`ROLLBACK` §3.3) | ✅ documented |
+| Cloudflare Tunnel down | Parallel phase: perbaiki Tunnel saja. Post-cutover: client → `cf.` lalu emergency origin CF-IP-only jika perlu (`ROLLBACK` §4) | ✅ documented |
+| Semua gagal / post-cutover | Full client rollback `api.` → `cf.` (CMS/Web env, Clerk webhook, `HEALTH_CHECK_URL`) + optional `wrangler deploy` (`ROLLBACK` §2, §6) | ✅ documented |
+| Platform SaaS bermasalah | `PLATFORM_ENABLED=false` + unset `VITE_PLATFORM_ENABLED` (`ROLLBACK` §5) | ✅ documented |
+| Health / CI | Unset `HEALTH_CHECK_URL` (default `cf.`); pause `ENABLE_VPS_DEPLOY`; keep `CLOUDFLARE_*` (`ROLLBACK` §7) | ✅ documented |
+
+Catatan:
+- Invariant: Worker `cf.` + D1 + R2 tetap SoT sampai Node path stabil; Tunnel/VPS boleh tetap hidup untuk debug.
+- Fase 8 go-live rollback rehearsal: centang di `ROLLBACK.md` §9 / cutover Phase C.
 
 ---
 
@@ -567,7 +575,7 @@ Untuk Fase 8 (Go Live):
 - [ ] Upload file real dari CMS → MinIO → tampil di Web
 - [ ] Downtime < 1 menit saat cutover dari Worker ke Express
 - [ ] Monitoring dashboard (aaPanel + PM2) menunjukkan semua hijau
-- [x] Repo: cloudflared template, bootstrap/PM2 scripts, cutover runbook committed
+- [x] Repo: cloudflared template, bootstrap/PM2 scripts, cutover + rollback runbooks committed
 
 ---
 

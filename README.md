@@ -45,6 +45,8 @@ Legacy Next monolit (referensi UI): `pnpm legacy:dev`.
 - [AGENTS.md](AGENTS.md)
 - [docs/CLERK.md](docs/CLERK.md)
 - [docs/API.md](docs/API.md)
+- [docs/CUTOVER-API-TUNNEL.md](docs/CUTOVER-API-TUNNEL.md) — Worker → Node Tunnel cutover
+- [docs/ROLLBACK.md](docs/ROLLBACK.md) — Node Tunnel → Worker rollback
 - [docs/PRP-FINAL.md](docs/PRP-FINAL.md) — VPS migration plan (Fase 7 data migrate done; Fase 8 = Tunnel cutover)
 
 OpenNext root (`wrangler.toml`) hanya untuk Workers Paid legacy — jangan deploy ke Free.

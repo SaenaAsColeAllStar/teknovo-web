@@ -12,6 +12,12 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — Rollback runbook (PRP §12)
+
+- `docs/ROLLBACK.md` — decision tree for soft PM2/git fix, full client rollback `api.`→`cf.`, data plane (PG/MinIO vs D1/R2), Tunnel/DNS, Platform flag off, Worker redeploy, health/CI secrets.
+- `scripts/ops/rollback-checklist.sh` — printable checklist + optional `--verify-cf` / `--verify-api`.
+- Linked from PRP §12, `DEPLOY.md`, `docs/CUTOVER-API-TUNNEL.md` Phase C, README.
+
 ### Added — SaaS Platform Foundation (PRP Fase 10)
 
 - Separate Platform DB Prisma schema (`apps/api/prisma-platform/`): `tenants`, `users`, `tenant_memberships` + encrypted secret fields.
