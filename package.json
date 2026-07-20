@@ -23,6 +23,7 @@
     "format": "prettier --write .",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:api": "pnpm --filter @teknovo/api test",
     "d1:migrate:remote": "pnpm --filter @teknovo/api d1:migrate:remote",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },

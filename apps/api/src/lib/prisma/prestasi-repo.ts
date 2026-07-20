@@ -10,6 +10,7 @@ import {
   toIso,
   toIsoRequired,
 } from "./map-helpers";
+import { isUuid } from "../ids";
 
 export type { PrestasiWriteInput } from "../d1/prestasi-repo";
 import type { PrestasiWriteInput } from "../d1/prestasi-repo";
@@ -88,6 +89,7 @@ export async function prismaGetPrestasiById(
   prisma: PrismaClient,
   id: string,
 ): Promise<Prestasi | null> {
+  if (!isUuid(id)) return null;
   const row = await prisma.prestasi.findUnique({ where: { id } });
   return row ? mapFull(row) : null;
 }

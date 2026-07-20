@@ -8,6 +8,7 @@ import type {
   SiteContentStatus,
 } from "@teknovo/shared";
 import { asStringArray, toIso, toIsoRequired } from "./map-helpers";
+import { isUuid } from "../ids";
 
 export type { EkstrakurikulerWriteInput } from "../d1/ekstrakurikuler-repo";
 import type { EkstrakurikulerWriteInput } from "../d1/ekstrakurikuler-repo";
@@ -92,6 +93,7 @@ export async function prismaGetEkstrakurikulerById(
   prisma: PrismaClient,
   id: string,
 ): Promise<Ekstrakurikuler | null> {
+  if (!isUuid(id)) return null;
   const row = await prisma.ekstrakurikuler.findUnique({ where: { id } });
   return row ? mapFull(row) : null;
 }

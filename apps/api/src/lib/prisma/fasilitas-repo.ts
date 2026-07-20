@@ -5,6 +5,7 @@ import type {
   SiteContentStatus,
 } from "@teknovo/shared";
 import { asExtras, asStringArray, toIso, toIsoRequired } from "./map-helpers";
+import { isUuid } from "../ids";
 
 export type { FasilitasWriteInput } from "../d1/fasilitas-repo";
 import type { FasilitasWriteInput } from "../d1/fasilitas-repo";
@@ -86,6 +87,7 @@ export async function prismaGetFasilitasById(
   prisma: PrismaClient,
   id: string,
 ): Promise<Fasilitas | null> {
+  if (!isUuid(id)) return null;
   const row = await prisma.fasilitas.findUnique({ where: { id } });
   return row ? mapFull(row) : null;
 }

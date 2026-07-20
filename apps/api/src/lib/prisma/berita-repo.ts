@@ -4,6 +4,7 @@ import {
   archiveOutdated,
   publishBerita as spPublishBerita,
 } from "../procedures/berita";
+import { isUuid } from "../ids";
 import { toIso, toIsoRequired } from "./map-helpers";
 
 export type { BeritaWriteInput } from "../d1/berita-repo";
@@ -90,6 +91,7 @@ export async function prismaGetBeritaById(
   prisma: PrismaClient,
   id: string,
 ): Promise<Berita | null> {
+  if (!isUuid(id)) return null;
   const row = await prisma.berita.findUnique({
     where: { id },
     include: { kategori: { select: kategoriSelect } },

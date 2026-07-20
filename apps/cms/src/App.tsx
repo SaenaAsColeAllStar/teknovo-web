@@ -32,7 +32,7 @@ export function App() {
           Set <code>VITE_CLERK_PUBLISHABLE_KEY</code> dan{" "}
           <code>VITE_API_URL</code> (atau <code>PUBLIC_API_URL</code> fallback)
           di Pages project <code>teknovo-cms</code> — default{" "}
-          https://cf.smkteknovo.sch.id/api.
+          https://cms-api.smkteknovo.sch.id/api.
         </p>
       </div>
     );

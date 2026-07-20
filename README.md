@@ -51,4 +51,13 @@ Legacy Next monolit (referensi UI): `pnpm legacy:dev`.
 - [docs/DEFINITION-OF-DONE.md](docs/DEFINITION-OF-DONE.md) — PRP §13 DoD (engineering + go-live)
 - [docs/PRP-FINAL.md](docs/PRP-FINAL.md) — VPS migration plan (Fase 7–10 + §12–13 docs; Fase 8 live cutover = operator)
 
+## E2E (Playwright)
+
+```bash
+pnpm exec playwright install chromium   # once
+pnpm test:e2e                           # production smoke: web + CMS + cms-api
+```
+
+Override hosts with `WEB_URL`, `CMS_URL`, `API_CMS_URL`. API unit tests: `pnpm test:api`. Node smoke (local PG/MinIO): `pnpm --filter @teknovo/api smoke:node`.
+
 OpenNext root (`wrangler.toml`) hanya untuk Workers Paid legacy — jangan deploy ke Free.

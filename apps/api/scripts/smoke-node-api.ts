@@ -89,6 +89,30 @@ async function main() {
       throw new Error("berita list failed");
     }
 
+    const beritaItems = beritaJson.data as { slug?: string }[] | undefined;
+    if (Array.isArray(beritaItems) && beritaItems.length > 0) {
+      const slug = beritaItems[0]?.slug;
+      if (!slug) throw new Error("published berita missing slug");
+      const bySlug = await fetch(`${base}/api/v1/berita/${slug}`);
+      const bySlugJson = (await bySlug.json()) as {
+        ok?: boolean;
+        data?: { slug?: string };
+        error?: { message?: string };
+      };
+      console.log(`GET /api/v1/berita/${slug}`, bySlug.status, {
+        ok: bySlugJson.ok,
+        slug: bySlugJson.data?.slug,
+      });
+      if (bySlug.status !== 200 || !bySlugJson.ok) {
+        throw new Error(
+          `berita by slug failed: ${bySlug.status} ${bySlugJson.error?.message ?? ""}`,
+        );
+      }
+      if (bySlugJson.data?.slug !== slug) {
+        throw new Error("berita by slug returned wrong slug");
+      }
+    }
+
     // Unauthorized write must fail without Clerk session.
     const createAttempt = await fetch(`${base}/api/v1/kategori`, {
       method: "POST",

@@ -12,6 +12,16 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Fixed — Prisma get-by-id with slug keys (500 on `/api/v1/berita/:slug`)
+
+- Guard `prismaGet*ById` / `prismaGetKategori` with `isUuid()` so non-UUID path keys fall through to slug lookup instead of throwing Prisma UUID parse errors.
+- Affects berita, fasilitas, ekstrakurikuler, prestasi, artikel, kategori on the Node/Express path.
+
+### Added — Full Playwright E2E suite
+
+- `e2e/web.spec.ts`, `cms.spec.ts`, `api.spec.ts`, `chain.spec.ts` — public pages, CMS auth redirects, API public reads/auth/CORS, web↔API RSS chain.
+- Run: `pnpm test:e2e`.
+
 ### Added — Definition of Done runbook (PRP §13)
 
 - `docs/DEFINITION-OF-DONE.md` — engineering DoD (local smokes / tooling) vs Fase 8 go-live (operator).

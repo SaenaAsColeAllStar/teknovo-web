@@ -9,6 +9,7 @@ import type {
   ArtikelSiswaStatus,
 } from "@teknovo/shared";
 import { toIso, toIsoRequired } from "./map-helpers";
+import { isUuid } from "../ids";
 
 export type { ArtikelWriteInput } from "../d1/artikel-repo";
 import type { ArtikelWriteInput } from "../d1/artikel-repo";
@@ -110,6 +111,7 @@ export async function prismaGetArtikelById(
   prisma: PrismaClient,
   id: string,
 ): Promise<ArtikelSiswa | null> {
+  if (!isUuid(id)) return null;
   const row = await prisma.artikelSiswa.findUnique({
     where: { id },
     include: { kategori: { select: kategoriSelect } },

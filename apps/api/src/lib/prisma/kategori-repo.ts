@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import type { Kategori } from "@teknovo/shared";
+import { isUuid } from "../ids";
 
 function mapKategori(row: {
   id: string;
@@ -28,6 +29,7 @@ export async function prismaGetKategori(
   prisma: PrismaClient,
   id: string,
 ): Promise<Kategori | null> {
+  if (!isUuid(id)) return null;
   const row = await prisma.kategori.findUnique({ where: { id } });
   return row ? mapKategori(row) : null;
 }
