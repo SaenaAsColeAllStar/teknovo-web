@@ -15,5 +15,14 @@
     }
   },
   "include": ["src/**/*.ts", "worker-configuration.d.ts"],
-  "exclude": ["src/**/*.test.ts", "src/server.ts"]
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/server.ts",
+    "src/routes/platform.ts",
+    "src/lib/tenant-router.ts",
+    "src/lib/platform/client.ts",
+    "src/lib/platform/events.ts",
+    "src/lib/platform/provision.ts",
+    "src/generated/**"
+  ]
 }

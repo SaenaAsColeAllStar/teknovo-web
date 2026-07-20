@@ -1,0 +1,81 @@
+// Platform DB — multi-tenant control plane (PRP Fase 10 / F-36–F-37).
+// Separate from tenant content schema (`prisma/schema.prisma` → public).
+// Default: PLATFORM_DATABASE_URL → database `teknovo_platform` on the same Postgres.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/platform-client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PLATFORM_DATABASE_URL")
+}
+
+enum TenantStatus {
+  PROVISIONING
+  ACTIVE
+  SUSPENDED
+  DELETING
+  DELETED
+}
+
+enum MembershipRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+/// One school / project on the Teknovo platform.
+model Tenant {
+  id               String       @id @default(uuid()) @db.Uuid
+  slug             String       @unique
+  name             String
+  /// Hostname or subdomain key used by tenant-router (e.g. `demo.smkteknovo.sch.id`).
+  domain           String?      @unique
+  status           TenantStatus @default(PROVISIONING)
+  /// Tenant Postgres URL (secrets encrypted when PLATFORM_SECRETS_KEY set).
+  dbUrlEnc         String?      @map("db_url_enc")
+  minioEndpoint    String?      @map("minio_endpoint")
+  minioBucket      String?      @map("minio_bucket")
+  minioAccessKeyEnc String?     @map("minio_access_key_enc")
+  minioSecretKeyEnc String?     @map("minio_secret_key_enc")
+  /// Optional notes from provision / setup steps.
+  meta             Json?
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
+
+  memberships TenantMembership[]
+
+  @@index([status])
+  @@map("tenants")
+}
+
+/// Platform-level user mirror (Clerk id + email). School CMS roles stay in Clerk metadata.
+model PlatformUser {
+  id          String   @id @default(uuid()) @db.Uuid
+  clerkUserId String   @unique @map("clerk_user_id")
+  email       String?
+  fullName    String?  @map("full_name")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  memberships TenantMembership[]
+
+  @@map("users")
+}
+
+model TenantMembership {
+  id        String         @id @default(uuid()) @db.Uuid
+  tenantId  String         @map("tenant_id") @db.Uuid
+  userId    String         @map("user_id") @db.Uuid
+  role      MembershipRole @default(MEMBER)
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  tenant Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   PlatformUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@map("tenant_memberships")
+}

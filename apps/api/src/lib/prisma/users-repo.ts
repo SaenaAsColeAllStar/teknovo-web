@@ -1,8 +1,9 @@
 /**
- * CMS users are Clerk-backed (`routes/users.ts`) — there is no tenant
- * `users` table in the current Prisma schema (Platform DB lands in Fase 10).
+ * CMS users are Clerk-backed (`routes/users.ts`).
+ * Platform DB has `users` + `tenant_memberships` (PRP Fase 10) for SaaS
+ * control-plane membership — school CMS roles remain in Clerk metadata.
  *
- * This module reserves the Prisma repo surface for a future local mirror /
+ * This module reserves a Prisma repo surface for optional local mirror /
  * membership sync. Until then, call Clerk via the existing users routes.
  */
 import type { PrismaClient } from "@prisma/client";
@@ -19,6 +20,6 @@ export async function prismaUsersRepoReady(
   await prisma.$queryRaw`SELECT 1`;
   return {
     source: "clerk",
-    note: "Users remain Clerk-only until Platform DB (PRP Fase 10). No Prisma User model yet.",
+    note: "School CMS users remain Clerk-only. Platform `users` / memberships live in Platform DB when PLATFORM_ENABLED=true.",
   };
 }

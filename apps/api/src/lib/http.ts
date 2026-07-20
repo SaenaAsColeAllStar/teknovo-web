@@ -3,6 +3,7 @@ import type { ContentfulStatusCode } from "hono/utils/http-status";
 import type { PrismaClient } from "@prisma/client";
 import type { S3Client } from "@aws-sdk/client-s3";
 import { CmsAuthError } from "../auth/cms-auth";
+import type { TenantContext, TenantResolveSource } from "./platform/types";
 
 /**
  * Node/VPS bindings (PRP Express path — Prisma + MinIO).
@@ -33,6 +34,9 @@ export type AppEnv = {
   Bindings: RuntimeBindings;
   Variables: {
     requestId: string;
+    /** Set by tenant-router when PLATFORM_ENABLED and a hint resolves. */
+    tenant?: TenantContext;
+    tenantSource?: TenantResolveSource;
   };
 };
 

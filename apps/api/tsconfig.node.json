@@ -24,6 +24,7 @@
     "src/media/**/*.ts",
     "src/lib/**/*.ts",
     "src/middleware/**/*.ts",
+    "src/generated/platform-client/**/*.ts",
     "scripts/**/*.ts",
     "prisma/seed.ts",
     "worker-configuration.d.ts"

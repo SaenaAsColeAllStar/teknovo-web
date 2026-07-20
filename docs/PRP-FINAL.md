@@ -516,16 +516,25 @@ Catatan Fase 9:
 
 ### Fase 10: SaaS Platform Foundation (Hari 16-20) — P1/P2
 
-| Task | Detail | Output |
-|---|---|---|
-| 10.1 | Buat Platform DB schema: `tenants`, `users`, `tenant_memberships` | Platform schema |
-| 10.2 | Buat `lib/tenant-router.ts` — middleware extract domain, lookup tenant, inject context | Tenant router |
-| 10.3 | Buat endpoint `POST /api/platform/tenants` — create tenant (DB + bucket + migrate) | Tenant provisioning |
-| 10.4 | Buat endpoint `DELETE /api/platform/tenants/:id` — delete tenant (backup + cleanup) | Tenant deletion |
-| 10.5 | Buat `POST /api/platform/tenants/:id/setup` — seed data default per tenant | Tenant setup |
-| 10.6 | Setup Redis (via docker) untuk event bus | Redis active |
-| 10.7 | Implement event: `tenant.created` → auto create DB & bucket | Event-driven |
-| 10.8 | Buat admin console sederhana (bisa di CMS yang sudah ada) | Admin UI |
+| Task | Detail | Output | Status |
+|---|---|---|---|
+| 10.1 | Buat Platform DB schema: `tenants`, `users`, `tenant_memberships` | Platform schema | ✅ |
+| 10.2 | Buat `lib/tenant-router.ts` — middleware extract domain, lookup tenant, inject context | Tenant router | ✅ |
+| 10.3 | Buat endpoint `POST /api/platform/tenants` — create tenant (DB + bucket + migrate) | Tenant provisioning | ✅ stub |
+| 10.4 | Buat endpoint `DELETE /api/platform/tenants/:id` — delete tenant (backup + cleanup) | Tenant deletion | ✅ stub |
+| 10.5 | Buat `POST /api/platform/tenants/:id/setup` — seed data default per tenant | Tenant setup | ✅ stub |
+| 10.6 | Setup Redis (via docker) untuk event bus | Redis active | ✅ |
+| 10.7 | Implement event: `tenant.created` → auto create DB & bucket | Event-driven | ✅ stub |
+| 10.8 | Buat admin console sederhana (bisa di CMS yang sudah ada) | Admin UI | ✅ minimal |
+
+Catatan Fase 10:
+- **Feature flag:** `PLATFORM_ENABLED=false` by default — single-tenant Worker + school Node path unchanged.
+- **Platform DB:** separate Prisma schema `apps/api/prisma-platform/` → database `teknovo_platform` (docker init). Tenant content remains `prisma/schema.prisma` / DB `teknovo`.
+- **Tenant resolve:** header `X-Tenant-Id` / `X-Tenant-Slug` → subdomain → path `/t/:slug` (`lib/tenant-hint.ts` + `lib/tenant-router.ts`). Injects `c.get("tenant")` when found; does not 404 school routes.
+- **Events:** Redis Pub/Sub (`REDIS_URL`) with in-process fallback; handlers stub CREATE DATABASE + MinIO bucket (no live multi-tenant DNS).
+- **CMS UI:** `/platform` behind `VITE_PLATFORM_ENABLED=true` + Super Admin. API docs enough without UI flag.
+- **Deferred:** per-tenant Prisma migrate/seed automation, membership sync from Clerk, encrypted secret rotation UI, live DNS, Worker multi-tenant.
+- **No secrets in git;** no live multi-tenant DNS from this phase.
 
 ---
 

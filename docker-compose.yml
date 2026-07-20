@@ -1,4 +1,4 @@
-# Local dev: PostgreSQL + MinIO for apps/api Node runtime (PRP Fase 1).
+# Local dev: PostgreSQL + MinIO + Redis for apps/api Node runtime (PRP).
 # Ports avoid host collisions (5432/5433/9000 often taken on shared machines).
 # Worker + D1 + R2 path remains production until cutover (see DEPLOY.md).
 
@@ -12,6 +12,7 @@ services:
       POSTGRES_PASSWORD: ${PG_PASSWORD:-teknovo}
     volumes:
       - teknovo_web_pgdata:/var/lib/postgresql/data
+      - ./ops/docker/postgres-init:/docker-entrypoint-initdb.d:ro
     ports:
       - "127.0.0.1:5434:5432"
     healthcheck:
@@ -36,6 +37,18 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s
       timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: teknovo-web-redis
+    command: redis-server --save "" --appendonly no
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 10
 
 volumes:

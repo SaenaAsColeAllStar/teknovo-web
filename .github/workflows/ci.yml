@@ -39,9 +39,13 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Prisma generate (Node path)
+      - name: Prisma generate (content + platform)
         working-directory: apps/api
-        run: pnpm exec prisma generate
+        env:
+          # Dummy URLs — generate does not connect; schema requires env names present.
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/teknovo
+          PLATFORM_DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/teknovo_platform
+        run: pnpm prisma:generate
       - name: Typecheck Worker
         run: pnpm --filter @teknovo/api typecheck
       - name: Typecheck Node

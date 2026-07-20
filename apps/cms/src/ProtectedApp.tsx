@@ -18,6 +18,7 @@ import { ModerasiPage } from "./pages/ModerasiPage";
 import { OverviewPage } from "./pages/OverviewPage";
 import { PengaturanPage } from "./pages/PengaturanPage";
 import { PenggunaPage } from "./pages/PenggunaPage";
+import { PlatformPage } from "./pages/PlatformPage";
 import {
   EkstrakurikulerFormPage,
   EkstrakurikulerListPage,
@@ -86,6 +87,7 @@ export function ProtectedApp() {
           <Route path="prestasi/:id/edit" element={<PrestasiFormPage mode="edit" />} />
           <Route path="media" element={<MediaPage />} />
           <Route path="pengguna" element={<PenggunaPage />} />
+          <Route path="platform" element={<PlatformPage />} />
           <Route path="pengaturan" element={<PengaturanPage />} />
           <Route path="dokumentasi" element={<DokumentasiPage />} />
           <Route path="bantuan" element={<BantuanPage />} />

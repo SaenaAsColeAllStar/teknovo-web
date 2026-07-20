@@ -7,6 +7,7 @@ import {
   FileText,
   Image as ImageIcon,
   Info,
+  Layers,
   LayoutDashboard,
   Newspaper,
   PenLine,
@@ -271,6 +272,20 @@ export function CmsApplicationSidenav({
       label: "Pengguna",
       href: "/pengguna",
       icon: <Users className="size-4 shrink-0" aria-hidden />,
+    });
+  }
+
+  const platformUiEnabled =
+    String(import.meta.env.VITE_PLATFORM_ENABLED || "").toLowerCase() ===
+      "true" ||
+    String(import.meta.env.VITE_PLATFORM_ENABLED || "") === "1";
+  if (platformUiEnabled && canManageSettings) {
+    primaryNav.push({
+      kind: "link",
+      id: "platform",
+      label: "Platform",
+      href: "/platform",
+      icon: <Layers className="size-4 shrink-0" aria-hidden />,
     });
   }
 

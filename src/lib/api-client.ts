@@ -1285,3 +1285,77 @@ export async function resetSiteMedia(
   });
 }
 
+/** Platform SaaS foundation (PRP Fase 10) — Node API only when PLATFORM_ENABLED. */
+export type PlatformStatus = {
+  enabled: boolean;
+  eventBus: "redis" | "memory" | "off";
+  note: string;
+};
+
+export type PlatformTenant = {
+  id: string;
+  slug: string;
+  name: string;
+  domain: string | null;
+  status: string;
+  minioBucket: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function fetchPlatformStatus(
+  token?: string,
+): Promise<PlatformStatus> {
+  const data = await request<ApiOk<PlatformStatus>>(
+    "/platform/status",
+    token ? { token, cache: "no-store" } : { cache: "no-store" },
+  );
+  return data.data;
+}
+
+export async function fetchPlatformTenants(
+  token: string,
+): Promise<PlatformTenant[]> {
+  const data = await request<ApiListResponse<PlatformTenant>>(
+    "/platform/tenants",
+    { token, cache: "no-store" },
+  );
+  return data.data;
+}
+
+export async function createPlatformTenant(
+  values: { slug: string; name: string; domain?: string | null },
+  token: string,
+): Promise<PlatformTenant> {
+  const data = await request<ApiOk<PlatformTenant>>("/platform/tenants", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function deletePlatformTenant(
+  id: string,
+  token: string,
+): Promise<PlatformTenant> {
+  const data = await request<ApiOk<PlatformTenant>>(
+    `/platform/tenants/${encodeURIComponent(id)}`,
+    { method: "DELETE", token },
+  );
+  return data.data;
+}
+
+export async function setupPlatformTenant(
+  id: string,
+  token: string,
+): Promise<{ tenant: PlatformTenant; setup: { ok: boolean; detail: string } }> {
+  const data = await request<
+    ApiOk<{ tenant: PlatformTenant; setup: { ok: boolean; detail: string } }>
+  >(`/platform/tenants/${encodeURIComponent(id)}/setup`, {
+    method: "POST",
+    token,
+  });
+  return data.data;
+}
+

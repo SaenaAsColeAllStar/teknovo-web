@@ -45,6 +45,42 @@ pnpm --filter @teknovo/api dev:node        # http://127.0.0.1:8787
 
 Node health reports Prisma + MinIO: `GET /api/health` → `{ runtime: "node", checks: { prisma, minio } }`.
 
+### SaaS Platform foundation (PRP Fase 10)
+
+Default **off** (`PLATFORM_ENABLED=false`). Does not affect Worker Free or school content routes.
+
+```bash
+pnpm docker:up   # includes redis + postgres init DB teknovo_platform (fresh volumes only)
+# Existing postgres volume without teknovo_platform:
+#   docker exec -it teknovo-web-postgres psql -U teknovo -c 'CREATE DATABASE teknovo_platform;'
+
+# apps/api/.env
+# PLATFORM_ENABLED=true
+# PLATFORM_DATABASE_URL=postgresql://teknovo:teknovo@127.0.0.1:5434/teknovo_platform
+# REDIS_URL=redis://127.0.0.1:6379
+# PLATFORM_ADMIN_SECRET=…   # optional Bearer for curl without Clerk
+# PLATFORM_SECRETS_KEY=…    # encrypt tenant secrets (else plain: prefix)
+
+pnpm --filter @teknovo/api prisma:generate
+pnpm --filter @teknovo/api prisma:platform:deploy
+pnpm --filter @teknovo/api dev:node
+
+curl -s http://127.0.0.1:8787/api/platform/status
+curl -s -X POST http://127.0.0.1:8787/api/platform/tenants \
+  -H "Authorization: Bearer $PLATFORM_ADMIN_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"slug":"demo","name":"Demo School"}'
+```
+
+| Path | Role |
+|------|------|
+| `prisma-platform/` | Platform schema + migrations |
+| `src/lib/tenant-hint.ts` / `tenant-router.ts` | Resolve tenant → `c.get("tenant")` |
+| `src/routes/platform.ts` | Admin provision / delete / setup stubs |
+| `src/lib/platform/events.ts` | Redis Pub/Sub + memory fallback |
+
+CMS: set `VITE_PLATFORM_ENABLED=true` to show `/platform` (Super Admin). See `DEPLOY.md` § Fase 10.
+
 ### MinIO bucket & seed (PRP Fase 6)
 
 ```bash

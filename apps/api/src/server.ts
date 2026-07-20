@@ -24,6 +24,20 @@ import type { AppEnv, NodeBindings } from "./lib/http";
 import { handleApiError } from "./lib/http";
 import { mountApiRoutes } from "./lib/mount-api-routes";
 import { log } from "./lib/logger";
+import { isPlatformEnabled } from "./lib/platform/config";
+import { disconnectPlatformPrisma } from "./lib/platform/client";
+import {
+  getEventBusMode,
+  initPlatformEventBus,
+  onPlatformEvent,
+  shutdownPlatformEventBus,
+} from "./lib/platform/events";
+import {
+  handleTenantCreated,
+  handleTenantDeleted,
+} from "./lib/platform/provision";
+import { tenantRouterMiddleware } from "./lib/tenant-router";
+import { platformRoutes } from "./routes/platform";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { securityHeadersMiddleware } from "./middleware/security-headers";
 import {
@@ -97,6 +111,7 @@ export function createNodeHono() {
 
   app.use("*", requestIdMiddleware);
   app.use("*", securityHeadersMiddleware);
+  app.use("*", tenantRouterMiddleware);
 
   // Prisma + MinIO are injected as Hono Bindings via fetch(req, bindings) below (task 2.6).
   app.use("*", async (c, next) => {
@@ -117,9 +132,11 @@ export function createNodeHono() {
   });
 
   app.get("/api/health", async (c) => {
-    const checks: Record<string, "ok" | "error"> = {
+    const checks: Record<string, "ok" | "error" | "off"> = {
       prisma: "error",
       minio: "error",
+      platform: "off",
+      redis: "off",
     };
 
     try {
@@ -142,19 +159,37 @@ export function createNodeHono() {
       checks.minio = "error";
     }
 
+    if (isPlatformEnabled()) {
+      try {
+        const { getPlatformPrisma } = await import("./lib/platform/client");
+        await getPlatformPrisma().$queryRaw`SELECT 1`;
+        checks.platform = "ok";
+      } catch {
+        checks.platform = "error";
+      }
+      const bus = getEventBusMode();
+      checks.redis = bus === "redis" ? "ok" : bus === "memory" ? "ok" : "error";
+    }
+
     const healthy = checks.prisma === "ok" && checks.minio === "ok";
     return c.json(
       {
         ok: healthy,
         service: "teknovo-cms-api",
         runtime: "node",
+        platformEnabled: isPlatformEnabled(),
         ts: new Date().toISOString(),
         requestId: c.get("requestId"),
+        tenant: c.get("tenant") ?? null,
         checks,
       },
       healthy ? 200 : 503,
     );
   });
+
+  // Platform admin stubs — Node only (Worker Free never mounts these).
+  // Routes self-gate with PLATFORM_ENABLED except GET /status.
+  app.route("/api/platform", platformRoutes);
 
   mountApiRoutes(app);
 
@@ -224,6 +259,13 @@ async function main() {
   const bindings = buildNodeBindings();
   await ensureBucket(bindings);
 
+  if (isPlatformEnabled()) {
+    const mode = await initPlatformEventBus();
+    onPlatformEvent("tenant.created", (p) => handleTenantCreated(p));
+    onPlatformEvent("tenant.deleted", (p) => handleTenantDeleted(p));
+    log.info("platform.enabled", { eventBus: mode });
+  }
+
   const honoApp = createNodeHono();
   const expressApp = express();
 
@@ -253,7 +295,13 @@ async function main() {
         else cb(null, false);
       },
       methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Authorization", "Content-Type", "X-Request-Id"],
+      allowedHeaders: [
+        "Authorization",
+        "Content-Type",
+        "X-Request-Id",
+        "X-Tenant-Id",
+        "X-Tenant-Slug",
+      ],
       exposedHeaders: [
         "X-Request-Id",
         "X-RateLimit-Limit",
@@ -287,6 +335,8 @@ async function main() {
   const shutdown = async (signal: string) => {
     log.info("shutdown", { signal });
     server.close(async () => {
+      await shutdownPlatformEventBus();
+      await disconnectPlatformPrisma();
       await disconnectPrisma();
       await destroyS3Client();
       process.exit(0);

@@ -247,6 +247,33 @@ bash scripts/ops/backup-minio.sh          # weekly MinIO mirror
 - On VPS: `pm2 monit` / `pm2 status` for process metrics (no paid SaaS required).
 - Failures show as failed workflow runs (enable GitHub notifications / email on Actions failure).
 
+## SaaS Platform foundation (PRP Fase 10)
+
+Multi-tenant **control plane** stubs on the **Node** API only. Default **off** — production Free Worker and single-tenant school CMS stay unchanged.
+
+| Flag | Default | Meaning |
+|------|---------|---------|
+| `PLATFORM_ENABLED` | `false` | Mount active tenant CRUD + event handlers |
+| `PLATFORM_DATABASE_URL` | `…/teknovo_platform` | Separate Platform DB (not tenant content) |
+| `REDIS_URL` | `redis://127.0.0.1:6379` | Event bus (falls back to in-process) |
+| `PLATFORM_SECRETS_KEY` | unset → `plain:` prefix | Encrypt MinIO/DB secrets at rest |
+| `PLATFORM_ADMIN_SECRET` | optional | Bearer for bootstrap without Clerk |
+| `VITE_PLATFORM_ENABLED` | unset | Show CMS `/platform` nav (local/super-admin) |
+
+Local enable:
+
+```bash
+pnpm docker:up   # postgres + minio + redis
+# ensure DB teknovo_platform exists (fresh volume via ops/docker/postgres-init)
+pnpm --filter @teknovo/api prisma:generate
+pnpm --filter @teknovo/api prisma:platform:deploy
+# apps/api/.env — PLATFORM_ENABLED=true + PLATFORM_DATABASE_URL + REDIS_URL
+pnpm --filter @teknovo/api dev:node
+curl -s http://127.0.0.1:8787/api/platform/status
+```
+
+**Not in this phase:** live per-school DNS, Worker multi-tenant, automated migrate/seed of every tenant DB, production secret rotation.
+
 ## DNS / Clerk cutover checklist
 
 1. Buat Pages projects: `teknovo-web`, `teknovo-cms`; attach custom domains apex + `cms.`.

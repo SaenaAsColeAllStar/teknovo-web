@@ -12,6 +12,14 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — SaaS Platform Foundation (PRP Fase 10)
+
+- Separate Platform DB Prisma schema (`apps/api/prisma-platform/`): `tenants`, `users`, `tenant_memberships` + encrypted secret fields.
+- Feature flag `PLATFORM_ENABLED=false` (default) — Worker Free + school Node API unchanged until explicitly enabled.
+- Tenant router (`X-Tenant-Id` / `X-Tenant-Slug` → subdomain → `/t/:slug`); admin stubs `POST|DELETE /api/platform/tenants`, `POST …/setup`.
+- Redis service in `docker-compose.yml` + Pub/Sub event bus (`tenant.created` / `tenant.deleted`) with in-memory fallback.
+- Minimal CMS `/platform` page behind `VITE_PLATFORM_ENABLED` (Super Admin). No live multi-tenant DNS.
+
 ### Added — Zero Trust / VPS deploy docs & scripts (PRP Fase 8)
 
 - `ops/cloudflared/config.yml.example` + README — Tunnel ingress for `api.smkteknovo.sch.id` → `127.0.0.1:8787`; DNS CNAME + SSL notes.

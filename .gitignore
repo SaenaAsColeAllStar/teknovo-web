@@ -39,6 +39,9 @@ yarn-error.log*
 .dev.vars
 apps/api/.env
 
+# Prisma generated platform client (run prisma:platform:generate)
+apps/api/src/generated/
+
 # vercel / cloudflare
 .vercel
 .wrangler
