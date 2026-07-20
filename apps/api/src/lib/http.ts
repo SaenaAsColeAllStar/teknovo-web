@@ -38,12 +38,17 @@ export type NodeAppEnv = {
   };
 };
 
-export function okJson<T>(c: Context<AppEnv>, data: T, status: ContentfulStatusCode = 200) {
+/** Shared helpers — accept Worker or Node Hono context. */
+// Hono Context is invariant on Env; keep helpers loosely typed across runtimes.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type ApiContext = Context<any>;
+
+export function okJson<T>(c: ApiContext, data: T, status: ContentfulStatusCode = 200) {
   return c.json({ ok: true as const, data }, status);
 }
 
 export function okListJson<T>(
-  c: Context<AppEnv>,
+  c: ApiContext,
   data: T[],
   meta: { page: number; limit: number; total: number },
 ) {
@@ -51,7 +56,7 @@ export function okListJson<T>(
 }
 
 export function errJson(
-  c: Context<AppEnv>,
+  c: ApiContext,
   code: string,
   message: string,
   status: ContentfulStatusCode,
@@ -59,7 +64,7 @@ export function errJson(
   return c.json({ ok: false as const, error: { code, message } }, status);
 }
 
-export function handleApiError(c: Context<AppEnv>, err: unknown) {
+export function handleApiError(c: ApiContext, err: unknown) {
   if (err instanceof CmsAuthError) {
     return errJson(c, "FORBIDDEN", err.message, err.status);
   }

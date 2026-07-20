@@ -20,6 +20,8 @@ import {
 } from "./lib/minio/client";
 import { disconnectPrisma, getPrisma } from "./lib/prisma/client";
 import type { NodeAppEnv, NodeBindings } from "./lib/http";
+import { handleApiError } from "./lib/http";
+import { log } from "./lib/logger";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { securityHeadersMiddleware } from "./middleware/security-headers";
 import {
@@ -31,6 +33,7 @@ import {
   publicReadLimit,
   writeLimit,
 } from "./middleware/rate-limit";
+import type { ErrorRequestHandler } from "express";
 
 function buildNodeBindings(): NodeBindings {
   const config = loadMinioConfig();
@@ -93,6 +96,7 @@ function createNodeHono() {
   app.use("*", requestIdMiddleware);
   app.use("*", securityHeadersMiddleware);
 
+  // Prisma + MinIO are injected as Hono Bindings via fetch(req, bindings) below (task 2.6).
   app.use("*", async (c, next) => {
     if (c.req.method === "OPTIONS") return next();
     const path = new URL(c.req.url).pathname;
@@ -146,6 +150,14 @@ function createNodeHono() {
     );
   });
 
+  app.onError((err, c) => {
+    log.error("unhandled", {
+      requestId: c.get("requestId"),
+      err: err instanceof Error ? err.message : String(err),
+    });
+    return handleApiError(c, err);
+  });
+
   app.notFound((c) =>
     c.json(
       {
@@ -163,6 +175,43 @@ function createNodeHono() {
   return app;
 }
 
+/** Express-layer errors (body parser 413, malformed JSON, etc.). */
+const expressErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+  const status =
+    typeof err === "object" &&
+    err !== null &&
+    "status" in err &&
+    typeof (err as { status: unknown }).status === "number"
+      ? (err as { status: number }).status
+      : typeof err === "object" &&
+          err !== null &&
+          "statusCode" in err &&
+          typeof (err as { statusCode: unknown }).statusCode === "number"
+        ? (err as { statusCode: number }).statusCode
+        : 500;
+  const type =
+    typeof err === "object" && err !== null && "type" in err
+      ? String((err as { type: unknown }).type)
+      : "";
+  const code =
+    status === 413 || type === "entity.too.large"
+      ? "PAYLOAD_TOO_LARGE"
+      : status === 400
+        ? "BAD_REQUEST"
+        : "INTERNAL";
+  const message =
+    err instanceof Error ? err.message : "Terjadi kesalahan server.";
+  log.error("express", { code, status, err: message });
+  res.status(status === 413 || type === "entity.too.large" ? 413 : status).json({
+    ok: false,
+    error: { code, message },
+  });
+};
+
 async function main() {
   const port = Number(process.env.PORT || 8787);
   const bindings = buildNodeBindings();
@@ -170,6 +219,9 @@ async function main() {
 
   const honoApp = createNodeHono();
   const expressApp = express();
+
+  // Cloudflare Tunnel / reverse proxy — needed for accurate X-Forwarded-For rate limits.
+  expressApp.set("trust proxy", 1);
 
   const isProd = (bindings.ENVIRONMENT ?? "production") === "production";
   const allowed = new Set(
@@ -205,6 +257,7 @@ async function main() {
     }),
   );
 
+  // F-04: JSON body limit 8MB (uploads buffered through API).
   expressApp.use(express.json({ limit: "8mb" }));
   expressApp.use(express.raw({ type: "application/octet-stream", limit: "8mb" }));
 
@@ -213,15 +266,19 @@ async function main() {
   expressApp.use((req, res) => {
     void listener(req, res);
   });
+  expressApp.use(expressErrorHandler);
 
   const server = expressApp.listen(port, () => {
-    console.log(
-      `[teknovo-api] Node runtime listening on http://127.0.0.1:${port} (Prisma + MinIO)`,
-    );
+    log.info("listening", {
+      runtime: "node",
+      port,
+      cmsOrigin: bindings.CMS_ORIGIN,
+      webOrigin: bindings.WEB_ORIGIN,
+    });
   });
 
   const shutdown = async (signal: string) => {
-    console.log(`[teknovo-api] ${signal} — graceful shutdown`);
+    log.info("shutdown", { signal });
     server.close(async () => {
       await disconnectPrisma();
       await destroyS3Client();

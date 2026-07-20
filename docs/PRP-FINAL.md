@@ -365,15 +365,17 @@ volumes:
 
 ### Fase 2: Entry Point & Middleware (Hari 3-4) — P0
 
-| Task | Detail | Output |
-|---|---|---|
-| 2.1 | Tulis ulang `src/index.ts` — Express server + Hono adapter | Entry point baru |
-| 2.2 | Setup CORS middleware Express | CORS working |
-| 2.3 | Adaptasi `request-id.ts` untuk Express pattern | Request ID per request |
-| 2.4 | Adaptasi `security-headers.ts` untuk Express | Security headers |
-| 2.5 | Adaptasi `rate-limit.ts` untuk Express (dengan memory store) | Rate limiter |
-| 2.6 | Inject Prisma & MinIO ke Hono context via middleware | Context binding |
-| 2.7 | Test health endpoint: `GET /api/health` | Health check OK |
+| Task | Detail | Output | Status |
+|---|---|---|---|
+| 2.1 | Entry Express + Hono adapter (`src/server.ts`; Worker tetap `src/index.ts`) | Entry point Node | ✅ |
+| 2.2 | Setup CORS middleware Express (dari `CMS_ORIGIN` / `WEB_ORIGIN`) | CORS working | ✅ |
+| 2.3 | Adaptasi `request-id.ts` + access log | Request ID per request | ✅ |
+| 2.4 | Adaptasi `security-headers.ts` (CSP, HSTS prod, dll) | Security headers | ✅ |
+| 2.5 | Adaptasi `rate-limit.ts` (memory store; trust proxy) | Rate limiter | ✅ |
+| 2.6 | Inject Prisma & MinIO ke Hono Bindings (`fetch(req, bindings)`) | Context binding | ✅ |
+| 2.7 | Test health endpoint: `GET /api/health` (Prisma + MinIO checks) | Health check OK | ✅ |
+
+Tambahan Fase 2 (hardening): global `onError` / Express body-parser error handler, graceful shutdown SIGTERM/SIGINT, JSON body limit 8MB.
 
 ### Fase 3: Migrasi Database Layer (Hari 5-7) — P0
 

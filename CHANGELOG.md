@@ -18,7 +18,7 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 - `docker-compose.yml`: PostgreSQL (`127.0.0.1:5434`) + MinIO (`9010`/`9011`).
 - Prisma schema + migration `init_tenant_content` mirroring D1 tables; seed kategori + pengaturan.
 - MinIO helpers (`putObject` / `getObject` / `deleteObject` / `listObjects` / `objectUrl`) + bucket ensure script.
-- Node entry `apps/api/src/server.ts`: CORS, 8MB JSON, request-id / security headers / rate limits, graceful shutdown, `GET /api/health` checks Prisma + MinIO.
+- Node entry `apps/api/src/server.ts`: CORS from env, 8MB JSON, request-id access logs, security headers (incl. HSTS in prod), in-memory rate limits + `trust proxy`, Hono/`Express` error handlers, graceful shutdown, `GET /api/health` checks Prisma + MinIO.
 - PM2 `ecosystem.config.cjs`; scripts `dev:node`, `prisma:*`, `minio:ensure-bucket`.
 
 ### Fix — publik ekskul/prestasi/fasilitas tanpa mock

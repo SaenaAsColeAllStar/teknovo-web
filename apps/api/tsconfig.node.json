@@ -21,6 +21,7 @@
     "src/lib/prisma/**/*.ts",
     "src/lib/minio/**/*.ts",
     "src/lib/http.ts",
+    "src/lib/logger.ts",
     "src/middleware/request-id.ts",
     "src/middleware/security-headers.ts",
     "src/middleware/rate-limit.ts",

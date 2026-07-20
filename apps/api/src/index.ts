@@ -16,6 +16,7 @@ import {
 } from "./routes/misc";
 import { usersRoutes } from "./routes/users";
 import type { AppEnv } from "./lib/http";
+import { handleApiError } from "./lib/http";
 import {
   cmsReadLimit,
   cmsWriteLimit,
@@ -27,6 +28,7 @@ import {
 } from "./middleware/rate-limit";
 import { requestIdMiddleware } from "./middleware/request-id";
 import { securityHeadersMiddleware } from "./middleware/security-headers";
+import { log } from "./lib/logger";
 
 const app = new Hono<AppEnv>();
 
@@ -101,6 +103,14 @@ app.route("/api/v1/analytics", analyticsRoutes);
 app.route("/api/v1/hooks", hooksRoutes);
 app.route("/api/cms/media", mediaRoutes);
 app.route("/api/webhook", webhookRoutes);
+
+app.onError((err, c) => {
+  log.error("unhandled", {
+    requestId: c.get("requestId"),
+    err: err instanceof Error ? err.message : String(err),
+  });
+  return handleApiError(c, err);
+});
 
 app.notFound((c) =>
   c.json(
