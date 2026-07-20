@@ -12,6 +12,12 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — API Postgres stored procedures (PRP Fase 5)
+
+- SQL di `apps/api/src/stored-procedures/`: `sp_upsert_site_media`, `sp_publish_berita`, `fn_get_analytics_overview`, `fn_search_berita` (pg_trgm), `sp_archive_outdated`.
+- Deploy `pnpm --filter @teknovo/api prisma:procedures`; smoke `prisma:procedures:smoke`. Wrappers di `lib/procedures/` (Node only — D1/Worker tidak memakai SP).
+- Prisma repos: site-media upsert + analytics overview + berita publish path memanggil procedures; search/archive wrapper siap (belum route/cron). CRUD lain tetap ORM.
+
 ### Added — API route dual-runtime (PRP Fase 4)
 
 - Thin data adapters (`apps/api/src/lib/data/*`): `hasPrisma(env)` → Prisma repos; else D1. Media: `hasMinio(env)` → MinIO S3 SDK; else R2.

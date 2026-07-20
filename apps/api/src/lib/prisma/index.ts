@@ -17,6 +17,8 @@ export {
   prismaCreateBerita,
   prismaUpdateBerita,
   prismaDeleteBerita,
+  prismaPublishBerita,
+  prismaArchiveOutdated,
 } from "./berita-repo";
 export type { BeritaWriteInput } from "./berita-repo";
 

@@ -1,5 +1,9 @@
 import type { Berita as BeritaModel, Kategori, PrismaClient } from "@prisma/client";
 import type { Berita, BeritaListItem, BeritaStatus } from "@teknovo/shared";
+import {
+  archiveOutdated,
+  publishBerita as spPublishBerita,
+} from "../procedures/berita";
 import { toIso, toIsoRequired } from "./map-helpers";
 
 export type { BeritaWriteInput } from "../d1/berita-repo";
@@ -112,8 +116,10 @@ export async function prismaCreateBerita(
   input: BeritaWriteInput,
 ): Promise<Berita> {
   const now = new Date();
-  const publishedAt = input.status === "PUBLISHED" ? now : null;
-  const sortAt = publishedAt ?? now;
+  const willPublish = input.status === "PUBLISHED";
+  // Create as DRAFT when publishing so `sp_publish_berita` owns timestamps.
+  const status = willPublish ? "DRAFT" : input.status;
+  const sortAt = now;
 
   const row = await prisma.berita.create({
     data: {
@@ -122,7 +128,7 @@ export async function prismaCreateBerita(
       ringkasan: input.ringkasan ?? null,
       konten: input.konten,
       coverUrl: input.coverUrl ?? null,
-      status: input.status,
+      status,
       kategoriId: input.kategoriId ?? null,
       metaTitle: input.metaTitle ?? null,
       metaDescription: input.metaDescription ?? null,
@@ -131,11 +137,19 @@ export async function prismaCreateBerita(
       canonicalUrl: input.canonicalUrl ?? null,
       penulisId: input.penulisId ?? null,
       penulisNama: input.penulisNama ?? null,
-      publishedAt,
+      publishedAt: null,
       sortAt,
     },
     include: { kategori: { select: kategoriSelect } },
   });
+
+  if (willPublish) {
+    await spPublishBerita(prisma, row.id);
+    const published = await prismaGetBeritaById(prisma, row.id);
+    if (!published) throw new Error(`berita missing after publish: ${row.id}`);
+    return published;
+  }
+
   return mapFull(row);
 }
 
@@ -147,11 +161,20 @@ export async function prismaUpdateBerita(
   const existing = await prisma.berita.findUnique({ where: { id } });
   if (!existing) return null;
 
+  const willPublish =
+    input.status === "PUBLISHED" && existing.status === "DRAFT";
+
   let publishedAt = existing.publishedAt;
-  if (input.status === "PUBLISHED" && !publishedAt) publishedAt = new Date();
+  let status = input.status;
+  if (willPublish) {
+    // Keep DRAFT until SP publish; other fields update below.
+    status = "DRAFT";
+  } else if (input.status === "PUBLISHED" && !publishedAt) {
+    publishedAt = new Date();
+  }
   const sortAt = publishedAt ?? existing.createdAt;
 
-  const row = await prisma.berita.update({
+  await prisma.berita.update({
     where: { id },
     data: {
       judul: input.judul,
@@ -159,7 +182,7 @@ export async function prismaUpdateBerita(
       ringkasan: input.ringkasan ?? null,
       konten: input.konten,
       coverUrl: input.coverUrl ?? null,
-      status: input.status,
+      status,
       kategoriId: input.kategoriId ?? null,
       metaTitle: input.metaTitle ?? null,
       metaDescription: input.metaDescription ?? null,
@@ -169,9 +192,32 @@ export async function prismaUpdateBerita(
       publishedAt,
       sortAt,
     },
-    include: { kategori: { select: kategoriSelect } },
   });
-  return mapFull(row);
+
+  if (willPublish) {
+    await spPublishBerita(prisma, id);
+  }
+
+  return prismaGetBeritaById(prisma, id);
+}
+
+/** Explicit publish via `sp_publish_berita`. */
+export async function prismaPublishBerita(
+  prisma: PrismaClient,
+  id: string,
+): Promise<Berita | null> {
+  const existing = await prisma.berita.findUnique({ where: { id } });
+  if (!existing) return null;
+  await spPublishBerita(prisma, id);
+  return prismaGetBeritaById(prisma, id);
+}
+
+/** Archive outdated published content via `sp_archive_outdated`. */
+export async function prismaArchiveOutdated(
+  prisma: PrismaClient,
+  daysThreshold = 365,
+) {
+  return archiveOutdated(prisma, daysThreshold);
 }
 
 export async function prismaDeleteBerita(

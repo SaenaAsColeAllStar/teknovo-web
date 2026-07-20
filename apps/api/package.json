@@ -17,6 +17,8 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:smoke": "tsx scripts/smoke-prisma-repos.ts",
+    "prisma:procedures": "tsx scripts/deploy-stored-procedures.ts",
+    "prisma:procedures:smoke": "tsx scripts/smoke-procedures.ts",
     "smoke:node": "tsx scripts/smoke-node-api.ts",
     "minio:ensure-bucket": "tsx scripts/ensure-minio-bucket.ts",
     "start:node": "tsx src/server.ts",

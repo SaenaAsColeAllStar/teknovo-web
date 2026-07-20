@@ -1,5 +1,6 @@
 import type { PrismaClient } from "@prisma/client";
 import type { SiteMediaItem } from "@teknovo/shared";
+import { upsertSiteMedia as spUpsertSiteMedia } from "../procedures/site-media";
 import { toIsoRequired } from "./map-helpers";
 
 /** Re-export catalog so Node path can share the same keys as D1/R2. */
@@ -40,6 +41,7 @@ export async function prismaGetSiteMedia(
   return row ? mapRow(row) : null;
 }
 
+/** Upsert via `sp_upsert_site_media` (atomic). */
 export async function prismaUpsertSiteMedia(
   prisma: PrismaClient,
   input: {
@@ -50,23 +52,7 @@ export async function prismaUpsertSiteMedia(
     updatedBy?: string | null;
   },
 ): Promise<SiteMediaItem> {
-  const row = await prisma.siteMedia.upsert({
-    where: { mediaKey: input.mediaKey },
-    create: {
-      mediaKey: input.mediaKey,
-      label: input.label,
-      category: input.category,
-      url: input.url,
-      updatedBy: input.updatedBy ?? null,
-    },
-    update: {
-      label: input.label,
-      category: input.category,
-      url: input.url,
-      updatedBy: input.updatedBy ?? null,
-    },
-  });
-  return mapRow(row);
+  return spUpsertSiteMedia(prisma, input);
 }
 
 export async function prismaDeleteSiteMedia(

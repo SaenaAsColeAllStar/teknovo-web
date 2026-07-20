@@ -416,15 +416,30 @@ Catatan Fase 4:
 
 ### Fase 5: Stored Procedures (Hari 10) — P0
 
-| Task | Detail | Output |
-|---|---|---|
-| 5.1 | Buat `stored-procedures/001_upsert_site_media.sql` | SP upsert |
-| 5.2 | Buat `stored-procedures/002_publish_berita.sql` | SP publish |
-| 5.3 | Buat `stored-procedures/003_analytics.sql` | Function analytics |
-| 5.4 | Buat `stored-procedures/004_search.sql` | Function search (pg_trgm) |
-| 5.5 | Buat `stored-procedures/005_archive_outdated.sql` | SP archive |
-| 5.6 | Buat `scripts/deploy-stored-procedures.ts` — baca semua SQL dan execute via Prisma `$executeRaw` | Deploy script |
-| 5.7 | Buat `lib/procedures/` — wrapper TypeScript untuk setiap SP | Service layer |
+| Task | Detail | Output | Status |
+|---|---|---|---|
+| 5.1 | Buat `stored-procedures/001_upsert_site_media.sql` | SP upsert | ✅ |
+| 5.2 | Buat `stored-procedures/002_publish_berita.sql` | SP publish | ✅ |
+| 5.3 | Buat `stored-procedures/003_analytics.sql` | Function analytics | ✅ |
+| 5.4 | Buat `stored-procedures/004_search.sql` | Function search (pg_trgm) | ✅ |
+| 5.5 | Buat `stored-procedures/005_archive_outdated.sql` | SP archive | ✅ |
+| 5.6 | Buat `scripts/deploy-stored-procedures.ts` — baca semua SQL dan execute via Prisma `$executeRaw` | Deploy script | ✅ |
+| 5.7 | Buat `lib/procedures/` — wrapper TypeScript untuk setiap SP | Service layer | ✅ |
+
+Catatan Fase 5:
+- SQL di `apps/api/src/stored-procedures/` (Postgres only). **D1/Worker tidak punya stored procedures** — repos D1 tetap ORM/SQL biasa.
+- Deploy: `pnpm --filter @teknovo/api prisma:procedures` → smoke `prisma:procedures:smoke`.
+- Wired ke Prisma repos: `prismaUpsertSiteMedia`, `prismaAnalyticsOverview`, publish path di create/update berita + `prismaPublishBerita`.
+- P1 siap wrapper, belum ada route/cron: `fn_search_berita` (`searchBerita`), `sp_archive_outdated` (`prismaArchiveOutdated`).
+- Ops lain (list/get/CRUD rutin) tetap Prisma Client ORM.
+
+| Procedure / function | Dipakai untuk |
+|---|---|
+| `sp_upsert_site_media` | Atomic upsert `site_media` |
+| `sp_publish_berita` | Validasi + DRAFT→PUBLISHED (`published_at`, `sort_at`) |
+| `fn_get_analytics_overview` | Aggregasi dashboard CMS |
+| `fn_search_berita` | ILIKE + `pg_trgm` (belum di-expose ke route) |
+| `sp_archive_outdated` | Archive konten published > N hari (belum cron) |
 
 ### Fase 6: MinIO Bucket Setup & Seed (Hari 11) — P0
 
@@ -499,7 +514,7 @@ Catatan Fase 4:
 Untuk setiap task:
 - [ ] Code sudah di-commit ke branch `main`
 - [ ] Prisma migration sudah apply tanpa error
-- [ ] Stored procedures sudah terdaftar di PostgreSQL
+- [x] Stored procedures sudah terdaftar di PostgreSQL
 - [ ] Endpoint di-test via Postman/curl dengan response 200
 - [ ] CORS dari CMS domain dan Web domain berfungsi
 - [ ] Upload file ke MinIO sukses, URL bisa diakses publik
