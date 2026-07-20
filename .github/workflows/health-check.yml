@@ -1,6 +1,6 @@
 # Scheduled + manual health probe for the public API.
-# Default target: current Free Worker (`cf.`). After Fase 8 Tunnel cutover,
-# set repo/environment variable HEALTH_CHECK_URL to `https://cms-api.smkteknovo.sch.id/api/health`.
+# Default: Node Tunnel (`cms-api.`). Rollback: set HEALTH_CHECK_URL to Worker `cf.`
+# (see docs/ROLLBACK.md).
 
 name: Health check
 
@@ -32,7 +32,7 @@ jobs:
             URL="${VAR_URL:-}"
           fi
           if [ -z "$URL" ]; then
-            URL="https://cf.smkteknovo.sch.id/api/health"
+            URL="https://cms-api.smkteknovo.sch.id/api/health"
           fi
           echo "url=$URL" >> "$GITHUB_OUTPUT"
           echo "Probing: $URL"

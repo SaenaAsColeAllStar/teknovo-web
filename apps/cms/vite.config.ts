@@ -10,7 +10,7 @@ const shims = path.resolve(root, "src/shims");
 /** Worker mounts at `/api/v1/...`. Accept host-only or `…/api` — never double `/api`. */
 function normalizeCmsApiBase(raw: string): string {
   const trimmed = raw.replace(/\/$/, "");
-  if (!trimmed) return "https://cf.smkteknovo.sch.id/api";
+  if (!trimmed) return "https://cms-api.smkteknovo.sch.id/api";
   return trimmed.endsWith("/api") ? trimmed : `${trimmed}/api`;
 }
 
@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
     env.VITE_API_URL ||
       env.PUBLIC_API_URL ||
       env.NEXT_PUBLIC_API_URL ||
-      "https://cf.smkteknovo.sch.id/api",
+      "https://cms-api.smkteknovo.sch.id/api",
   );
   // Prefer VITE_*; accept Next-era name if someone builds from monorepo .env.local.
   const clerkPk =
@@ -31,7 +31,9 @@ export default defineConfig(({ mode }) => {
     env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
     "";
   const r2Url =
-    env.VITE_R2_PUBLIC_URL || env.PUBLIC_R2_URL || "https://r2.ctos.web.id";
+    env.VITE_R2_PUBLIC_URL ||
+    env.PUBLIC_R2_URL ||
+    "https://storage-console.smkteknovo.sch.id/smk-teknovo";
   const appUrl = "https://cms.smkteknovo.sch.id";
   const webOrigin = (
     env.VITE_WEB_ORIGIN ||

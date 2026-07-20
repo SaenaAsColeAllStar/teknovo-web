@@ -6,7 +6,7 @@ export function getR2PublicUrl(): string {
     (typeof import.meta !== "undefined" &&
       (import.meta as ImportMeta & { env?: { PUBLIC_R2_URL?: string } }).env
         ?.PUBLIC_R2_URL) ||
-    "https://r2.ctos.web.id";
+    "https://storage-console.smkteknovo.sch.id/smk-teknovo";
   return String(fromEnv).replace(/\/$/, "");
 }
 

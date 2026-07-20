@@ -56,12 +56,12 @@ const url = canonical || new URL(Astro.url.pathname, site).href;
 const r2Origin = (
   (typeof import.meta.env.PUBLIC_R2_URL === "string" &&
     import.meta.env.PUBLIC_R2_URL) ||
-  "https://r2.ctos.web.id"
+  "https://storage-console.smkteknovo.sch.id/smk-teknovo"
 ).replace(/\/$/, "");
 const apiOrigin = (
   (typeof import.meta.env.PUBLIC_API_URL === "string" &&
     import.meta.env.PUBLIC_API_URL) ||
-  "https://cf.smkteknovo.sch.id"
+  "https://cms-api.smkteknovo.sch.id"
 )
   .replace(/\/$/, "")
   .replace(/\/api$/, "");

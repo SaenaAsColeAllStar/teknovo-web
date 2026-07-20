@@ -11,10 +11,12 @@ const shims = path.resolve(root, "src/shims");
 const siteUrl = process.env.PUBLIC_SITE_URL || "https://smkteknovo.sch.id";
 // Host origin only (paths add `/api/v1/...`). Strip trailing `/api` if someone
 // copied the CMS-style value (`…/api`) into teknovo-web Pages env.
-const apiUrl = (process.env.PUBLIC_API_URL || "https://cf.smkteknovo.sch.id")
+const apiUrl = (process.env.PUBLIC_API_URL || "https://cms-api.smkteknovo.sch.id")
   .replace(/\/$/, "")
   .replace(/\/api$/, "");
-const r2Url = process.env.PUBLIC_R2_URL || "https://r2.ctos.web.id";
+const r2Url =
+  process.env.PUBLIC_R2_URL ||
+  "https://storage-console.smkteknovo.sch.id/smk-teknovo";
 
 export default defineConfig({
   output: "static",

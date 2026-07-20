@@ -26,7 +26,9 @@ jobs:
         working-directory: apps/cms
         env:
           VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.VITE_CLERK_PUBLISHABLE_KEY }}
-          VITE_API_URL: https://cf.smkteknovo.sch.id/api
+          VITE_API_URL: https://cms-api.smkteknovo.sch.id/api
+          VITE_R2_PUBLIC_URL: https://storage-console.smkteknovo.sch.id/smk-teknovo
+          VITE_WEB_ORIGIN: https://smkteknovo.sch.id
         run: |
           if [ -z "${VITE_CLERK_PUBLISHABLE_KEY:-}" ]; then
             echo "::warning::VITE_CLERK_PUBLISHABLE_KEY missing — building with placeholder (do not use this artifact in production)."

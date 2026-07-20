@@ -29,9 +29,9 @@ jobs:
       - name: Build Astro site
         working-directory: apps/web
         env:
-          PUBLIC_API_URL: https://cf.smkteknovo.sch.id
+          PUBLIC_API_URL: https://cms-api.smkteknovo.sch.id
           PUBLIC_SITE_URL: https://smkteknovo.sch.id
-          PUBLIC_R2_URL: https://r2.ctos.web.id
+          PUBLIC_R2_URL: https://storage-console.smkteknovo.sch.id/smk-teknovo
         run: pnpm build
       - name: Check Cloudflare credentials
         id: cf

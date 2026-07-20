@@ -1,6 +1,6 @@
 /** Host origin only — paths already include `/api/v1/...`. Strip trailing `/api` if set. */
 const API_URL = (
-  import.meta.env.PUBLIC_API_URL || "https://cf.smkteknovo.sch.id"
+  import.meta.env.PUBLIC_API_URL || "https://cms-api.smkteknovo.sch.id"
 )
   .replace(/\/$/, "")
   .replace(/\/api$/, "");
