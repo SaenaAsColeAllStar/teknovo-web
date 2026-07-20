@@ -12,6 +12,12 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — API Prisma repos (PRP Fase 3)
+
+- Prisma repository layer mirroring D1 (`apps/api/src/lib/prisma/*`): kategori, berita, artikel, fasilitas, ekstrakurikuler, prestasi, site-media, pengaturan, analytics; users stub (Clerk until Platform DB).
+- Barrel `lib/prisma/index.ts`; smoke script `pnpm --filter @teknovo/api prisma:smoke`; map-helper unit tests.
+- Worker D1 repos untouched; Node content route cutover deferred to Fase 4.
+
 ### Added — API Node foundation (PRP Fase 1–2)
 
 - Dual-runtime API foundation for VPS path (Express + Hono + Prisma + MinIO) **without** removing Worker + D1 + R2 production.

@@ -165,7 +165,7 @@ function createNodeHono() {
         error: {
           code: "NOT_FOUND",
           message:
-            "Route tidak ditemukan. Node runtime: content routes land in Fase 3–4; Worker path still serves D1.",
+            "Route tidak ditemukan. Node runtime: Prisma repos ready (Fase 3); route cutover in Fase 4. Worker path still serves D1.",
         },
       },
       404,

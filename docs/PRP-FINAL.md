@@ -379,16 +379,22 @@ Tambahan Fase 2 (hardening): global `onError` / Express body-parser error handle
 
 ### Fase 3: Migrasi Database Layer (Hari 5-7) — P0
 
-| Task | Detail | Output |
-|---|---|---|
-| 3.1 | Buat Prisma queries untuk route `kategori`: list, create, update, delete | `prisma/kategori-repo.ts` |
-| 3.2 | Buat Prisma queries untuk route `berita`: CRUD + list with pagination + filter status | `prisma/berita-repo.ts` |
-| 3.3 | Buat Prisma queries untuk route `artikel-siswa`: CRUD + filter penulis | `prisma/artikel-repo.ts` |
-| 3.4 | Buat Prisma queries untuk route `fasilitas`, `ekstrakurikuler`, `prestasi` | Content repos |
-| 3.5 | Buat Prisma queries untuk `site-media` — list, get, upsert, delete | `prisma/site-media-repo.ts` |
-| 3.6 | Buat Prisma queries untuk `pengaturan` — get, upsert | `prisma/pengaturan-repo.ts` |
-| 3.7 | Buat Prisma queries untuk `analytics` — overview aggregation | `prisma/analytics-repo.ts` |
-| 3.8 | Buat Prisma queries untuk `users` — sync dengan Clerk | `prisma/users-repo.ts` |
+| Task | Detail | Output | Status |
+|---|---|---|---|
+| 3.1 | Buat Prisma queries untuk route `kategori`: list, create, update, delete | `prisma/kategori-repo.ts` | ✅ |
+| 3.2 | Buat Prisma queries untuk route `berita`: CRUD + list with pagination + filter status | `prisma/berita-repo.ts` | ✅ |
+| 3.3 | Buat Prisma queries untuk route `artikel-siswa`: CRUD + filter penulis | `prisma/artikel-repo.ts` | ✅ |
+| 3.4 | Buat Prisma queries untuk route `fasilitas`, `ekstrakurikuler`, `prestasi` | Content repos | ✅ |
+| 3.5 | Buat Prisma queries untuk `site-media` — list, get, upsert, delete | `prisma/site-media-repo.ts` | ✅ |
+| 3.6 | Buat Prisma queries untuk `pengaturan` — get, upsert | `prisma/pengaturan-repo.ts` | ✅ |
+| 3.7 | Buat Prisma queries untuk `analytics` — overview aggregation | `prisma/analytics-repo.ts` | ✅ |
+| 3.8 | Buat Prisma queries untuk `users` — sync dengan Clerk | `prisma/users-repo.ts` | ✅ stub |
+
+Catatan Fase 3:
+- Repos di `apps/api/src/lib/prisma/*` — mirror API `lib/d1/*` (`prisma*` vs `d1*`); Worker tetap D1.
+- Route cutover ke Prisma = **Fase 4** (Node `server.ts` belum mount content routes).
+- Task 3.8: CMS users tetap Clerk (`routes/users.ts`); tidak ada model `User` di tenant schema — `users-repo.ts` hanya probe/stub sampai Platform DB (Fase 10).
+- Smoke: `pnpm --filter @teknovo/api prisma:smoke` (butuh Postgres + migrate + seed).
 
 ### Fase 4: Route Integration & Testing (Hari 8-9) — P0
 
