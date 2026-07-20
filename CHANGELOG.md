@@ -12,6 +12,12 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — MinIO bucket seed & site-media defaults (PRP Fase 6)
+
+- `minio:ensure-bucket` — bucket `teknovo-web` + public-read policy `media/*` / `brand/*`.
+- `minio:seed` (`apps/api/scripts/seed-minio.ts`) — upload landing/brand assets (CDN or placeholder) + upsert `site_media` rows to MinIO public URLs.
+- Prisma helpers `catalogDefaultUrl` / `siteMediaCatalogWithMinioUrls` (Node only); Worker/R2 path unchanged.
+
 ### Added — API Postgres stored procedures (PRP Fase 5)
 
 - SQL di `apps/api/src/stored-procedures/`: `sp_upsert_site_media`, `sp_publish_berita`, `fn_get_analytics_overview`, `fn_search_berita` (pg_trgm), `sp_archive_outdated`.

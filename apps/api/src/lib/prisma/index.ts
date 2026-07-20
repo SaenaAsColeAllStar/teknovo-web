@@ -66,11 +66,14 @@ export type { PrestasiWriteInput } from "./prestasi-repo";
 
 export {
   SITE_MEDIA_CATALOG,
+  catalogDefaultUrl,
+  siteMediaCatalogWithMinioUrls,
   prismaListSiteMedia,
   prismaGetSiteMedia,
   prismaUpsertSiteMedia,
   prismaDeleteSiteMedia,
 } from "./site-media-repo";
+export type { SiteMediaCatalogEntry } from "./site-media-repo";
 
 export {
   prismaGetPengaturan,

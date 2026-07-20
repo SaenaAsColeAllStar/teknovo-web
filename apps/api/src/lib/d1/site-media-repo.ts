@@ -21,13 +21,16 @@ function mapRow(row: SiteMediaRow): SiteMediaItem {
   };
 }
 
-/** Known public site media keys (object path under R2 / logical override key). */
-export const SITE_MEDIA_CATALOG: ReadonlyArray<{
+/** Known public site media keys (object path under R2/MinIO / logical override key). */
+export type SiteMediaCatalogEntry = {
   mediaKey: string;
   label: string;
   category: string;
+  /** Relative object key — resolve via `publicObjectUrl` (R2) or `catalogDefaultUrl` (MinIO). */
   defaultPath: string;
-}> = [
+};
+
+export const SITE_MEDIA_CATALOG: ReadonlyArray<SiteMediaCatalogEntry> = [
   { mediaKey: "landing.hero.bg01", label: "Hero beranda 1", category: "hero", defaultPath: "media/landing/hero/bg-01.webp" },
   { mediaKey: "landing.hero.bg02", label: "Hero beranda 2", category: "hero", defaultPath: "media/landing/hero/bg-02.webp" },
   { mediaKey: "landing.hero.bg03", label: "Hero beranda 3", category: "hero", defaultPath: "media/landing/hero/bg-03.webp" },

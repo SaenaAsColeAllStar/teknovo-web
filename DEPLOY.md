@@ -2,7 +2,7 @@
 
 Production di **Cloudflare Free** memakai tiga deploy terpisah. OpenNext monolit **tidak** dipakai di Free (lihat bagian legacy di bawah).
 
-> **PRP (draft):** VPS path (Express + PostgreSQL + MinIO via Cloudflare Tunnel → `api.smkteknovo.sch.id`) is under construction in `apps/api` (`src/server.ts`). **Do not cut over production** until Fase 7–8. Live API remains `cf.smkteknovo.sch.id` (Worker + D1 + R2). Local Node stack: `pnpm docker:up` + `pnpm --filter @teknovo/api dev:node` (see `apps/api/README.md`).
+> **PRP (draft):** VPS path (Express + PostgreSQL + MinIO via Cloudflare Tunnel → `api.smkteknovo.sch.id`) is under construction in `apps/api` (`src/server.ts`). **Do not cut over production** until Fase 7–8. Live API remains `cf.smkteknovo.sch.id` (Worker + D1 + R2). Local Node stack: `pnpm docker:up` + `pnpm --filter @teknovo/api minio:ensure-bucket` + `pnpm --filter @teknovo/api minio:seed` + `pnpm --filter @teknovo/api dev:node` (see `apps/api/README.md`).
 
 ## Hosts
 

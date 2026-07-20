@@ -1,10 +1,38 @@
 import type { PrismaClient } from "@prisma/client";
 import type { SiteMediaItem } from "@teknovo/shared";
+import { loadMinioConfig } from "../minio/client";
+import { objectUrl } from "../minio/url";
 import { upsertSiteMedia as spUpsertSiteMedia } from "../procedures/site-media";
 import { toIsoRequired } from "./map-helpers";
+import {
+  SITE_MEDIA_CATALOG,
+  type SiteMediaCatalogEntry,
+} from "../d1/site-media-repo";
 
 /** Re-export catalog so Node path can share the same keys as D1/R2. */
-export { SITE_MEDIA_CATALOG } from "../d1/site-media-repo";
+export { SITE_MEDIA_CATALOG };
+export type { SiteMediaCatalogEntry };
+
+/**
+ * Resolve a catalog `defaultPath` to the MinIO public URL (Node/VPS).
+ * Worker/R2 continues to use `publicObjectUrl(env, path)` — do not call this on Worker.
+ */
+export function catalogDefaultUrl(
+  defaultPath: string,
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  return objectUrl(defaultPath, loadMinioConfig(env));
+}
+
+/** Catalog entries with MinIO public URLs for local/VPS defaults. */
+export function siteMediaCatalogWithMinioUrls(
+  env: NodeJS.ProcessEnv = process.env,
+): Array<SiteMediaCatalogEntry & { defaultUrl: string }> {
+  return SITE_MEDIA_CATALOG.map((entry) => ({
+    ...entry,
+    defaultUrl: catalogDefaultUrl(entry.defaultPath, env),
+  }));
+}
 
 function mapRow(row: {
   mediaKey: string;

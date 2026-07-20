@@ -39,10 +39,23 @@ pnpm --filter @teknovo/api prisma:generate
 pnpm --filter @teknovo/api prisma:deploy   # or prisma:migrate for new migrations
 pnpm --filter @teknovo/api prisma:seed
 pnpm --filter @teknovo/api minio:ensure-bucket
+pnpm --filter @teknovo/api minio:seed          # landing/brand → MinIO + site_media URLs
 pnpm --filter @teknovo/api dev:node        # http://127.0.0.1:8787
 ```
 
 Node health reports Prisma + MinIO: `GET /api/health` → `{ runtime: "node", checks: { prisma, minio } }`.
+
+### MinIO bucket & seed (PRP Fase 6)
+
+```bash
+pnpm --filter @teknovo/api minio:ensure-bucket   # bucket teknovo-web + public-read media/* brand/*
+pnpm --filter @teknovo/api minio:seed            # upload landing assets; upsert site_media → MinIO URLs
+```
+
+- Source objects: `SEED_SRC` (default `https://r2.ctos.web.id`); missing `.webp` → tiny placeholder.
+- `SEED_CATALOG_ONLY=1` — only `SITE_MEDIA_CATALOG` keys.
+- `SEED_SKIP_DB=1` — objects only (no Postgres upsert).
+- Worker/R2 path unchanged; catalog still stores relative `defaultPath`.
 
 Content CRUD routes on Node land in PRP Fase 3–4; until then Worker serves them.
 

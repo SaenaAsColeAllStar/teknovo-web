@@ -443,12 +443,18 @@ Catatan Fase 5:
 
 ### Fase 6: MinIO Bucket Setup & Seed (Hari 11) — P0
 
-| Task | Detail | Output |
-|---|---|---|
-| 6.1 | Buat bucket `teknovo-web` via script setup | Bucket ready |
-| 6.2 | Set bucket policy: public read untuk `media/*`, `brand/*` | Policy applied |
-| 6.3 | Buat `scripts/seed-minio.ts` — upload landing assets ke MinIO | All assets seeded |
-| 6.4 | Update `site-media-repo.ts` — default path mengarah ke MinIO URL | Site media pointing ke MinIO |
+| Task | Detail | Output | Status |
+|---|---|---|---|
+| 6.1 | Buat bucket `teknovo-web` via script setup | Bucket ready | ✅ |
+| 6.2 | Set bucket policy: public read untuk `media/*`, `brand/*` | Policy applied | ✅ |
+| 6.3 | Buat `scripts/seed-minio.ts` — upload landing assets ke MinIO | All assets seeded | ✅ |
+| 6.4 | Update `site-media-repo.ts` — default path mengarah ke MinIO URL | Site media pointing ke MinIO | ✅ |
+
+Catatan Fase 6:
+- `pnpm --filter @teknovo/api minio:ensure-bucket` — create `MINIO_BUCKET` (default `teknovo-web`) + public-read `media/*` / `brand/*` (`cms/uploads/*` tetap privat).
+- `pnpm --filter @teknovo/api minio:seed` — upload catalog + landing keys dari `SEED_SRC` (default R2 CDN); placeholder `.webp` jika gagal; upsert `site_media` ke MinIO public URLs.
+- Script di `apps/api/scripts/` (bukan root `scripts/`) agar sejajar dengan `ensure-minio-bucket` / package scripts.
+- `catalogDefaultUrl` / `siteMediaCatalogWithMinioUrls` di Prisma repo (Node only). Worker tetap relative `defaultPath` + `R2_PUBLIC_URL` via `publicObjectUrl`.
 
 ### Fase 7: Data Migration (Hari 12-13) — P0
 
