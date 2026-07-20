@@ -477,15 +477,23 @@ Catatan Fase 7:
 
 ### Fase 8: Zero Trust Setup & VPS Deploy (Hari 14) — P0
 
-| Task | Detail | Output |
-|---|---|---|
-| 8.1 | Install cloudflared di VPS, login Cloudflare | Tunnel authenticated |
-| 8.2 | Buat tunnel `teknovo-api`, konfigurasi ingress | Tunnel active |
-| 8.3 | DNS: `api.smkteknovo.sch.id` CNAME ke tunnel | Domain pointing |
-| 8.4 | Install PM2 global + pm2-logrotate | PM2 ready |
-| 8.5 | Setup aaPanel reverse proxy (jika tidak pakai tunnel) | Proxy OK |
-| 8.6 | Build TS → `dist/`, jalankan `pnpm start:pm2` | API running |
-| 8.7 | Test semua endpoint dari public internet via Tunnel | All endpoints OK |
+| Task | Detail | Output | Status |
+|---|---|---|---|
+| 8.1 | Install cloudflared di VPS, login Cloudflare | Tunnel authenticated | ⬜ ops (script ready) |
+| 8.2 | Buat tunnel `teknovo-api`, konfigurasi ingress | Tunnel active | ⬜ ops (template ready) |
+| 8.3 | DNS: `api.smkteknovo.sch.id` CNAME ke tunnel | Domain pointing | ⬜ ops (canonical; not `cms-api`) |
+| 8.4 | Install PM2 global + pm2-logrotate | PM2 ready | ✅ scripts |
+| 8.5 | Setup aaPanel reverse proxy (jika tidak pakai tunnel) | Proxy OK | ⏭ skip if Tunnel |
+| 8.6 | Jalankan API via PM2 (`tsx` + cluster; bukan `dist/` emit) | API running | ✅ ecosystem + scripts |
+| 8.7 | Test semua endpoint dari public internet via Tunnel | All endpoints OK | ⬜ after live Tunnel |
+
+Catatan Fase 8:
+- **Hostname:** `api.smkteknovo.sch.id` (F-31 / arsitektur). Checklist draft `cms-api.` = optional alias only.
+- **Repo artifacts:** `ops/cloudflared/config.yml.example` + README; `scripts/ops/bootstrap-vps.sh`, `pm2-start.sh`, `pm2-restart.sh`; cutover `docs/CUTOVER-API-TUNNEL.md`; `DEPLOY.md` § Zero Trust.
+- **Runtime:** PM2 cluster menjalankan `src/server.ts` via `tsx` (sama `deploy-api-vps.yml`). Emit `dist/` ditunda — dual Worker/Node + workspace `@teknovo/shared`.
+- **Tidak** membuat tunnel/DNS live dari CI tanpa kredensial VPS; Super Admin menyelesaikan 8.1–8.3 + 8.7 di server.
+- **Cutover:** Node di belakang Tunnel **paralel** dengan Worker `cf.`; ganti `VITE_API_URL` / `PUBLIC_API_URL` hanya saat siap; rollback → `cf.`.
+- aaPanel reverse proxy (8.5) hanya jika Tunnel tidak dipakai.
 
 ### Fase 9: CI/CD & Monitoring (Hari 15) — P1
 
@@ -546,10 +554,11 @@ Untuk setiap task:
 - [ ] Review bersama sebelum merge
 
 Untuk Fase 8 (Go Live):
-- [ ] Smoke test semua route: GET, POST, PATCH, DELETE
+- [ ] Smoke test semua route: GET, POST, PATCH, DELETE *(via Tunnel setelah Super Admin setup)*
 - [ ] Upload file real dari CMS → MinIO → tampil di Web
 - [ ] Downtime < 1 menit saat cutover dari Worker ke Express
 - [ ] Monitoring dashboard (aaPanel + PM2) menunjukkan semua hijau
+- [x] Repo: cloudflared template, bootstrap/PM2 scripts, cutover runbook committed
 
 ---
 

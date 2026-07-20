@@ -43,6 +43,14 @@ apps/api/.env
 .vercel
 .wrangler
 
+# Cloudflare Tunnel credentials (never commit)
+**/cloudflared/*.json
+**/cloudflared/config.yml
+!**/cloudflared/config.yml.example
+!**/cloudflared/README.md
+cert.pem
+.cloudflared/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -2,7 +2,7 @@
 
 Production di **Cloudflare Free** memakai tiga deploy terpisah. OpenNext monolit **tidak** dipakai di Free (lihat bagian legacy di bawah).
 
-> **PRP:** VPS path (Express + PostgreSQL + MinIO via Cloudflare Tunnel → `api.smkteknovo.sch.id`) is under construction in `apps/api` (`src/server.ts`). **Fase 7** migrate script ready; **Fase 9** CI/health/VPS-deploy workflows ready — **do not cut over production DNS** until Fase 8. Live API remains `cf.smkteknovo.sch.id` (Worker + D1 + R2). Local Node stack: `pnpm docker:up` + MinIO seed + `migrate:d1-to-pg:dry` + `dev:node` (see `apps/api/README.md`).
+> **PRP:** VPS path (Express + PostgreSQL + MinIO via Cloudflare Tunnel → `api.smkteknovo.sch.id`) — **Fase 8 configs/runbooks shipped**; live DNS cutover is **manual** (Super Admin). **Fase 7** migrate + **Fase 9** CI/health/VPS-deploy ready. Production clients still use `cf.smkteknovo.sch.id` (Worker + D1 + R2) until cutover. Local Node: `pnpm docker:up` + MinIO seed + `migrate:d1-to-pg:dry` + `dev:node` (see `apps/api/README.md`). Cutover: [`docs/CUTOVER-API-TUNNEL.md`](docs/CUTOVER-API-TUNNEL.md).
 
 ## Hosts
 
@@ -10,7 +10,8 @@ Production di **Cloudflare Free** memakai tiga deploy terpisah. OpenNext monolit
 |------|-----|--------|--------|
 | `smkteknovo.sch.id` | `apps/web` | Astro SSG | Cloudflare Pages `teknovo-web` |
 | `www.smkteknovo.sch.id` | — | Redirect 301 → apex | Cloudflare Redirect Rule |
-| `cf.smkteknovo.sch.id` | `apps/api` | Hono Worker | Worker `teknovo-cms-api` |
+| `cf.smkteknovo.sch.id` | `apps/api` | Hono Worker | Worker `teknovo-cms-api` (**current production**) |
+| `api.smkteknovo.sch.id` | `apps/api` | Node + Tunnel | VPS PM2 → `127.0.0.1:8787` (**parallel / post-cutover**) |
 | `cms.smkteknovo.sch.id` | `apps/cms` | Vite + React + TipTap + Clerk | Pages `teknovo-cms` |
 
 ## Root directory & Build output (Cloudflare dashboard)
@@ -169,6 +170,42 @@ If CF secrets are **empty**, deploy workflows still run typecheck/build then **s
 **Manual CMS deploy trap:** `wrangler pages deploy apps/cms/dist` publishes whatever is already in `dist`. If that folder was built without `VITE_CLERK_PUBLISHABLE_KEY`, production shows “CMS belum dikonfigurasi”. Always rebuild with the env vars (or run `deploy-cms.yml` / Pages CI) before deploying.
 
 **Setup sekali:** GitHub → Settings → Environments → buat `production` → Mandatory reviewers (opsional tapi disarankan) + secrets environment-scoped jika ingin memisahkan dari repo secrets.
+
+## Zero Trust / VPS (PRP Fase 8)
+
+Ship configs first; **do not** flip CMS/Web env until Tunnel + Node health are green. Full steps: [`docs/CUTOVER-API-TUNNEL.md`](docs/CUTOVER-API-TUNNEL.md) · Tunnel template: [`ops/cloudflared/`](ops/cloudflared/).
+
+### On the VPS (once)
+
+```bash
+# From monorepo root on the server (default path /www/wwwroot/teknovo-web)
+bash scripts/ops/bootstrap-vps.sh
+# Edit apps/api/.env (Postgres, MinIO, Clerk, CMS_ORIGIN/WEB_ORIGIN production)
+bash scripts/ops/setup-pm2-logrotate.sh
+bash scripts/ops/pm2-start.sh
+# Tunnel (local or remote-managed) — see ops/cloudflared/README.md
+# DNS: CNAME api → <TUNNEL_UUID>.cfargotunnel.com (proxied); SSL/TLS Full
+```
+
+PM2 scripts (also via package): `pnpm --filter @teknovo/api pm2:reload` / `pm2:restart` / `pm2:stop`.
+
+### DNS / SSL summary
+
+| Record | Target | Notes |
+|--------|--------|-------|
+| `api` CNAME | `<uuid>.cfargotunnel.com` | Proxied; created by `cloudflared tunnel route dns` or dashboard |
+| SSL | Cloudflare edge | Universal SSL; origin is HTTP localhost via Tunnel |
+
+Optional aaPanel reverse proxy (task 8.5) only if **not** using Tunnel — prefer Tunnel so the VPS has no public API port.
+
+### Cutover (clients)
+
+1. Parallel: smoke `https://api.smkteknovo.sch.id/api/health` while CMS/Web still use `cf.`.
+2. Switch CMS `VITE_API_URL=https://api.smkteknovo.sch.id/api` + Web `PUBLIC_API_URL=https://api.smkteknovo.sch.id` → rebuild.
+3. Set `HEALTH_CHECK_URL` to the Tunnel URL; update Clerk webhook when ready.
+4. Rollback: point env vars back to `cf.` and redeploy (Worker stays deployed).
+
+**This repo does not create live tunnels/DNS** without VPS + Tunnel credentials on the operator machine.
 
 ## CI/CD & monitoring (PRP Fase 9)
 

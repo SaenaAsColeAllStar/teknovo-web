@@ -89,6 +89,28 @@ pnpm --filter @teknovo/api migrate:d1-to-pg -- --from-json /tmp/d1-export.json
 
 Production traffic stays on Worker until Fase 8 Tunnel cutover.
 
+## VPS / Cloudflare Tunnel (PRP Fase 8)
+
+Production clients stay on `cf.smkteknovo.sch.id` until cutover. Parallel hostname: **`api.smkteknovo.sch.id`**.
+
+| Artifact | Path |
+|----------|------|
+| Tunnel config template | `ops/cloudflared/config.yml.example` |
+| DNS / SSL notes | `ops/cloudflared/README.md` |
+| Cutover + rollback | `docs/CUTOVER-API-TUNNEL.md` |
+| VPS bootstrap | `scripts/ops/bootstrap-vps.sh` |
+| PM2 start / reload | `scripts/ops/pm2-start.sh`, `pm2-restart.sh` |
+
+```bash
+# On VPS after repo sync
+bash scripts/ops/bootstrap-vps.sh
+# edit apps/api/.env
+bash scripts/ops/pm2-start.sh
+pnpm --filter @teknovo/api pm2:reload   # after code deploy
+```
+
+Never commit tunnel credentials JSON or `TUNNEL_TOKEN`.
+
 ## Deploy
 
 ```bash

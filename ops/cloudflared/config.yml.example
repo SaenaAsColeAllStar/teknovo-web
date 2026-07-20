@@ -1,0 +1,48 @@
+# Cloudflare Tunnel — teknovo-api (PRP Fase 8 / F-30–F-31)
+#
+# Copy to the VPS (DO NOT commit filled values):
+#   sudo mkdir -p /etc/cloudflared
+#   sudo cp ops/cloudflared/config.yml.example /etc/cloudflared/config.yml
+#   # edit tunnel UUID + credentials-file path
+#
+# Or for a user-managed install:
+#   mkdir -p ~/.cloudflared
+#   cp ops/cloudflared/config.yml.example ~/.cloudflared/config.yml
+#
+# Create tunnel (on VPS, after `cloudflared tunnel login`):
+#   cloudflared tunnel create teknovo-api
+#   cloudflared tunnel route dns teknovo-api api.smkteknovo.sch.id
+#   cloudflared tunnel ingress validate
+#   sudo cloudflared service install   # or: cloudflared tunnel run teknovo-api
+#
+# Remotely-managed alternative (token — preferred for new tunnels):
+#   cloudflared service install <TUNNEL_TOKEN>
+#   (ingress configured in Zero Trust dashboard → Published application
+#    hostname api.smkteknovo.sch.id → http://127.0.0.1:8787)
+#
+# Secrets: credentials JSON / TUNNEL_TOKEN stay on the VPS only.
+# See ops/cloudflared/README.md and docs/CUTOVER-API-TUNNEL.md
+
+tunnel: REPLACE_WITH_TUNNEL_UUID
+credentials-file: /etc/cloudflared/REPLACE_WITH_TUNNEL_UUID.json
+
+# Optional top-level origin defaults (override per-ingress if needed)
+originRequest:
+  connectTimeout: 30s
+  noTLSVerify: false
+
+ingress:
+  # Canonical API hostname (F-31). Keep Worker on cf. until cutover.
+  - hostname: api.smkteknovo.sch.id
+    service: http://127.0.0.1:8787
+    originRequest:
+      # Express sets trust proxy; Tunnel forwards CF headers
+      httpHostHeader: api.smkteknovo.sch.id
+
+  # Optional alias if you also registered cms-api (PRP checklist 8.3 draft).
+  # Uncomment only after creating the DNS route.
+  # - hostname: cms-api.smkteknovo.sch.id
+  #   service: http://127.0.0.1:8787
+
+  # Required catch-all
+  - service: http_status:404

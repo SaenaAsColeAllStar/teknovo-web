@@ -25,7 +25,12 @@
     "migrate:d1-to-pg:dry": "tsx scripts/migrate-d1-to-pg.ts",
     "migrate:d1-to-pg": "tsx scripts/migrate-d1-to-pg.ts --execute",
     "start:node": "tsx src/server.ts",
-    "start:pm2": "pm2 start ecosystem.config.cjs"
+    "start:pm2": "pm2 start ecosystem.config.cjs",
+    "pm2:start": "pm2 start ecosystem.config.cjs",
+    "pm2:reload": "pm2 reload ecosystem.config.cjs --update-env",
+    "pm2:restart": "pm2 restart teknovo-api --update-env",
+    "pm2:stop": "pm2 stop teknovo-api",
+    "pm2:status": "pm2 status teknovo-api"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

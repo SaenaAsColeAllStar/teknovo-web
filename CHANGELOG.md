@@ -12,6 +12,14 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — Zero Trust / VPS deploy docs & scripts (PRP Fase 8)
+
+- `ops/cloudflared/config.yml.example` + README — Tunnel ingress for `api.smkteknovo.sch.id` → `127.0.0.1:8787`; DNS CNAME + SSL notes.
+- `scripts/ops/bootstrap-vps.sh` — idempotent Node/pnpm/PM2/cloudflared + `.env` template.
+- `scripts/ops/pm2-start.sh` / `pm2-restart.sh`; PM2 package scripts; production-ready `ecosystem.config.cjs`.
+- Cutover runbook `docs/CUTOVER-API-TUNNEL.md` — parallel Tunnel while Worker `cf.` stays; client env switch + rollback.
+- Docs: `DEPLOY.md` § Zero Trust; PRP Fase 8 checklist updated. **No live tunnel/DNS** created in-repo (needs VPS + credentials).
+
 ### Added — CI/CD & monitoring (PRP Fase 9)
 
 - `ci.yml` — PR/push gates: shared + API (Worker/Node typecheck + vitest), CMS build, Astro offline build.
