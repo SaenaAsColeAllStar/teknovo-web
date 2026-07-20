@@ -19,6 +19,14 @@ test.describe("web ↔ API chain", () => {
       const res = await request.get(`${API_CMS_URL}/api/v1/berita/${slug}`, {
         headers: { Accept: "application/json" },
       });
+      if (res.status() === 500) {
+        const body = await res.text();
+        if (body.includes("Error creating UUID")) {
+          throw new Error(
+            `cms-api slug ${slug} still 500 (UUID parse) — redeploy Node API on VPS with main isUuid fix`,
+          );
+        }
+      }
       expect(res.status(), `API slug ${slug}`).toBe(200);
       const json = (await res.json()) as { ok?: boolean; data?: { slug?: string } };
       expect(json.ok).toBe(true);

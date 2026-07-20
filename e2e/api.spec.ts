@@ -106,6 +106,14 @@ test.describe("API public reads", () => {
     test.skip(!items?.length, "no published fasilitas");
     const slug = items![0]!.slug;
     const detail = await getJson(request, `/api/v1/fasilitas/${slug}`);
+    if (
+      detail.res.status() === 500 &&
+      JSON.stringify(detail.json).includes("Error creating UUID")
+    ) {
+      throw new Error(
+        `cms-api still has pre-fix build for slug lookup (GET /api/v1/fasilitas/${slug} → 500). Redeploy Node API on VPS (VPS_* GitHub secrets).`,
+      );
+    }
     expect(detail.res.status()).toBe(200);
     expect(detail.json?.ok).toBe(true);
   });
