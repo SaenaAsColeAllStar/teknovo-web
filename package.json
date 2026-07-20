@@ -21,6 +21,8 @@
     "legacy:build:cf": "pnpm cf-typegen && opennextjs-cloudflare build",
     "lint": "eslint .",
     "format": "prettier --write .",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
     "d1:migrate:remote": "pnpm --filter @teknovo/api d1:migrate:remote",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
@@ -61,6 +63,7 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260717.1",
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^20",
