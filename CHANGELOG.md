@@ -12,6 +12,15 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — CI/CD & monitoring (PRP Fase 9)
+
+- `ci.yml` — PR/push gates: shared + API (Worker/Node typecheck + vitest), CMS build, Astro offline build.
+- Deploy workflows skip `wrangler` when `CLOUDFLARE_*` secrets empty (typecheck/build still run).
+- Optional `deploy-api-vps.yml` — SSH/rsync + PM2 reload (gated by `VPS_*` secrets / `ENABLE_VPS_DEPLOY`).
+- `health-check.yml` — cron every 15m to `/api/health` (default `cf.`; overridable via `HEALTH_CHECK_URL`).
+- VPS ops scripts: `scripts/ops/setup-pm2-logrotate.sh`, `backup-pg.sh`, `backup-minio.sh`.
+- Docs: `DEPLOY.md` secrets table + Fase 9 section; PRP Fase 9 checklist marked done. Rebuild hook (9.2) already live.
+
 ### Added — D1 → Postgres data migration (PRP Fase 7)
 
 - `migrate:d1-to-pg:dry` / `migrate:d1-to-pg` (`apps/api/scripts/migrate-d1-to-pg.ts`) — export D1 via wrangler JSON (remote/local) or `--from-json`, idempotent Prisma upserts, R2→MinIO URL rewrite, row-count/slug/orphan validation.

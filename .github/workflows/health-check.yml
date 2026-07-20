@@ -1,0 +1,66 @@
+# Scheduled + manual health probe for the public API.
+# Default target: current Free Worker (`cf.`). After Fase 8 Tunnel cutover,
+# set repo/environment variable HEALTH_CHECK_URL to `https://api.smkteknovo.sch.id/api/health`.
+
+name: Health check
+
+on:
+  schedule:
+    # Every 15 minutes
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      url:
+        description: Override health URL (optional)
+        required: false
+        default: ""
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resolve health URL
+        id: url
+        env:
+          INPUT_URL: ${{ github.event.inputs.url }}
+          VAR_URL: ${{ vars.HEALTH_CHECK_URL }}
+        run: |
+          set -euo pipefail
+          URL="${INPUT_URL:-}"
+          if [ -z "$URL" ]; then
+            URL="${VAR_URL:-}"
+          fi
+          if [ -z "$URL" ]; then
+            URL="https://cf.smkteknovo.sch.id/api/health"
+          fi
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Probing: $URL"
+
+      - name: GET /api/health
+        env:
+          HEALTH_URL: ${{ steps.url.outputs.url }}
+        run: |
+          set -euo pipefail
+          BODY_FILE="$(mktemp)"
+          HTTP_CODE=$(curl -sS -o "$BODY_FILE" -w "%{http_code}" \
+            --connect-timeout 10 --max-time 30 \
+            -H "Accept: application/json" \
+            -H "User-Agent: teknovo-health-check/1.0" \
+            "$HEALTH_URL" || true)
+
+          echo "HTTP $HTTP_CODE"
+          cat "$BODY_FILE"
+          echo
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::Health check failed (HTTP $HTTP_CODE) for $HEALTH_URL"
+            exit 1
+          fi
+
+          if ! grep -q '"ok"[[:space:]]*:[[:space:]]*true' "$BODY_FILE"; then
+            echo "::error::Health JSON missing ok:true"
+            exit 1
+          fi
+
+          echo "Health OK"

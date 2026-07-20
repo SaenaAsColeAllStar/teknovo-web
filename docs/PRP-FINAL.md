@@ -489,13 +489,22 @@ Catatan Fase 7:
 
 ### Fase 9: CI/CD & Monitoring (Hari 15) — P1
 
-| Task | Detail | Output |
-|---|---|---|
-| 9.1 | Buat GitHub Action: build + deploy ke VPS via SSH | CI/CD pipeline |
-| 9.2 | Setup deploy hook: `POST /api/v1/hooks/rebuild-web` trigger deploy script | Auto-deploy |
-| 9.3 | Setup pm2-logrotate — max 10 file, 50MB per file | Log management |
-| 9.4 | Setup backup cron: PostgreSQL dump harian + MinIO backup mingguan | Backup system |
-| 9.5 | Setup monitoring: `pm2 monit` + health check endpoint monitoring | Monitoring |
+| Task | Detail | Output | Status |
+|---|---|---|---|
+| 9.1 | Buat GitHub Action: build + deploy ke VPS via SSH | CI/CD pipeline | ✅ |
+| 9.2 | Setup deploy hook: `POST /api/v1/hooks/rebuild-web` trigger deploy script | Auto-deploy | ✅ |
+| 9.3 | Setup pm2-logrotate — max 10 file, 50MB per file | Log management | ✅ |
+| 9.4 | Setup backup cron: PostgreSQL dump harian + MinIO backup mingguan | Backup system | ✅ |
+| 9.5 | Setup monitoring: `pm2 monit` + health check endpoint monitoring | Monitoring | ✅ |
+
+Catatan Fase 9:
+- **CI** (`.github/workflows/ci.yml`): PR/push — `@teknovo/shared` tests; API `typecheck` + `typecheck:node` + unit tests; CMS Vite build; Astro build with offline `PUBLIC_API_URL` (no live content dependency).
+- **Worker/Pages deploys** remain primary until Fase 8 cutover. Missing `CLOUDFLARE_*` secrets → build/typecheck still run, deploy **skipped** with warning (job green).
+- **VPS deploy** (`.github/workflows/deploy-api-vps.yml`): rsync + `pm2 reload`; requires `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY`. Auto on push only if `vars.ENABLE_VPS_DEPLOY=true`; otherwise `workflow_dispatch`. Does **not** replace `deploy-api.yml`.
+- **9.2** already implemented: CMS publish + `POST /api/v1/hooks/rebuild-web` → `repository_dispatch` → `rebuild-web.yml`.
+- **Ops scripts** (`scripts/ops/`): `setup-pm2-logrotate.sh` (50M×10), `backup-pg.sh`, `backup-minio.sh` — run on VPS after Fase 8; cron examples in script headers.
+- **Health:** `health-check.yml` cron `*/15` curls `GET /api/health` (default `cf.smkteknovo.sch.id`). Override with `vars.HEALTH_CHECK_URL` after Tunnel (`api.`). Lightweight — no paid SaaS. VPS: `pm2 monit`.
+- **Tidak** memaksa Fase 8 DNS cutover.
 
 ### Fase 10: SaaS Platform Foundation (Hari 16-20) — P1/P2
 

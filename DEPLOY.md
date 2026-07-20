@@ -2,7 +2,7 @@
 
 Production di **Cloudflare Free** memakai tiga deploy terpisah. OpenNext monolit **tidak** dipakai di Free (lihat bagian legacy di bawah).
 
-> **PRP:** VPS path (Express + PostgreSQL + MinIO via Cloudflare Tunnel → `api.smkteknovo.sch.id`) is under construction in `apps/api` (`src/server.ts`). **Fase 7** data migrate script is ready (`migrate:d1-to-pg`); **do not cut over production DNS** until Fase 8. Live API remains `cf.smkteknovo.sch.id` (Worker + D1 + R2). Local Node stack: `pnpm docker:up` + `pnpm --filter @teknovo/api minio:ensure-bucket` + `pnpm --filter @teknovo/api minio:seed` + `pnpm --filter @teknovo/api migrate:d1-to-pg:dry -- --remote` + `pnpm --filter @teknovo/api dev:node` (see `apps/api/README.md`).
+> **PRP:** VPS path (Express + PostgreSQL + MinIO via Cloudflare Tunnel → `api.smkteknovo.sch.id`) is under construction in `apps/api` (`src/server.ts`). **Fase 7** migrate script ready; **Fase 9** CI/health/VPS-deploy workflows ready — **do not cut over production DNS** until Fase 8. Live API remains `cf.smkteknovo.sch.id` (Worker + D1 + R2). Local Node stack: `pnpm docker:up` + MinIO seed + `migrate:d1-to-pg:dry` + `dev:node` (see `apps/api/README.md`).
 
 ## Hosts
 
@@ -124,20 +124,91 @@ Local CORS: set `ENVIRONMENT=development` in `apps/api/.dev.vars` so localhost o
 - **Clerk webhook**: Svix signature required; handler ack-only until sync is built.
 - **D1 list performance**: migration `0004_perf_indexes.sql` adds composite indexes and application-maintained `sort_at` on `berita` / `artikel_siswa` (replaces `ORDER BY COALESCE(...)`). List `limit` max 100; optional `?includeTotal=0` skips COUNT.
 
-## GitHub Actions secrets
+## GitHub Actions secrets & vars
 
-- `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`
-- `VITE_CLERK_PUBLISHABLE_KEY` (CMS build — **required** for `deploy-cms.yml`)
+### Required for Cloudflare Free deploys (environment `production`)
 
-Workflows:
+| Secret | Used by |
+|--------|---------|
+| `CLOUDFLARE_API_TOKEN` | `deploy-api`, `deploy-cms`, `rebuild-web` |
+| `CLOUDFLARE_ACCOUNT_ID` | same |
+| `VITE_CLERK_PUBLISHABLE_KEY` | `deploy-cms` (real `pk_…`; placeholder only for CI) |
 
-- `.github/workflows/deploy-api.yml` — push ke `apps/api` → environment **`production`**
-- `.github/workflows/deploy-cms.yml` — push ke `apps/cms` → environment **`production`**; hardcodes `VITE_API_URL=https://cf.smkteknovo.sch.id/api`
-- `.github/workflows/rebuild-web.yml` — `repository_dispatch` type `rebuild-web` → environment **`production`**
+If CF secrets are **empty**, deploy workflows still run typecheck/build then **skip** `wrangler` with a warning (job stays green). Fix secrets before expecting production updates.
+
+### Worker / hook secrets (wrangler — not GitHub)
+
+| Secret | Purpose |
+|--------|---------|
+| `GITHUB_REBUILD_TOKEN` | PAT → `repository_dispatch` `rebuild-web` on CMS publish |
+| `REBUILD_WEB_SECRET` | Bearer for `POST /api/v1/hooks/rebuild-web` |
+| `CLERK_SECRET_KEY`, `CLERK_WEBHOOK_SECRET` | Auth + Svix |
+
+### Optional — VPS Node/PM2 (Fase 8+; does not replace Worker)
+
+| Name | Type | Purpose |
+|------|------|---------|
+| `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` | secret | SSH deploy (`deploy-api-vps.yml`) |
+| `VPS_PORT` | secret or var | default `22` |
+| `VPS_PATH` | secret or var | default `/www/wwwroot/teknovo-web` |
+| `ENABLE_VPS_DEPLOY` | var | set `true` to auto-deploy VPS on push to `apps/api` (otherwise `workflow_dispatch` only) |
+| `HEALTH_CHECK_URL` | var | override health probe URL (default `https://cf.smkteknovo.sch.id/api/health`) |
+
+### Workflows
+
+| Workflow | Trigger | Notes |
+|----------|---------|--------|
+| `ci.yml` | PR + push `main` | shared tests; API typecheck (Worker+Node) + unit tests; CMS build; web build with offline API |
+| `deploy-api.yml` | push `apps/api` | Worker → `cf.` (skips if no CF secrets) |
+| `deploy-cms.yml` | push `apps/cms` | Pages `teknovo-cms` |
+| `rebuild-web.yml` | `repository_dispatch` `rebuild-web` / manual | Pages `teknovo-web` (hook: `POST /api/v1/hooks/rebuild-web`) |
+| `deploy-api-vps.yml` | optional | rsync + `pm2 reload` — **gated**; never breaks Free Worker path |
+| `health-check.yml` | cron `*/15` + manual | curl `/api/health`, expects HTTP 200 + `"ok":true` |
+| `deploy.yml` | disabled | legacy OpenNext |
 
 **Manual CMS deploy trap:** `wrangler pages deploy apps/cms/dist` publishes whatever is already in `dist`. If that folder was built without `VITE_CLERK_PUBLISHABLE_KEY`, production shows “CMS belum dikonfigurasi”. Always rebuild with the env vars (or run `deploy-cms.yml` / Pages CI) before deploying.
 
 **Setup sekali:** GitHub → Settings → Environments → buat `production` → Mandatory reviewers (opsional tapi disarankan) + secrets environment-scoped jika ingin memisahkan dari repo secrets.
+
+## CI/CD & monitoring (PRP Fase 9)
+
+Works for **current Worker** and **future Node/PM2** without forcing Fase 8 DNS cutover.
+
+### 9.1 VPS deploy (optional)
+
+1. Complete Fase 8 (Tunnel + PM2 on VPS).
+2. Add `VPS_*` secrets on environment `production`.
+3. Run **Deploy API VPS** → `workflow_dispatch`, or set `ENABLE_VPS_DEPLOY=true`.
+4. Keep `deploy-api.yml` until cutover; both can coexist.
+
+Remote layout expected: monorepo at `VPS_PATH` with `apps/api/ecosystem.config.cjs`.
+
+### 9.2 Rebuild hook (already live)
+
+```bash
+curl -X POST https://cf.smkteknovo.sch.id/api/v1/hooks/rebuild-web \
+  -H "Authorization: Bearer $REBUILD_WEB_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"reason":"manual"}'
+```
+
+CMS publish also calls `triggerWebRebuild` → GitHub `rebuild-web` when `GITHUB_REBUILD_TOKEN` is set.
+
+### 9.3–9.4 PM2 logs + backups (run on VPS)
+
+```bash
+bash scripts/ops/setup-pm2-logrotate.sh   # 50MB × 10 files
+# crontab examples in scripts/ops/*.sh headers
+bash scripts/ops/backup-pg.sh             # daily pg_dump
+bash scripts/ops/backup-minio.sh          # weekly MinIO mirror
+```
+
+### 9.5 Health monitoring
+
+- **GitHub Actions** `health-check.yml` every 15 minutes → default `https://cf.smkteknovo.sch.id/api/health`.
+- After Tunnel cutover: set var `HEALTH_CHECK_URL=https://api.smkteknovo.sch.id/api/health`.
+- On VPS: `pm2 monit` / `pm2 status` for process metrics (no paid SaaS required).
+- Failures show as failed workflow runs (enable GitHub notifications / email on Actions failure).
 
 ## DNS / Clerk cutover checklist
 

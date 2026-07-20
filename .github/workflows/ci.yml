@@ -1,0 +1,89 @@
+# PR / push CI — lint gates where available, typecheck + test (api), build (cms/web).
+# Does not deploy. Cloudflare secrets not required.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  shared:
+    name: Shared tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Test @teknovo/shared
+        run: pnpm --filter @teknovo/shared test
+
+  api:
+    name: API typecheck + test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Prisma generate (Node path)
+        working-directory: apps/api
+        run: pnpm exec prisma generate
+      - name: Typecheck Worker
+        run: pnpm --filter @teknovo/api typecheck
+      - name: Typecheck Node
+        run: pnpm --filter @teknovo/api typecheck:node
+      - name: Unit tests
+        run: pnpm --filter @teknovo/api test
+
+  cms:
+    name: CMS build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build CMS
+        working-directory: apps/cms
+        env:
+          # Placeholder — CI must not bake real Clerk keys; build only validates compile.
+          VITE_CLERK_PUBLISHABLE_KEY: pk_test_ci_placeholder
+          VITE_API_URL: https://cf.smkteknovo.sch.id/api
+        run: pnpm build
+
+  web:
+    name: Web build (offline API)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build Astro (no live API)
+        working-directory: apps/web
+        env:
+          # Closed port → fetchApi* returns empty; avoids flaky SSG vs production content.
+          PUBLIC_API_URL: http://127.0.0.1:9
+          PUBLIC_SITE_URL: https://smkteknovo.sch.id
+          PUBLIC_R2_URL: https://r2.ctos.web.id
+        run: pnpm build

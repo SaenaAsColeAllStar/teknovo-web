@@ -130,3 +130,10 @@ pnpm --filter @teknovo/api test
 pnpm --filter @teknovo/api typecheck
 pnpm --filter @teknovo/api typecheck:node
 ```
+
+## CI / VPS ops (PRP Fase 9)
+
+- GitHub **CI** runs the commands above on every PR/push (`ci.yml`).
+- Production Free path still uses Worker deploy (`deploy-api.yml`). Optional Node path: `deploy-api-vps.yml` after Fase 8 (see `DEPLOY.md`).
+- On VPS: `bash scripts/ops/setup-pm2-logrotate.sh`, cron `backup-pg.sh` / `backup-minio.sh`.
+- Health probe: `GET /api/health` (Worker or Node); monitored by `health-check.yml`.

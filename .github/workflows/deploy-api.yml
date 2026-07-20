@@ -24,9 +24,25 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Typecheck API
         run: pnpm --filter @teknovo/api typecheck
+      - name: Check Cloudflare credentials
+        id: cf
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::CLOUDFLARE_API_TOKEN and/or CLOUDFLARE_ACCOUNT_ID missing on environment 'production' — typecheck OK, deploy skipped. See DEPLOY.md."
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Deploy Worker
+        if: steps.cf.outputs.configured == 'true'
         working-directory: apps/api
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm deploy
+      - name: Skip notice
+        if: steps.cf.outputs.configured != 'true'
+        run: echo "Deploy skipped (no Cloudflare credentials)."

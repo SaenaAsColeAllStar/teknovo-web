@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "typecheck": "vite build",
     "deploy": "pnpm build && wrangler pages deploy dist --project-name=teknovo-cms"
   },
   "dependencies": {
