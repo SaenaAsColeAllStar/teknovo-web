@@ -22,6 +22,8 @@
     "smoke:node": "tsx scripts/smoke-node-api.ts",
     "minio:ensure-bucket": "tsx scripts/ensure-minio-bucket.ts",
     "minio:seed": "tsx scripts/seed-minio.ts",
+    "migrate:d1-to-pg:dry": "tsx scripts/migrate-d1-to-pg.ts",
+    "migrate:d1-to-pg": "tsx scripts/migrate-d1-to-pg.ts --execute",
     "start:node": "tsx src/server.ts",
     "start:pm2": "pm2 start ecosystem.config.cjs"
   },

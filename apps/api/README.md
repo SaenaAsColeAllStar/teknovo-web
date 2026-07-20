@@ -57,7 +57,37 @@ pnpm --filter @teknovo/api minio:seed            # upload landing assets; upsert
 - `SEED_SKIP_DB=1` — objects only (no Postgres upsert).
 - Worker/R2 path unchanged; catalog still stores relative `defaultPath`.
 
-Content CRUD routes on Node land in PRP Fase 3–4; until then Worker serves them.
+### D1 → Postgres migration (PRP Fase 7)
+
+Copy content from Cloudflare D1 into local/VPS Postgres and rewrite R2 public URLs → `MINIO_PUBLIC_URL`. **Dry-run is the default**; live writes need `--execute`.
+
+```bash
+# Plan only (remote D1 → transform preview; no PG writes)
+pnpm --filter @teknovo/api migrate:d1-to-pg:dry -- --remote
+
+# Live upsert (idempotent by id / media_key)
+pnpm --filter @teknovo/api migrate:d1-to-pg -- --remote
+
+# Local wrangler D1, or offline dump
+pnpm --filter @teknovo/api migrate:d1-to-pg:dry -- --local
+pnpm --filter @teknovo/api migrate:d1-to-pg:dry -- --remote --dump-json /tmp/d1-export.json
+pnpm --filter @teknovo/api migrate:d1-to-pg -- --from-json /tmp/d1-export.json
+```
+
+| Flag / env | Meaning |
+|------------|---------|
+| *(default)* | Dry-run — export + rewrite plan, no writes |
+| `--execute` / `migrate:d1-to-pg` | Upsert into Postgres |
+| `--remote` / `--local` | `wrangler d1 execute --json` source |
+| `--from-json` / `--dump-json` | Offline export / import |
+| `R2_PUBLIC_URL` | Source CDN base (default `https://r2.ctos.web.id`) |
+| `MINIO_PUBLIC_URL` | Target public base for `cover_url` / `file_url` / `site_media.url` / HTML `konten` |
+
+**Rollback:** keep production on Worker + D1 + R2 until Fase 8 DNS cutover. Do not delete D1. Re-run dry-run / execute after fixes (upserts are idempotent). If Postgres is wrong, leave Worker live and fix/re-import the VPS DB only.
+
+**Auth note:** if remote D1 fails with wrangler `7403`/`1027`, run `wrangler login` or use `--from-json` / `--local`.
+
+Production traffic stays on Worker until Fase 8 Tunnel cutover.
 
 ## Deploy
 

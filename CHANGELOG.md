@@ -12,6 +12,12 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — D1 → Postgres data migration (PRP Fase 7)
+
+- `migrate:d1-to-pg:dry` / `migrate:d1-to-pg` (`apps/api/scripts/migrate-d1-to-pg.ts`) — export D1 via wrangler JSON (remote/local) or `--from-json`, idempotent Prisma upserts, R2→MinIO URL rewrite, row-count/slug/orphan validation.
+- Dry-run default; live requires `--execute`. Rollback: keep Worker+D1+R2 as SoT until Fase 8; re-run script safely.
+- Docs: `apps/api/README.md` migration section; PRP Fase 7 checklist marked done.
+
 ### Added — MinIO bucket seed & site-media defaults (PRP Fase 6)
 
 - `minio:ensure-bucket` — bucket `teknovo-web` + public-read policy `media/*` / `brand/*`.

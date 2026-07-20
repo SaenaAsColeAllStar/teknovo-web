@@ -36,6 +36,8 @@ Legacy Next monolit (referensi UI): `pnpm legacy:dev`.
 | `pnpm build:cms` / `build:web` | Build static |
 | `pnpm deploy:api` / `deploy:cms` / `deploy:web` | Deploy ke CF |
 | `pnpm d1:migrate:remote` | Migrasi D1 via `apps/api` |
+| `pnpm --filter @teknovo/api migrate:d1-to-pg:dry` | Dry-run D1 → Postgres (PRP Fase 7) |
+| `pnpm --filter @teknovo/api migrate:d1-to-pg` | Live D1 → Postgres upsert (`--execute`) |
 
 ## Docs
 
@@ -43,5 +45,6 @@ Legacy Next monolit (referensi UI): `pnpm legacy:dev`.
 - [AGENTS.md](AGENTS.md)
 - [docs/CLERK.md](docs/CLERK.md)
 - [docs/API.md](docs/API.md)
+- [docs/PRP-FINAL.md](docs/PRP-FINAL.md) — VPS migration plan (Fase 7 data migrate done; Fase 8 = Tunnel cutover)
 
 OpenNext root (`wrangler.toml`) hanya untuk Workers Paid legacy — jangan deploy ke Free.

@@ -185,9 +185,8 @@ teknovo-web/
 │   ├── cms/                          ← TIDAK BERUBAH (Vite SPA di CF)
 │   └── web/                          ← TIDAK BERUBAH (Astro SSG di CF)
 ├── docker-compose.yml                ← PostgreSQL + MinIO untuk local dev
-├── scripts/
-│   ├── migrate-d1-to-pg.ts           ← Migrasi data dari D1 ke PostgreSQL
-│   └── seed-minio.ts                 ← Seed file assets ke MinIO
+├── scripts/                          ← (opsional root); migrate/seed hidup di apps/api/scripts/
+│   └── …                             ← lihat apps/api/scripts/migrate-d1-to-pg.ts, seed-minio.ts
 ├── pnpm-workspace.yaml
 └── package.json
 ```
@@ -458,13 +457,23 @@ Catatan Fase 6:
 
 ### Fase 7: Data Migration (Hari 12-13) — P0
 
-| Task | Detail | Output |
-|---|---|---|
-| 7.1 | Buat `scripts/migrate-d1-to-pg.ts` — export data dari D1 via API, insert ke PostgreSQL | Data migrated |
-| 7.2 | Transform `cover_url`, `file_url` — ganti domain R2 dengan MinIO public URL | URLs updated |
-| 7.3 | Transform `site_media` dari D1 ke MinIO + PostgreSQL | Site media migrated |
-| 7.4 | Validasi: jumlah record sama, URL bisa diakses | Integrity OK |
-| 7.5 | Rollback plan: jika gagal, kembalikan ke Worker dengan D1 dan R2 | Rollback script ready |
+| Task | Detail | Output | Status |
+|---|---|---|---|
+| 7.1 | Buat `scripts/migrate-d1-to-pg.ts` — export data dari D1 via API, insert ke PostgreSQL | Data migrated | ✅ |
+| 7.2 | Transform `cover_url`, `file_url` — ganti domain R2 dengan MinIO public URL | URLs updated | ✅ |
+| 7.3 | Transform `site_media` dari D1 ke MinIO + PostgreSQL | Site media migrated | ✅ |
+| 7.4 | Validasi: jumlah record sama, URL bisa diakses | Integrity OK | ✅ |
+| 7.5 | Rollback plan: jika gagal, kembalikan ke Worker dengan D1 dan R2 | Rollback script ready | ✅ |
+
+Catatan Fase 7:
+- Script di `apps/api/scripts/migrate-d1-to-pg.ts` (sejajar Fase 5–6). PRP tree `scripts/` di root = alias konsep; package scripts di `@teknovo/api`.
+- `pnpm --filter @teknovo/api migrate:d1-to-pg:dry` — default aman (no writes). Live: `migrate:d1-to-pg` (= `--execute`).
+- Sumber: `wrangler d1 execute --remote|--local --json`, atau `--from-json` / `--dump-json`.
+- Tabel: `kategori`, `berita`, `artikel_siswa`, `fasilitas`, `ekstrakurikuler`, `prestasi`, `site_media`, `pengaturan`. Upsert idempotent by `id` / `media_key`.
+- Rewrite: `R2_PUBLIC_URL` → `MINIO_PUBLIC_URL` pada `cover_url`, `file_url`, `preview_url`, `og_image_url`, `site_media.url`, HTML `konten`, string fields di `pengaturan.payload`.
+- Validasi setelah `--execute`: row counts (PG ≥ D1), sample slugs, orphan `kategori_id` report; optional `--check-urls` HEAD.
+- **Rollback:** D1+R2 tetap SoT sampai Fase 8; jangan hapus D1. Ulangi dry-run/execute setelah perbaikan.
+- **DNS belum diganti** — production tetap `cf.smkteknovo.sch.id` (Worker).
 
 ### Fase 8: Zero Trust Setup & VPS Deploy (Hari 14) — P0
 
