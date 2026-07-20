@@ -1,12 +1,11 @@
 /**
- * Node/VPS entry — Express HTTP shell + Hono routing (PRP Fase 2).
- * Production Free path remains Worker (`src/index.ts` + wrangler) until cutover.
+ * Node/VPS entry — Express-only HTTP server (production path).
+ * Routes: native Express routers in `express-routes/*` (Prisma + MinIO).
+ * Worker Free path remains Hono in `src/index.ts` + `routes/*` until cutover.
  */
 import "dotenv/config";
 import cors from "cors";
 import express from "express";
-import { Hono } from "hono";
-import { getRequestListener } from "@hono/node-server";
 import { fileURLToPath } from "node:url";
 import {
   CreateBucketCommand,
@@ -20,14 +19,12 @@ import {
   loadMinioConfig,
 } from "./lib/minio/client";
 import { disconnectPrisma, getPrisma } from "./lib/prisma/client";
-import type { AppEnv, NodeBindings } from "./lib/http";
-import { handleApiError } from "./lib/http";
-import { mountApiRoutes } from "./lib/mount-api-routes";
+import type { NodeBindings } from "./lib/http";
+import { mountExpressApiRoutes } from "./lib/mount-express-routes";
 import { log } from "./lib/logger";
 import { isPlatformEnabled } from "./lib/platform/config";
 import { disconnectPlatformPrisma } from "./lib/platform/client";
 import {
-  getEventBusMode,
   initPlatformEventBus,
   onPlatformEvent,
   shutdownPlatformEventBus,
@@ -36,20 +33,17 @@ import {
   handleTenantCreated,
   handleTenantDeleted,
 } from "./lib/platform/provision";
-import { tenantRouterMiddleware } from "./lib/tenant-router";
-import { platformRoutes } from "./routes/platform";
-import { requestIdMiddleware } from "./middleware/request-id";
-import { securityHeadersMiddleware } from "./middleware/security-headers";
 import {
-  cmsReadLimit,
-  cmsWriteLimit,
-  hasBearerAuth,
-  hookLimit,
-  mediaLimit,
-  publicReadLimit,
-  writeLimit,
-} from "./middleware/rate-limit";
-import type { ErrorRequestHandler } from "express";
+  attachBindings,
+  createHealthHandler,
+  expressErrorHandler,
+  expressNotFound,
+  expressRateLimit,
+  expressRequestId,
+  expressSecurityHeaders,
+  expressTenantRouter,
+} from "./middleware/express";
+import { setRawBody } from "./lib/express-http";
 
 export function buildNodeBindings(): NodeBindings {
   const config = loadMinioConfig();
@@ -77,7 +71,6 @@ async function ensureBucket(bindings: NodeBindings): Promise<void> {
     await bindings.s3.send(new CreateBucketCommand({ Bucket: config.bucket }));
   }
 
-  // Public read for media/* and brand/*; cms/uploads/* stays private (no public Get).
   const policy = {
     Version: "2012-10-17",
     Statement: [
@@ -106,167 +99,8 @@ async function ensureBucket(bindings: NodeBindings): Promise<void> {
   }
 }
 
-export function createNodeHono() {
-  const app = new Hono<AppEnv>();
-
-  app.use("*", requestIdMiddleware);
-  app.use("*", securityHeadersMiddleware);
-  app.use("*", tenantRouterMiddleware);
-
-  // Prisma + MinIO are injected as Hono Bindings via fetch(req, bindings) below (task 2.6).
-  app.use("*", async (c, next) => {
-    if (c.req.method === "OPTIONS") return next();
-    const path = new URL(c.req.url).pathname;
-
-    if (path.startsWith("/api/v1/hooks") || path.startsWith("/api/webhook")) {
-      return hookLimit(c, next);
-    }
-    if (path.startsWith("/api/cms/media")) {
-      return mediaLimit(c, next);
-    }
-    const authed = hasBearerAuth(c);
-    if (c.req.method === "GET" || c.req.method === "HEAD") {
-      return (authed ? cmsReadLimit : publicReadLimit)(c, next);
-    }
-    return (authed ? cmsWriteLimit : writeLimit)(c, next);
-  });
-
-  app.get("/api/health", async (c) => {
-    const checks: Record<string, "ok" | "error" | "off"> = {
-      prisma: "error",
-      minio: "error",
-      platform: "off",
-      redis: "off",
-    };
-
-    try {
-      if ("prisma" in c.env && c.env.prisma) {
-        await c.env.prisma.$queryRaw`SELECT 1`;
-        checks.prisma = "ok";
-      }
-    } catch {
-      checks.prisma = "error";
-    }
-
-    try {
-      if ("s3" in c.env && c.env.s3 && "MINIO_BUCKET" in c.env) {
-        await c.env.s3.send(
-          new HeadBucketCommand({ Bucket: c.env.MINIO_BUCKET }),
-        );
-        checks.minio = "ok";
-      }
-    } catch {
-      checks.minio = "error";
-    }
-
-    if (isPlatformEnabled()) {
-      try {
-        const { getPlatformPrisma } = await import("./lib/platform/client");
-        await getPlatformPrisma().$queryRaw`SELECT 1`;
-        checks.platform = "ok";
-      } catch {
-        checks.platform = "error";
-      }
-      const bus = getEventBusMode();
-      checks.redis = bus === "redis" ? "ok" : bus === "memory" ? "ok" : "error";
-    }
-
-    const healthy = checks.prisma === "ok" && checks.minio === "ok";
-    return c.json(
-      {
-        ok: healthy,
-        service: "teknovo-cms-api",
-        runtime: "node",
-        platformEnabled: isPlatformEnabled(),
-        ts: new Date().toISOString(),
-        requestId: c.get("requestId"),
-        tenant: c.get("tenant") ?? null,
-        checks,
-      },
-      healthy ? 200 : 503,
-    );
-  });
-
-  // Platform admin stubs — Node only (Worker Free never mounts these).
-  // Routes self-gate with PLATFORM_ENABLED except GET /status.
-  app.route("/api/platform", platformRoutes);
-
-  mountApiRoutes(app);
-
-  app.onError((err, c) => {
-    log.error("unhandled", {
-      requestId: c.get("requestId"),
-      err: err instanceof Error ? err.message : String(err),
-    });
-    return handleApiError(c, err);
-  });
-
-  app.notFound((c) =>
-    c.json(
-      {
-        ok: false,
-        error: {
-          code: "NOT_FOUND",
-          message: "Route tidak ditemukan.",
-        },
-      },
-      404,
-    ),
-  );
-
-  return app;
-}
-
-/** Express-layer errors (body parser 413, malformed JSON, etc.). */
-const expressErrorHandler: ErrorRequestHandler = (err, _req, res, next) => {
-  if (res.headersSent) {
-    next(err);
-    return;
-  }
-  const status =
-    typeof err === "object" &&
-    err !== null &&
-    "status" in err &&
-    typeof (err as { status: unknown }).status === "number"
-      ? (err as { status: number }).status
-      : typeof err === "object" &&
-          err !== null &&
-          "statusCode" in err &&
-          typeof (err as { statusCode: unknown }).statusCode === "number"
-        ? (err as { statusCode: number }).statusCode
-        : 500;
-  const type =
-    typeof err === "object" && err !== null && "type" in err
-      ? String((err as { type: unknown }).type)
-      : "";
-  const code =
-    status === 413 || type === "entity.too.large"
-      ? "PAYLOAD_TOO_LARGE"
-      : status === 400
-        ? "BAD_REQUEST"
-        : "INTERNAL";
-  const message =
-    err instanceof Error ? err.message : "Terjadi kesalahan server.";
-  log.error("express", { code, status, err: message });
-  res.status(status === 413 || type === "entity.too.large" ? 413 : status).json({
-    ok: false,
-    error: { code, message },
-  });
-};
-
-async function main() {
-  const port = Number(process.env.PORT || 8787);
-  const bindings = buildNodeBindings();
-  await ensureBucket(bindings);
-
-  if (isPlatformEnabled()) {
-    const mode = await initPlatformEventBus();
-    onPlatformEvent("tenant.created", (p) => handleTenantCreated(p));
-    onPlatformEvent("tenant.deleted", (p) => handleTenantDeleted(p));
-    log.info("platform.enabled", { eventBus: mode });
-  }
-
-  const honoApp = createNodeHono();
+/** Express application (listen-ready). Used by PM2 / aaPanel / smoke. */
+export function createExpressApp(bindings: NodeBindings) {
   const expressApp = express();
 
   // Cloudflare Tunnel / reverse proxy — needed for accurate X-Forwarded-For rate limits.
@@ -294,13 +128,16 @@ async function main() {
         if (!origin || allowed.has(origin)) cb(null, origin || true);
         else cb(null, false);
       },
-      methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+      methods: ["GET", "POST", "PATCH", "DELETE", "PUT", "OPTIONS"],
       allowedHeaders: [
         "Authorization",
         "Content-Type",
         "X-Request-Id",
         "X-Tenant-Id",
         "X-Tenant-Slug",
+        "svix-id",
+        "svix-timestamp",
+        "svix-signature",
       ],
       exposedHeaders: [
         "X-Request-Id",
@@ -312,16 +149,47 @@ async function main() {
     }),
   );
 
-  // F-04: JSON body limit 8MB (uploads buffered through API).
-  expressApp.use(express.json({ limit: "8mb" }));
+  // F-04: JSON body limit 8MB; keep raw buffer for Svix webhook verify.
+  expressApp.use(
+    express.json({
+      limit: "8mb",
+      verify: (req, _res, buf) => {
+        setRawBody(req as { rawBody?: Buffer }, Buffer.from(buf));
+      },
+    }),
+  );
   expressApp.use(express.raw({ type: "application/octet-stream", limit: "8mb" }));
 
-  // Pass NodeBindings as Hono env (2nd arg to fetch) — Worker uses CF Bindings instead.
-  const listener = getRequestListener((req) => honoApp.fetch(req, bindings));
-  expressApp.use((req, res) => {
-    void listener(req, res);
-  });
+  expressApp.use(attachBindings(bindings));
+  expressApp.use(expressRequestId);
+  expressApp.use(expressSecurityHeaders);
+  expressApp.use(expressTenantRouter);
+  expressApp.use(expressRateLimit);
+
+  expressApp.get("/api/health", createHealthHandler(bindings));
+
+  mountExpressApiRoutes(expressApp);
+
+  expressApp.use(expressNotFound);
   expressApp.use(expressErrorHandler);
+
+  return expressApp;
+}
+
+async function main() {
+  // 8788 on this VPS — 8787 reserved by teknovo-wa-bridge (aaPanel).
+  const port = Number(process.env.PORT || 8788);
+  const bindings = buildNodeBindings();
+  await ensureBucket(bindings);
+
+  if (isPlatformEnabled()) {
+    const mode = await initPlatformEventBus();
+    onPlatformEvent("tenant.created", (p) => handleTenantCreated(p));
+    onPlatformEvent("tenant.deleted", (p) => handleTenantDeleted(p));
+    log.info("platform.enabled", { eventBus: mode });
+  }
+
+  const expressApp = createExpressApp(bindings);
 
   const server = expressApp.listen(port, () => {
     log.info("listening", {
@@ -346,6 +214,11 @@ async function main() {
 
   process.on("SIGTERM", () => void shutdown("SIGTERM"));
   process.on("SIGINT", () => void shutdown("SIGINT"));
+}
+
+/** Start Node HTTP server (PM2 / aaPanel entry + direct `tsx src/server.ts`). */
+export async function startNodeServer() {
+  return main();
 }
 
 const isDirectRun =

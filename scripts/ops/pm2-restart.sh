@@ -4,7 +4,7 @@
 #   bash scripts/ops/pm2-restart.sh hard     # restart (brief disconnect)
 set -euo pipefail
 
-REPO_ROOT="${REPO_ROOT:-/www/wwwroot/teknovo-web}"
+REPO_ROOT="${REPO_ROOT:-/www/wwwroot/eduos-teknovo/teknovo-web}"
 API_DIR="${REPO_ROOT}/apps/api"
 MODE="${1:-reload}"
 

@@ -1,56 +1,9 @@
-# Local dev: PostgreSQL + MinIO + Redis for apps/api Node runtime (PRP).
-# Ports avoid host collisions (5432/5433/9000 often taken on shared machines).
-# Worker + D1 + R2 path remains production until cutover (see DEPLOY.md).
+# Infra is external on this VPS — do NOT run local Postgres / MinIO / Redis here.
+# Use aaPanel PostgreSQL + Redis and the existing MinIO container (minio_webhost).
+# See .env.local (append-only notes) and apps/api/.env.example for connection shapes.
+#
+# Production Node API secrets: set in aaPanel environment variables (not a file).
+# Optional: keep this file empty of data services so `pnpm docker:up` is a no-op
+# until/unless you add app-only sidecars later.
 
-services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: teknovo-web-postgres
-    environment:
-      POSTGRES_DB: teknovo
-      POSTGRES_USER: teknovo
-      POSTGRES_PASSWORD: ${PG_PASSWORD:-teknovo}
-    volumes:
-      - teknovo_web_pgdata:/var/lib/postgresql/data
-      - ./ops/docker/postgres-init:/docker-entrypoint-initdb.d:ro
-    ports:
-      - "127.0.0.1:5434:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U teknovo -d teknovo"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  minio:
-    image: minio/minio:latest
-    container_name: teknovo-web-minio
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
-    volumes:
-      - teknovo_web_miniodata:/data
-    ports:
-      - "127.0.0.1:9010:9000"
-      - "127.0.0.1:9011:9001"
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  redis:
-    image: redis:7-alpine
-    container_name: teknovo-web-redis
-    command: redis-server --save "" --appendonly no
-    ports:
-      - "127.0.0.1:6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-volumes:
-  teknovo_web_pgdata:
-  teknovo_web_miniodata:
+services: {}

@@ -12,6 +12,30 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Changed — Node API native Express routers + `cms-api` hostname
+
+- Node production path mounts real Express routers (`src/express-routes/*`) — no Hono fetch bridge on VPS. Worker Free keeps Hono (`src/index.ts` + `routes/*`) until cutover.
+- Canonical public API hostname: **`cms-api.smkteknovo.sch.id`** (Tunnel → `:8788`). Docs/env/ops updated; `api.` draft retired.
+- Svix webhook verify uses raw body capture; CORS allows PUT + Svix headers.
+
+### Changed — Node API Express-only shell (no `@hono/node-server`)
+
+- `apps/api/src/server.ts` is Express-only for listen/CORS/body/rate-limit/security/health (superseded bridge later removed from Node entry).
+- Removed `@hono/node-server`. VPS default port **8788** (8787 reserved by `teknovo-wa-bridge`); Tunnel/PM2 docs updated. Prefer SSH/PM2 over aaPanel “Create Node.js project”.
+- PM2 uses `pm2-entry.cjs` (fork) so `startNodeServer()` actually runs; cluster+tsx was crash-looping.
+
+### Changed — External aaPanel infra (no local PG/MinIO/Redis in compose)
+
+- `docker-compose.yml` no longer runs Postgres, MinIO, or Redis (use aaPanel PG/Redis + existing MinIO).
+- Documented per-app env needs; **production Node API secrets → aaPanel environment variables** (not a file).
+- `.env.example` placeholders for `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `REDIS_URL` (DB index 10), MinIO public/API URL notes.
+
+### Added — R2 → MinIO object binary sync (PRP Fase 7 gap)
+
+- `migrate:r2-objects:dry` / `migrate:r2-objects` (`apps/api/scripts/migrate-r2-objects-to-minio.ts`) — collect keys from Postgres (or D1 JSON / keys file), download from R2 public CDN, `putObject` to MinIO; dry-run default; skip existing unless `--force`.
+- Optional `--public-cms-uploads` for anonymous read parity with R2 CDN; `--check` HEAD after copy.
+- Docs: `apps/api/README.md`, cutover Phase A/B; `.env.example` notes.
+
 ### Added — Rollback runbook (PRP §12)
 
 - `docs/ROLLBACK.md` — decision tree for soft PM2/git fix, full client rollback `api.`→`cf.`, data plane (PG/MinIO vs D1/R2), Tunnel/DNS, Platform flag off, Worker redeploy, health/CI secrets.

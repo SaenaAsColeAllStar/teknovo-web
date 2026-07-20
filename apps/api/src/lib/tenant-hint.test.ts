@@ -21,8 +21,8 @@ describe("extractTenantHint", () => {
   });
 
   it("extracts subdomain hint", () => {
-    const headers = new Headers({ host: "acme.api.smkteknovo.sch.id" });
-    const url = new URL("https://acme.api.smkteknovo.sch.id/api/v1/berita");
+    const headers = new Headers({ host: "acme.cms-api.smkteknovo.sch.id" });
+    const url = new URL("https://acme.cms-api.smkteknovo.sch.id/api/v1/berita");
     expect(extractTenantHint({ headers, url })).toEqual({
       hint: "acme",
       source: "subdomain",
@@ -30,14 +30,14 @@ describe("extractTenantHint", () => {
   });
 
   it("ignores reserved subdomains", () => {
-    const headers = new Headers({ host: "api.smkteknovo.sch.id" });
-    const url = new URL("https://api.smkteknovo.sch.id/api/v1/berita");
+    const headers = new Headers({ host: "cms-api.smkteknovo.sch.id" });
+    const url = new URL("https://cms-api.smkteknovo.sch.id/api/v1/berita");
     expect(extractTenantHint({ headers, url }).source).toBe("none");
   });
 
   it("extracts /t/:slug path prefix", () => {
-    const headers = new Headers({ host: "api.smkteknovo.sch.id" });
-    const url = new URL("https://api.smkteknovo.sch.id/t/acme/api/v1/berita");
+    const headers = new Headers({ host: "cms-api.smkteknovo.sch.id" });
+    const url = new URL("https://cms-api.smkteknovo.sch.id/t/acme/api/v1/berita");
     expect(extractTenantHint({ headers, url })).toEqual({
       hint: "acme",
       source: "path",

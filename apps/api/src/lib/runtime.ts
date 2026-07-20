@@ -39,6 +39,15 @@ export function publicObjectUrl(env: RuntimeBindings, key: string): string {
   return `${base}/${normalized}`;
 }
 
+/** Node / Express: fire-and-forget background work. */
+export function runBackground(task: Promise<unknown>): void {
+  void task.catch((err) => {
+    log.warn("background_task_failed", {
+      err: err instanceof Error ? err.message : String(err),
+    });
+  });
+}
+
 /**
  * Worker: `executionCtx.waitUntil`. Node: fire-and-forget (no ExecutionContext).
  */
@@ -55,9 +64,5 @@ export function scheduleBackground(c: Context<any>, task: Promise<unknown>) {
   } catch {
     // Node / adapters without ExecutionContext throw on access.
   }
-  void task.catch((err) => {
-    log.warn("background_task_failed", {
-      err: err instanceof Error ? err.message : String(err),
-    });
-  });
+  runBackground(task);
 }

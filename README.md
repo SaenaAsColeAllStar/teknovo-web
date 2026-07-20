@@ -5,7 +5,8 @@ Portal SMK TEKNOVO — **Split Free** di Cloudflare:
 | Host | App |
 |------|-----|
 | `smkteknovo.sch.id` | `apps/web` (Astro SSG) |
-| `cf.smkteknovo.sch.id` | `apps/api` (Hono Worker + D1/R2) |
+| `cf.smkteknovo.sch.id` | `apps/api` (Hono Worker + D1/R2 — current) |
+| `cms-api.smkteknovo.sch.id` | `apps/api` (Node Express + Tunnel — cutover target) |
 | `cms.smkteknovo.sch.id` | `apps/cms` (Vite + TipTap + Clerk) |
 | `www` | 301 → apex |
 

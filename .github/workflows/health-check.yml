@@ -1,6 +1,6 @@
 # Scheduled + manual health probe for the public API.
 # Default target: current Free Worker (`cf.`). After Fase 8 Tunnel cutover,
-# set repo/environment variable HEALTH_CHECK_URL to `https://api.smkteknovo.sch.id/api/health`.
+# set repo/environment variable HEALTH_CHECK_URL to `https://cms-api.smkteknovo.sch.id/api/health`.
 
 name: Health check
 

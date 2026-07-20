@@ -25,14 +25,14 @@ import {
 } from "../lib/http";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
-function requireClerk(env: { CLERK_SECRET_KEY: string }) {
+export function requireClerk(env: { CLERK_SECRET_KEY: string }) {
   if (!env.CLERK_SECRET_KEY || env.CLERK_SECRET_KEY.startsWith("GANTI_")) {
     return null;
   }
   return createClerkClient({ secretKey: env.CLERK_SECRET_KEY });
 }
 
-type ClerkClient = NonNullable<ReturnType<typeof requireClerk>>;
+export type ClerkClient = NonNullable<ReturnType<typeof requireClerk>>;
 
 type ClerkApiErrorItem = {
   code?: string;
@@ -53,7 +53,7 @@ function clerkErrors(err: unknown): ClerkApiErrorItem[] {
   return [];
 }
 
-function clerkErrorMessage(err: unknown): string {
+export function clerkErrorMessage(err: unknown): string {
   const first = clerkErrors(err)[0];
   if (first) return first.longMessage || first.message || "Permintaan Clerk gagal.";
   if (err instanceof Error) return err.message;
@@ -73,7 +73,7 @@ function clerkErrorBlob(err: unknown): string {
 }
 
 /** Map Clerk Backend errors to actionable Indonesian admin messages. */
-function mapClerkCreateUserError(err: unknown): {
+export function mapClerkCreateUserError(err: unknown): {
   code: string;
   message: string;
   status: ContentfulStatusCode;
@@ -164,7 +164,7 @@ function isClerkConflict(err: unknown): boolean {
   );
 }
 
-function isUsernameConflict(err: unknown): boolean {
+export function isUsernameConflict(err: unknown): boolean {
   const blob = clerkErrorBlob(err);
   return (
     blob.includes("username") &&
@@ -176,7 +176,7 @@ function isUsernameConflict(err: unknown): boolean {
 }
 
 /** Username disabled on the Clerk instance — retry create without it. */
-function isUsernameFeatureDisabled(err: unknown): boolean {
+export function isUsernameFeatureDisabled(err: unknown): boolean {
   const blob = clerkErrorBlob(err);
   return (
     (blob.includes("disabled") && blob.includes("username")) ||
@@ -185,7 +185,7 @@ function isUsernameFeatureDisabled(err: unknown): boolean {
   );
 }
 
-function splitNama(nama: string | undefined | null): {
+export function splitNama(nama: string | undefined | null): {
   firstName?: string;
   lastName?: string;
 } {
@@ -199,7 +199,7 @@ function splitNama(nama: string | undefined | null): {
   };
 }
 
-function toListItem(user: User): CmsUserListItem {
+export function toListItem(user: User): CmsUserListItem {
   return {
     id: user.id,
     email: user.primaryEmailAddress?.emailAddress ?? null,
@@ -211,7 +211,7 @@ function toListItem(user: User): CmsUserListItem {
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
-function readInviteExpiresInDays(meta: unknown): number | null {
+export function readInviteExpiresInDays(meta: unknown): number | null {
   if (!meta || typeof meta !== "object") return null;
   const raw = (meta as { expiresInDays?: unknown }).expiresInDays;
   if (typeof raw === "number" && Number.isFinite(raw) && raw >= 1 && raw <= 30) {
@@ -228,7 +228,7 @@ function invitationExpiresAt(
   return new Date(createdAtMs + expiresInDays * MS_PER_DAY).toISOString();
 }
 
-function toInvitationListItem(invitation: Invitation): CmsInvitationListItem {
+export function toInvitationListItem(invitation: Invitation): CmsInvitationListItem {
   const role = parseCmsRole(invitation.publicMetadata);
   const expiresInDays = readInviteExpiresInDays(invitation.publicMetadata);
   const status = (invitation.status ?? "pending") as CmsInvitationStatus;
@@ -255,7 +255,7 @@ function inviteRedirectUrl(env: { CMS_ORIGIN: string }): string {
 }
 
 /** Map Clerk invitation errors to actionable Indonesian admin messages. */
-function mapClerkInvitationError(err: unknown): {
+export function mapClerkInvitationError(err: unknown): {
   code: string;
   message: string;
   status: ContentfulStatusCode;
@@ -330,7 +330,7 @@ type CreateCmsInvitationParams = {
   nama?: string | null;
 };
 
-async function createCmsInvitation({
+export async function createCmsInvitation({
   clerk,
   env,
   email,
@@ -368,7 +368,7 @@ async function createCmsInvitation({
 }
 
 /** Editors only see siswa invitations; Super Admin sees all. */
-function filterInvitationsForActor(
+export function filterInvitationsForActor(
   actorRole: CmsRole,
   items: CmsInvitationListItem[],
 ): CmsInvitationListItem[] {
@@ -378,7 +378,7 @@ function filterInvitationsForActor(
   return items;
 }
 
-function assertCanAssign(actorRole: CmsRole, targetRole: CmsRole): void {
+export function assertCanAssign(actorRole: CmsRole, targetRole: CmsRole): void {
   if (!cmsRoleCanAssignRole(actorRole, targetRole)) {
     if (actorRole === "editor") {
       throw new CmsAuthError(
@@ -397,7 +397,7 @@ function assertCanAssign(actorRole: CmsRole, targetRole: CmsRole): void {
 }
 
 /** Editors may only mutate siswa accounts; never themselves or staff. */
-function assertEditorMayTouchTarget(
+export function assertEditorMayTouchTarget(
   actorRole: CmsRole,
   actorUserId: string,
   targetUserId: string,
@@ -442,7 +442,7 @@ async function countSuperAdmins(clerk: ClerkClient): Promise<number> {
  * Block demote/delete that would leave zero Super Admins.
  * Call when target currently has role `admin` and would lose that role.
  */
-async function assertNotLastSuperAdmin(
+export async function assertNotLastSuperAdmin(
   clerk: ClerkClient,
   existingRole: CmsRole,
 ): Promise<void> {
@@ -643,7 +643,7 @@ usersRoutes.get("/invitations", async (c) => {
   }
 });
 
-async function findInvitationById(
+export async function findInvitationById(
   clerk: ClerkClient,
   invitationId: string,
 ): Promise<Invitation | null> {

@@ -1,10 +1,12 @@
-# @teknovo/api — Hono Worker (+ Node/VPS foundation)
+# @teknovo/api — Hono Worker + Express Node/VPS entry
 
 **Domain (production Free):** `cf.smkteknovo.sch.id`  
 **Project name:** `teknovo-cms-api` (Workers, bukan Pages)
 
-> **PRP migration:** Node runtime (Express + Prisma + MinIO) is being built in parallel.
-> Production traffic stays on Worker + D1 + R2 until cutover. See `docs/PRP-FINAL.md`.
+> **PRP migration:** Node runtime (**Express-only HTTP shell** + Prisma + MinIO) runs on VPS (PM2, port **8788**).
+> Shared route modules stay Hono for Worker compatibility. Production traffic stays on Worker + D1 + R2 until cutover. See `docs/PRP-FINAL.md`.
+>
+> **aaPanel:** skip the UI “Create Node.js project” hang — start via SSH/PM2 (`pnpm pm2:start` / `scripts/ops/pm2-start.sh`).
 
 ## Cloudflare dashboard (Workers Builds) / Wrangler
 
@@ -40,7 +42,7 @@ pnpm --filter @teknovo/api prisma:deploy   # or prisma:migrate for new migration
 pnpm --filter @teknovo/api prisma:seed
 pnpm --filter @teknovo/api minio:ensure-bucket
 pnpm --filter @teknovo/api minio:seed          # landing/brand → MinIO + site_media URLs
-pnpm --filter @teknovo/api dev:node        # http://127.0.0.1:8787
+pnpm --filter @teknovo/api dev:node        # http://127.0.0.1:8788 (PORT; 8787 often WA bridge)
 ```
 
 Node health reports Prisma + MinIO: `GET /api/health` → `{ runtime: "node", checks: { prisma, minio } }`.
@@ -65,8 +67,8 @@ pnpm --filter @teknovo/api prisma:generate
 pnpm --filter @teknovo/api prisma:platform:deploy
 pnpm --filter @teknovo/api dev:node
 
-curl -s http://127.0.0.1:8787/api/platform/status
-curl -s -X POST http://127.0.0.1:8787/api/platform/tenants \
+curl -s http://127.0.0.1:8788/api/platform/status
+curl -s -X POST http://127.0.0.1:8788/api/platform/tenants \
   -H "Authorization: Bearer $PLATFORM_ADMIN_SECRET" \
   -H "Content-Type: application/json" \
   -d '{"slug":"demo","name":"Demo School"}'
@@ -123,11 +125,43 @@ pnpm --filter @teknovo/api migrate:d1-to-pg -- --from-json /tmp/d1-export.json
 
 **Auth note:** if remote D1 fails with wrangler `7403`/`1027`, run `wrangler login` or use `--from-json` / `--local`.
 
+### R2 → MinIO object binaries (PRP Fase 7 gap)
+
+`migrate:d1-to-pg` only rewrites URLs. **Copy the actual files** so MinIO keys exist (covers, prestasi, `cms/uploads/*`, HTML-embedded assets):
+
+```bash
+# Plan: collect keys from Postgres (DATABASE_URL) + HEAD source CDN
+pnpm --filter @teknovo/api migrate:r2-objects:dry
+
+# Or from a D1 dump produced by migrate:d1-to-pg --dump-json
+pnpm --filter @teknovo/api migrate:r2-objects:dry -- --from-json /tmp/d1-export.json
+
+# Live PutObject (idempotent — skips keys already in MinIO unless --force)
+pnpm --filter @teknovo/api migrate:r2-objects -- --from-pg --check
+
+# Optional: make cms/uploads/* anonymously readable (R2 CDN parity; overrides F-26 private)
+pnpm --filter @teknovo/api migrate:r2-objects -- --execute --public-cms-uploads
+```
+
+| Flag / env | Meaning |
+|------------|---------|
+| *(default)* | Dry-run — list keys + probe R2; no MinIO writes |
+| `--execute` / `migrate:r2-objects` | Download from `R2_PUBLIC_URL`/`SEED_SRC` → `putObject` |
+| `--from-pg` | Scan PG media fields + HTML `konten` + `pengaturan` (default if `DATABASE_URL` set) |
+| `--from-json` | Same field scan on a D1 export JSON |
+| `--keys-file` / `--dump-keys` | Explicit key list / write plan |
+| `--include-seed-keys` | Also copy `SITE_MEDIA_CATALOG` paths (landing extras still `minio:seed`) |
+| `--force` | Re-upload even if MinIO already has the key |
+| `--public-cms-uploads` | Bucket policy public-read for `cms/uploads/*` |
+| `--check` | After execute, HEAD objects in MinIO |
+
+Recommended order before Tunnel cutover: `minio:ensure-bucket` → `migrate:d1-to-pg` → **`migrate:r2-objects`** → `minio:seed` (fills any catalog gaps).
+
 Production traffic stays on Worker until Fase 8 Tunnel cutover.
 
 ## VPS / Cloudflare Tunnel (PRP Fase 8)
 
-Production clients stay on `cf.smkteknovo.sch.id` until cutover. Parallel hostname: **`api.smkteknovo.sch.id`**.
+Production clients stay on `cf.smkteknovo.sch.id` until cutover. Canonical Node hostname: **`cms-api.smkteknovo.sch.id`** (Express routers, Prisma, MinIO).
 
 | Artifact | Path |
 |----------|------|

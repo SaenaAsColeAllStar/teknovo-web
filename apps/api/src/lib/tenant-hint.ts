@@ -7,6 +7,7 @@ import type { TenantResolveSource } from "./platform/types";
 const RESERVED_SUBDOMAINS = new Set([
   "www",
   "api",
+  "cms-api",
   "cf",
   "cms",
   "clerk",

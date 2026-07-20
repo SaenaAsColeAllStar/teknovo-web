@@ -1,6 +1,6 @@
 # Rollback runbook — Node Tunnel (`api.`) → Worker (`cf.`)
 
-**Goal:** Restore production CMS + public web to the Free Worker stack (`cf.smkteknovo.sch.id` + D1 + R2) when the VPS Node path (`api.smkteknovo.sch.id` + Postgres + MinIO via Cloudflare Tunnel) fails after cutover — or when a bad deploy / migrate / platform flag needs an immediate undo.
+**Goal:** Restore production CMS + public web to the Free Worker stack (`cf.smkteknovo.sch.id` + D1 + R2) when the VPS Node path (`cms-api.smkteknovo.sch.id` + Postgres + MinIO via Cloudflare Tunnel) fails after cutover — or when a bad deploy / migrate / platform flag needs an immediate undo.
 
 **Companion:** Forward cutover is [`CUTOVER-API-TUNNEL.md`](CUTOVER-API-TUNNEL.md). Deploy overview: [`../DEPLOY.md`](../DEPLOY.md).
 
@@ -27,11 +27,11 @@ Printable checklist: `bash scripts/ops/rollback-checklist.sh` (see §8).
 
 | Role | Production Worker (`cf.`) | Node Tunnel (`api.`) |
 |------|---------------------------|----------------------|
-| CMS Pages env | `VITE_API_URL=https://cf.smkteknovo.sch.id/api` | `VITE_API_URL=https://api.smkteknovo.sch.id/api` |
-| Web Pages env | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id` | `PUBLIC_API_URL=https://api.smkteknovo.sch.id` |
-| Health (CI var) | unset → default `https://cf.smkteknovo.sch.id/api/health` | `HEALTH_CHECK_URL=https://api.smkteknovo.sch.id/api/health` |
-| Clerk webhook | `https://cf.smkteknovo.sch.id/api/webhook/clerk` | `https://api.smkteknovo.sch.id/api/webhook/clerk` |
-| Rebuild hook | `https://cf.smkteknovo.sch.id/api/v1/hooks/rebuild-web` | same path on `api.` |
+| CMS Pages env | `VITE_API_URL=https://cf.smkteknovo.sch.id/api` | `VITE_API_URL=https://cms-api.smkteknovo.sch.id/api` |
+| Web Pages env | `PUBLIC_API_URL=https://cf.smkteknovo.sch.id` | `PUBLIC_API_URL=https://cms-api.smkteknovo.sch.id` |
+| Health (CI var) | unset → default `https://cf.smkteknovo.sch.id/api/health` | `HEALTH_CHECK_URL=https://cms-api.smkteknovo.sch.id/api/health` |
+| Clerk webhook | `https://cf.smkteknovo.sch.id/api/webhook/clerk` | `https://cms-api.smkteknovo.sch.id/api/webhook/clerk` |
+| Rebuild hook | `https://cf.smkteknovo.sch.id/api/v1/hooks/rebuild-web` | same path on `cms-api.` |
 
 CMS env must include `/api`. Web env is **host only** (no `/api` suffix).
 
@@ -48,8 +48,8 @@ bash scripts/ops/pm2-restart.sh
 # or:
 pnpm --filter @teknovo/api pm2:restart
 pm2 logs teknovo-api --lines 100
-curl -sS http://127.0.0.1:8787/api/health
-curl -sS https://api.smkteknovo.sch.id/api/health
+curl -sS http://127.0.0.1:8788/api/health
+curl -sS https://cms-api.smkteknovo.sch.id/api/health
 ```
 
 Bad deploy via `deploy-api-vps.yml`:
@@ -182,7 +182,7 @@ Tunnel down is **non-urgent**. Restart cloudflared / recreate route per `ops/clo
 # Typical on VPS (adjust unit name)
 sudo systemctl restart cloudflared
 # or: cloudflared tunnel run teknovo-api
-curl -sS https://api.smkteknovo.sch.id/api/health
+curl -sS https://cms-api.smkteknovo.sch.id/api/health
 ```
 
 ### 4.2 Clients already on `api.`
@@ -195,7 +195,7 @@ curl -sS https://api.smkteknovo.sch.id/api/health
 
 Only after §2 smoke is green and you want to stop accidental use of `api.`:
 
-1. Cloudflare Zero Trust → Tunnels → pause/stop `teknovo-api`, **or** remove public hostname `api.smkteknovo.sch.id`.
+1. Cloudflare Zero Trust → Tunnels → pause/stop `teknovo-api`, **or** remove public hostname `cms-api.smkteknovo.sch.id`.
 2. Optionally delete DNS CNAME `api` (can recreate later).
 3. Optional: `pm2 stop teknovo-api` (keeps code on disk).
 
@@ -216,7 +216,7 @@ PLATFORM_ENABLED=false
 
 ```bash
 bash scripts/ops/pm2-restart.sh
-curl -sS https://api.smkteknovo.sch.id/api/platform/status   # expect disabled / flag off
+curl -sS https://cms-api.smkteknovo.sch.id/api/platform/status   # expect disabled / flag off
 ```
 
 **CMS Pages:** unset or set `VITE_PLATFORM_ENABLED` empty/false → rebuild CMS (hides `/platform` nav).
@@ -247,7 +247,7 @@ Then ensure CMS/Web env still point at `cf.` (§2.2–2.3).
 
 | Knob | During Node cutover | After rollback to Worker |
 |------|---------------------|--------------------------|
-| `vars.HEALTH_CHECK_URL` | `https://api.smkteknovo.sch.id/api/health` | unset or `https://cf.smkteknovo.sch.id/api/health` |
+| `vars.HEALTH_CHECK_URL` | `https://cms-api.smkteknovo.sch.id/api/health` | unset or `https://cf.smkteknovo.sch.id/api/health` |
 | `vars.ENABLE_VPS_DEPLOY` | `true` only when stable | `false` while debugging VPS |
 | `secrets.CLOUDFLARE_*` | keep | **keep** (Worker deploys) |
 | `secrets.VPS_*` | keep | keep (no need to delete) |

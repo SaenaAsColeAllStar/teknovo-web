@@ -5,23 +5,27 @@
  */
 const path = require("node:path");
 
-const logDir = process.env.TEKNOVO_API_LOG_DIR || "/www/wwwlogs/teknovo-api";
+const logDir =
+  process.env.TEKNOVO_API_LOG_DIR ||
+  path.join(__dirname, "..", "..", "logs", "teknovo-api");
 
 module.exports = {
   apps: [
     {
       name: "teknovo-api",
       cwd: __dirname,
-      script: "src/server.ts",
+      // CommonJS bootstrap loads Express `src/server.ts` via tsx (aaPanel-friendly).
+      script: "pm2-entry.cjs",
       interpreter: "node",
-      interpreter_args: "--import tsx",
-      instances: "max",
-      exec_mode: "cluster",
+      // fork + CJS entry (cluster cannot reliably fork TypeScript)
+      instances: 1,
+      exec_mode: "fork",
       max_memory_restart: "512M",
       env: {
         NODE_ENV: "production",
         ENVIRONMENT: "production",
-        PORT: 8787,
+        // 8787 reserved by teknovo-wa-bridge on this VPS (aaPanel).
+        PORT: 8788,
       },
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       error_file: path.join(logDir, "err.log"),

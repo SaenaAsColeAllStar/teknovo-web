@@ -302,10 +302,12 @@ function rewriteMediaUrl(
     return { value: `${minioBase}/${rest}`, rewritten: true };
   }
 
-  // Known alternate / legacy hosts
+  // Known alternate / legacy hosts (old CDN + current custom domain)
   const legacy = [
     "https://r2.ctos.web.id",
     "http://r2.ctos.web.id",
+    "https://r2.smkteknovo.sch.id",
+    "http://r2.smkteknovo.sch.id",
   ];
   for (const base of legacy) {
     if (base === r2Base) continue;
@@ -336,7 +338,13 @@ function rewriteInText(
   let count = 0;
   let out = text;
   const bases = Array.from(
-    new Set([r2Base, "https://r2.ctos.web.id", "http://r2.ctos.web.id"]),
+    new Set([
+      r2Base,
+      "https://r2.ctos.web.id",
+      "http://r2.ctos.web.id",
+      "https://r2.smkteknovo.sch.id",
+      "http://r2.smkteknovo.sch.id",
+    ]),
   );
   for (const base of bases) {
     if (!base) continue;

@@ -22,7 +22,7 @@ import {
 } from "../lib/platform/provision";
 import { loadMinioConfig } from "../lib/minio/client";
 
-const createTenantSchema = z.object({
+export const createTenantSchema = z.object({
   slug: z
     .string()
     .min(2)
@@ -32,7 +32,7 @@ const createTenantSchema = z.object({
   domain: z.string().min(3).max(253).optional().nullable(),
 });
 
-async function requirePlatformAdmin(
+export async function requirePlatformAdmin(
   request: Request,
   env: { CLERK_SECRET_KEY: string },
 ): Promise<{ via: "clerk" | "secret"; userId?: string }> {
@@ -49,7 +49,7 @@ async function requirePlatformAdmin(
   return { via: "clerk", userId: session.userId };
 }
 
-function publicTenant(row: {
+export function publicTenant(row: {
   id: string;
   slug: string;
   name: string;

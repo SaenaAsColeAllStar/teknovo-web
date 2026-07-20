@@ -21,6 +21,7 @@
     "src/index.ts",
     "src/auth/**/*.ts",
     "src/routes/**/*.ts",
+    "src/express-routes/**/*.ts",
     "src/media/**/*.ts",
     "src/lib/**/*.ts",
     "src/middleware/**/*.ts",

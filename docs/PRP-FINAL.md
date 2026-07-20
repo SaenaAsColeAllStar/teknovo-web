@@ -9,7 +9,7 @@
 
 ## 1. Ringkasan Eksekutif
 
-Migrasi backend dari Cloudflare Workers (D1 + R2) ke **Express + Hono di VPS (aaPanel)** dengan **PostgreSQL (Prisma ORM)** dan **MinIO (S3-compatible storage)**. Frontend tetap di Cloudflare Free (Astro SSG + Vite SPA). Arsitektur dirancang sebagai fondasi **SaaS multi-tenant** untuk ekosistem Teknovo.
+Migrasi backend dari Cloudflare Workers (D1 + R2) ke **Express di VPS (aaPanel)** dengan **PostgreSQL (Prisma ORM)** dan **MinIO (S3-compatible storage)**. Route modules tetap Hono agar Worker Free (`cf.`) bisa share handler sampai cutover. Frontend tetap di Cloudflare Free (Astro SSG + Vite SPA). Arsitektur dirancang sebagai fondasi **SaaS multi-tenant** untuk ekosistem Teknovo.
 
 ---
 
@@ -29,11 +29,11 @@ Migrasi backend dari Cloudflare Workers (D1 + R2) ke **Express + Hono di VPS (aa
 Cloudflare (Free)
 ├── smkteknovo.sch.id     → Astro SSG (apps/web)
 ├── cms.smkteknovo.sch.id → Vite SPA (apps/cms)
-└── api.smkteknovo.sch.id → Cloudflare Tunnel
+└── cms-api.smkteknovo.sch.id → Cloudflare Tunnel
                               │
 VPS (aaPanel)                │
 ├── cloudflared (tunnel) ◄──┘
-├── PM2 Cluster (Express + Hono)
+├── PM2 Cluster (Express Node entry; Hono routes shared with Worker)
 │   └── apps/api/src/index.ts
 ├── PostgreSQL 16
 │   ├── Platform DB (tenants, users)
@@ -46,11 +46,11 @@ VPS (aaPanel)                │
 
 ## 4. Persyaratan Fungsional
 
-### 4.1 API Layer (Express + Hono)
+### 4.1 API Layer (Express Node + shared Hono routes)
 
 | ID | Persyaratan | Prioritas |
 |---|---|---|
-| F-01 | Express sebagai HTTP server, Hono sebagai routing layer via `hono/express` adapter | P0 |
+| F-01 | Express sebagai HTTP server Node/VPS; tanpa `@hono/node-server` — route modules Hono di-mount via fetch bridge lokal (Worker tetap Hono murni) | P0 |
 | F-02 | Semua route handler yang sudah ada (`routes/*.ts`) tidak berubah | P0 |
 | F-03 | CORS origin dari CMS dan Web domain | P0 |
 | F-04 | JSON body parser limit 8MB (support upload) | P0 |
@@ -105,7 +105,7 @@ VPS (aaPanel)                │
 | ID | Persyaratan | Prioritas |
 |---|---|---|
 | F-30 | Cloudflare Tunnel (cloudflared) untuk akses ke VPS tanpa port terbuka | P0 |
-| F-31 | Domain API: `api.smkteknovo.sch.id` → Tunnel → `localhost:8787` | P0 |
+| F-31 | Domain API: `cms-api.smkteknovo.sch.id` → Tunnel → `localhost:8788` | P0 |
 | F-32 | PM2 cluster mode dengan `-i max` (semua CPU cores) | P0 |
 | F-33 | `ecosystem.config.cjs` — konfigurasi PM2 lengthkap (log rotation, max memory restart) | P0 |
 | F-34 | Graceful reload support | P1 |
@@ -199,7 +199,7 @@ teknovo-web/
 
 ```env
 # ── Server ──
-PORT=8787
+PORT=8788
 NODE_ENV=production
 ENVIRONMENT=production
 
@@ -240,7 +240,6 @@ GITHUB_REPO=SaenaAsColeAllStar/teknovo-web
   "@aws-sdk/client-s3": "^3.700.0",
   "@aws-sdk/s3-request-presigner": "^3.700.0",
   "@clerk/backend": "^2.29.0",
-  "@hono/node-server": "^1.13.0",
   "@prisma/client": "^6.0.0",
   "@teknovo/shared": "workspace:*",
   "cors": "^2.8.5",
@@ -282,7 +281,7 @@ module.exports = {
     max_memory_restart: "512M",
     env: {
       NODE_ENV: "production",
-      PORT: 8787,
+      PORT: 8788,
     },
     log_date_format: "YYYY-MM-DD HH:mm:ss",
     error_file: "/www/wwwlogs/teknovo-api/err.log",
@@ -366,7 +365,7 @@ volumes:
 
 | Task | Detail | Output | Status |
 |---|---|---|---|
-| 2.1 | Entry Express + Hono adapter (`src/server.ts`; Worker tetap `src/index.ts`) | Entry point Node | ✅ |
+| 2.1 | Entry Express-only (`src/server.ts`; Worker tetap `src/index.ts` Hono) | Entry point Node | ✅ |
 | 2.2 | Setup CORS middleware Express (dari `CMS_ORIGIN` / `WEB_ORIGIN`) | CORS working | ✅ |
 | 2.3 | Adaptasi `request-id.ts` + access log | Request ID per request | ✅ |
 | 2.4 | Adaptasi `security-headers.ts` (CSP, HSTS prod, dll) | Security headers | ✅ |
@@ -461,8 +460,9 @@ Catatan Fase 6:
 |---|---|---|---|
 | 7.1 | Buat `scripts/migrate-d1-to-pg.ts` — export data dari D1 via API, insert ke PostgreSQL | Data migrated | ✅ |
 | 7.2 | Transform `cover_url`, `file_url` — ganti domain R2 dengan MinIO public URL | URLs updated | ✅ |
+| 7.2b | Copy object binaries R2 CDN → MinIO (`migrate:r2-objects`) | Objects present | ✅ script |
 | 7.3 | Transform `site_media` dari D1 ke MinIO + PostgreSQL | Site media migrated | ✅ |
-| 7.4 | Validasi: jumlah record sama, URL bisa diakses | Integrity OK | ✅ |
+| 7.4 | Validasi: jumlah record sama, URL bisa diakses | Integrity OK | ✅ (+ object `--check`) |
 | 7.5 | Rollback plan: jika gagal, kembalikan ke Worker dengan D1 dan R2 | Rollback script ready | ✅ |
 
 Catatan Fase 7:
@@ -471,7 +471,8 @@ Catatan Fase 7:
 - Sumber: `wrangler d1 execute --remote|--local --json`, atau `--from-json` / `--dump-json`.
 - Tabel: `kategori`, `berita`, `artikel_siswa`, `fasilitas`, `ekstrakurikuler`, `prestasi`, `site_media`, `pengaturan`. Upsert idempotent by `id` / `media_key`.
 - Rewrite: `R2_PUBLIC_URL` → `MINIO_PUBLIC_URL` pada `cover_url`, `file_url`, `preview_url`, `og_image_url`, `site_media.url`, HTML `konten`, string fields di `pengaturan.payload`.
-- Validasi setelah `--execute`: row counts (PG ≥ D1), sample slugs, orphan `kategori_id` report; optional `--check-urls` HEAD.
+- **Object binaries:** `migrate:r2-objects:dry` / `migrate:r2-objects` — copy R2 CDN objects → MinIO (keys from PG / D1 JSON). URL rewrite alone is not enough for cutover.
+- Validasi setelah `--execute`: row counts (PG ≥ D1), sample slugs, orphan `kategori_id` report; optional `--check-urls` HEAD; object sync `--check`.
 - **Rollback:** D1+R2 tetap SoT sampai Fase 8; jangan hapus D1. Ulangi dry-run/execute setelah perbaikan.
 - **DNS belum diganti** — production tetap `cf.smkteknovo.sch.id` (Worker).
 
@@ -481,14 +482,14 @@ Catatan Fase 7:
 |---|---|---|---|
 | 8.1 | Install cloudflared di VPS, login Cloudflare | Tunnel authenticated | ⬜ ops (script ready) |
 | 8.2 | Buat tunnel `teknovo-api`, konfigurasi ingress | Tunnel active | ⬜ ops (template ready) |
-| 8.3 | DNS: `api.smkteknovo.sch.id` CNAME ke tunnel | Domain pointing | ⬜ ops (canonical; not `cms-api`) |
+| 8.3 | DNS: `cms-api.smkteknovo.sch.id` CNAME ke tunnel | Domain pointing | ⬜ ops (canonical) |
 | 8.4 | Install PM2 global + pm2-logrotate | PM2 ready | ✅ scripts |
 | 8.5 | Setup aaPanel reverse proxy (jika tidak pakai tunnel) | Proxy OK | ⏭ skip if Tunnel |
 | 8.6 | Jalankan API via PM2 (`tsx` + cluster; bukan `dist/` emit) | API running | ✅ ecosystem + scripts |
 | 8.7 | Test semua endpoint dari public internet via Tunnel | All endpoints OK | ⬜ after live Tunnel |
 
 Catatan Fase 8:
-- **Hostname:** `api.smkteknovo.sch.id` (F-31 / arsitektur). Checklist draft `cms-api.` = optional alias only.
+- **Hostname:** `cms-api.smkteknovo.sch.id` (canonical for Node cutover). Legacy draft `api.` is unused.
 - **Repo artifacts:** `ops/cloudflared/config.yml.example` + README; `scripts/ops/bootstrap-vps.sh`, `pm2-start.sh`, `pm2-restart.sh`; cutover `docs/CUTOVER-API-TUNNEL.md`; `DEPLOY.md` § Zero Trust.
 - **Runtime:** PM2 cluster menjalankan `src/server.ts` via `tsx` (sama `deploy-api-vps.yml`). Emit `dist/` ditunda — dual Worker/Node + workspace `@teknovo/shared`.
 - **Tidak** membuat tunnel/DNS live dari CI tanpa kredensial VPS; Super Admin menyelesaikan 8.1–8.3 + 8.7 di server.
@@ -511,7 +512,7 @@ Catatan Fase 9:
 - **VPS deploy** (`.github/workflows/deploy-api-vps.yml`): rsync + `pm2 reload`; requires `VPS_HOST`/`VPS_USER`/`VPS_SSH_KEY`. Auto on push only if `vars.ENABLE_VPS_DEPLOY=true`; otherwise `workflow_dispatch`. Does **not** replace `deploy-api.yml`.
 - **9.2** already implemented: CMS publish + `POST /api/v1/hooks/rebuild-web` → `repository_dispatch` → `rebuild-web.yml`.
 - **Ops scripts** (`scripts/ops/`): `setup-pm2-logrotate.sh` (50M×10), `backup-pg.sh`, `backup-minio.sh` — run on VPS after Fase 8; cron examples in script headers.
-- **Health:** `health-check.yml` cron `*/15` curls `GET /api/health` (default `cf.smkteknovo.sch.id`). Override with `vars.HEALTH_CHECK_URL` after Tunnel (`api.`). Lightweight — no paid SaaS. VPS: `pm2 monit`.
+- **Health:** `health-check.yml` cron `*/15` curls `GET /api/health` (default `cf.smkteknovo.sch.id`). Override with `vars.HEALTH_CHECK_URL` after Tunnel (`cms-api.`). Lightweight — no paid SaaS. VPS: `pm2 monit`.
 - **Tidak** memaksa Fase 8 DNS cutover.
 
 ### Fase 10: SaaS Platform Foundation (Hari 16-20) — P1/P2

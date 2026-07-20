@@ -31,10 +31,10 @@ done
 
 CF_HEALTH="https://cf.smkteknovo.sch.id/api/health"
 CF_KATEGORI="https://cf.smkteknovo.sch.id/api/v1/kategori"
-API_HEALTH="https://api.smkteknovo.sch.id/api/health"
+API_HEALTH="https://cms-api.smkteknovo.sch.id/api/health"
 
 cat <<'EOF'
-=== Rollback checklist (api. → cf.) ===
+=== Rollback checklist (cms-api. → cf.) ===
 Runbook: docs/ROLLBACK.md
 
 [ ] 1. Soft fix first?  pm2-restart / git checkout good SHA on VPS (ROLLBACK §1)

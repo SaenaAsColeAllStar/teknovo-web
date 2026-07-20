@@ -103,18 +103,25 @@ async function ensureBucket(): Promise<void> {
     console.log(`Created bucket: ${config.bucket}`);
   }
 
+  const publicCms =
+    (process.env.MINIO_PUBLIC_CMS_UPLOADS || "").trim() === "1";
+  const resources = [
+    `arn:aws:s3:::${config.bucket}/media/*`,
+    `arn:aws:s3:::${config.bucket}/brand/*`,
+  ];
+  if (publicCms) {
+    resources.push(`arn:aws:s3:::${config.bucket}/cms/uploads/*`);
+  }
+
   const policy = {
     Version: "2012-10-17",
     Statement: [
       {
-        Sid: "PublicReadMediaBrand",
+        Sid: publicCms ? "PublicReadMediaBrandCms" : "PublicReadMediaBrand",
         Effect: "Allow",
         Principal: "*",
         Action: ["s3:GetObject"],
-        Resource: [
-          `arn:aws:s3:::${config.bucket}/media/*`,
-          `arn:aws:s3:::${config.bucket}/brand/*`,
-        ],
+        Resource: resources,
       },
     ],
   };
@@ -125,7 +132,11 @@ async function ensureBucket(): Promise<void> {
       Policy: JSON.stringify(policy),
     }),
   );
-  console.log("Applied public-read policy for media/* and brand/*");
+  console.log(
+    publicCms
+      ? "Applied public-read policy for media/*, brand/*, cms/uploads/*"
+      : "Applied public-read policy for media/* and brand/*",
+  );
 }
 
 async function fetchOrPlaceholder(
