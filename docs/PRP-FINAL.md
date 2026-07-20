@@ -561,22 +561,35 @@ Catatan:
 
 ## 13. Definisi Selesai (Definition of Done)
 
-Untuk setiap task:
-- [ ] Code sudah di-commit ke branch `main`
-- [ ] Prisma migration sudah apply tanpa error
-- [x] Stored procedures sudah terdaftar di PostgreSQL
-- [ ] Endpoint di-test via Postman/curl dengan response 200
-- [ ] CORS dari CMS domain dan Web domain berfungsi
-- [ ] Upload file ke MinIO sukses, URL bisa diakses publik
-- [ ] Auth Clerk memverifikasi session dengan benar
-- [ ] Review bersama sebelum merge
+**Runbook:** [`docs/DEFINITION-OF-DONE.md`](DEFINITION-OF-DONE.md) · printable: `bash scripts/ops/dod-checklist.sh` (`--verify-cf` / `--verify-cms-api` / `--smoke-local`).
 
-Untuk Fase 8 (Go Live):
-- [ ] Smoke test semua route: GET, POST, PATCH, DELETE *(via Tunnel setelah Super Admin setup)*
-- [ ] Upload file real dari CMS → MinIO → tampil di Web
-- [ ] Downtime < 1 menit saat cutover dari Worker ke Express
-- [ ] Monitoring dashboard (aaPanel + PM2) menunjukkan semua hijau
-- [x] Repo: cloudflared template, bootstrap/PM2 scripts, cutover + rollback runbooks committed
+### Per-task (engineering — repo / local)
+
+| Criterion | Status | Notes |
+|---|---|---|
+| Code on `main` | ✅ | Fase 1–10 + §12; see `CHANGELOG.md` |
+| Prisma migrate apply | ✅ tooling | `prisma:deploy` per env (aaPanel PG / local) |
+| Stored procedures | ✅ | `prisma:procedures` + `prisma:procedures:smoke` |
+| Endpoints smoke 200 | ✅ local | `pnpm --filter @teknovo/api smoke:node` |
+| CORS CMS + Web | ✅ code | `CMS_ORIGIN` / web origins in Express + Worker |
+| Upload MinIO + public URL | ✅ local | smoke put/list/delete; `minio:ensure-bucket` / seed |
+| Clerk session | ✅ reject path | unauth → 401/403 in smoke; live login = operator |
+| Review before merge | ✅ process | ongoing PR / human review |
+
+### Fase 8 go-live (operator — deferred until Tunnel cutover)
+
+| Criterion | Status |
+|---|---|
+| Smoke GET/POST/PATCH/DELETE via `cms-api.` | ⬜ after Super Admin Tunnel |
+| CMS upload → MinIO → Web | ⬜ after client env switch |
+| Cutover downtime &lt; 1 menit | ⬜ prep Pages builds first |
+| aaPanel + PM2 + health-check hijau | ⬜ |
+| Repo: cloudflared / PM2 / cutover + rollback | ✅ |
+
+Catatan:
+- Engineering DoD (§13 per-task) **closed** for the migration track in-repo.
+- Production DoD = Fase 8 go-live checklist ([`CUTOVER-API-TUNNEL.md`](CUTOVER-API-TUNNEL.md)); failure → [`ROLLBACK.md`](ROLLBACK.md).
+- Worker `cf.` + D1 + R2 remain SoT until cutover.
 
 ---
 

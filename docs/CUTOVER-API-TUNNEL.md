@@ -79,6 +79,8 @@ Emergency origin without Tunnel (PRP rollback): temporarily allow Cloudflare IPs
 
 ## Checklist (Definition of Done — Fase 8 go-live)
 
+Full §13 (engineering + go-live): [`DEFINITION-OF-DONE.md`](DEFINITION-OF-DONE.md) · `bash scripts/ops/dod-checklist.sh --verify-cms-api`.
+
 - [ ] `GET/POST/PATCH/DELETE` smoke via `https://cms-api.smkteknovo.sch.id`
 - [ ] CMS upload → MinIO → visible on web
 - [ ] Cutover downtime &lt; 1 minute (env rebuild is the long pole — prep builds)

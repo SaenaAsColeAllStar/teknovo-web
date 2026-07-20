@@ -204,6 +204,7 @@ Optional aaPanel reverse proxy (task 8.5) only if **not** using Tunnel — prefe
 2. Switch CMS `VITE_API_URL=https://cms-api.smkteknovo.sch.id/api` + Web `PUBLIC_API_URL=https://cms-api.smkteknovo.sch.id` → rebuild.
 3. Set `HEALTH_CHECK_URL` to the Tunnel URL; update Clerk webhook when ready.
 4. Rollback: point env vars back to `cf.` and redeploy (Worker stays deployed). Full steps (Clerk, health CI, Platform flag, data, Tunnel): [`docs/ROLLBACK.md`](docs/ROLLBACK.md) · `bash scripts/ops/rollback-checklist.sh`.
+5. Definition of Done (PRP §13): [`docs/DEFINITION-OF-DONE.md`](docs/DEFINITION-OF-DONE.md) · `bash scripts/ops/dod-checklist.sh` (`--smoke-local` / `--verify-cf` / `--verify-cms-api`).
 
 **This repo does not create live tunnels/DNS** without VPS + Tunnel credentials on the operator machine.
 

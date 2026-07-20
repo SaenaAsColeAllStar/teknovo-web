@@ -12,6 +12,13 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — Definition of Done runbook (PRP §13)
+
+- `docs/DEFINITION-OF-DONE.md` — engineering DoD (local smokes / tooling) vs Fase 8 go-live (operator).
+- `scripts/ops/dod-checklist.sh` — printable checklist + `--verify-cf` / `--verify-cms-api` / `--smoke-local`.
+- PRP §13 marked: per-task engineering closed in-repo; go-live items remain open until Tunnel cutover.
+- Linked from `DEPLOY.md`, cutover checklist, README.
+
 ### Changed — Node API native Express routers + `cms-api` hostname
 
 - Node production path mounts real Express routers (`src/express-routes/*`) — no Hono fetch bridge on VPS. Worker Free keeps Hono (`src/index.ts` + `routes/*`) until cutover.
