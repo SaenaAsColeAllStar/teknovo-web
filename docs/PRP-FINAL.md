@@ -580,16 +580,17 @@ Catatan:
 
 | Criterion | Status |
 |---|---|
-| Smoke GET/POST/PATCH/DELETE via `cms-api.` | ⬜ after Super Admin Tunnel |
-| CMS upload → MinIO → Web | ⬜ after client env switch |
-| Cutover downtime &lt; 1 menit | ⬜ prep Pages builds first |
-| aaPanel + PM2 + health-check hijau | ⬜ |
+| Smoke GET/POST/PATCH/DELETE via `cms-api.` | ⬜ partial — public GET + auth gates green in Playwright; slug GET blocked until VPS redeploy of `isUuid` fix |
+| CMS upload → MinIO → Web | ⬜ operator (auth session) |
+| Cutover downtime &lt; 1 menit | ✅ clients already on `cms-api.` (see `apps/web/.env.production`) |
+| aaPanel + PM2 + health-check hijau | ✅ `cms-api` health `runtime=node` + prisma/minio ok |
 | Repo: cloudflared / PM2 / cutover + rollback | ✅ |
 
 Catatan:
 - Engineering DoD (§13 per-task) **closed** for the migration track in-repo.
-- Production DoD = Fase 8 go-live checklist ([`CUTOVER-API-TUNNEL.md`](CUTOVER-API-TUNNEL.md)); failure → [`ROLLBACK.md`](ROLLBACK.md).
-- Worker `cf.` + D1 + R2 remain SoT until cutover.
+- Production slug bug fixed on `main` (`isUuid` in Prisma get-by-id); **redeploy Node API on VPS** (GitHub `VPS_*` secrets) to clear remaining Playwright failures.
+- Failure → [`ROLLBACK.md`](ROLLBACK.md).
+- Worker `cf.` DNS may be retired post-cutover; rollback host remains documented.
 
 ---
 

@@ -3,6 +3,7 @@
  */
 import type { MiddlewareHandler } from "hono";
 import type { AppEnv } from "./http";
+import { isUuid } from "./ids";
 import { isPlatformEnabled } from "./platform/config";
 import { getPlatformPrisma } from "./platform/client";
 import type {
@@ -21,12 +22,6 @@ type TenantRow = {
   status: TenantContext["status"];
   minioBucket: string | null;
 };
-
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-    value,
-  );
-}
 
 export async function lookupTenant(
   hint: string,

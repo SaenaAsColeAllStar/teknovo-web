@@ -64,6 +64,15 @@ test.describe("API public reads", () => {
 
     const slug = items[0]!.slug;
     const detail = await getJson(request, `/api/v1/berita/${slug}`);
+    if (
+      detail.res.status() === 500 &&
+      JSON.stringify(detail.json).includes("Error creating UUID")
+    ) {
+      throw new Error(
+        `cms-api still has pre-fix build for slug lookup (GET /api/v1/berita/${slug} → 500). ` +
+          `Fix is on main (isUuid guard). Redeploy Node API on VPS (set GitHub secrets VPS_HOST/VPS_USER/VPS_SSH_KEY, then workflow Deploy API VPS). Local proof: pnpm --filter @teknovo/api smoke:node`,
+      );
+    }
     expect(
       detail.res.status(),
       `GET /api/v1/berita/${slug} → ${detail.res.status()} ${JSON.stringify(detail.json)}`,
