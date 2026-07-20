@@ -1,7 +1,10 @@
-# @teknovo/api — Hono Worker
+# @teknovo/api — Hono Worker (+ Node/VPS foundation)
 
-**Domain:** `cf.smkteknovo.sch.id`  
+**Domain (production Free):** `cf.smkteknovo.sch.id`  
 **Project name:** `teknovo-cms-api` (Workers, bukan Pages)
+
+> **PRP migration:** Node runtime (Express + Prisma + MinIO) is being built in parallel.
+> Production traffic stays on Worker + D1 + R2 until cutover. See `docs/PRP-FINAL.md`.
 
 ## Cloudflare dashboard (Workers Builds) / Wrangler
 
@@ -15,7 +18,7 @@
 
 Worker **tidak** punya folder `dist` seperti Pages. Entry: `main = "src/index.ts"`.
 
-## Local
+## Local — Worker (production path)
 
 ```bash
 # dari repo root
@@ -26,6 +29,22 @@ pnpm --filter @teknovo/api dev   # http://127.0.0.1:8787
 ```
 
 Health: `GET http://127.0.0.1:8787/api/health`
+
+## Local — Node + Postgres + MinIO (PRP path)
+
+```bash
+pnpm docker:up
+cp apps/api/.env.example apps/api/.env
+pnpm --filter @teknovo/api prisma:generate
+pnpm --filter @teknovo/api prisma:deploy   # or prisma:migrate for new migrations
+pnpm --filter @teknovo/api prisma:seed
+pnpm --filter @teknovo/api minio:ensure-bucket
+pnpm --filter @teknovo/api dev:node        # http://127.0.0.1:8787
+```
+
+Node health reports Prisma + MinIO: `GET /api/health` → `{ runtime: "node", checks: { prisma, minio } }`.
+
+Content CRUD routes on Node land in PRP Fase 3–4; until then Worker serves them.
 
 ## Deploy
 
@@ -65,4 +84,6 @@ Local: set `ENVIRONMENT=development` in `.dev.vars` for localhost CORS.
 
 ```bash
 pnpm --filter @teknovo/api test
+pnpm --filter @teknovo/api typecheck
+pnpm --filter @teknovo/api typecheck:node
 ```

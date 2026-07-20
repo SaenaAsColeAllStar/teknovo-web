@@ -1,8 +1,7 @@
 import type { MiddlewareHandler } from "hono";
-import type { AppEnv } from "../lib/http";
 
-/** Minimal security headers for a JSON API Worker. */
-export const securityHeadersMiddleware: MiddlewareHandler<AppEnv> = async (
+/** Minimal security headers for JSON API (Worker + Node). */
+export const securityHeadersMiddleware: MiddlewareHandler = async (
   c,
   next,
 ) => {

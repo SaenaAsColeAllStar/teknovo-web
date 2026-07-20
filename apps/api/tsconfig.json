@@ -15,5 +15,5 @@
     }
   },
   "include": ["src/**/*.ts", "worker-configuration.d.ts"],
-  "exclude": ["src/**/*.test.ts"]
+  "exclude": ["src/**/*.test.ts", "src/server.ts", "src/lib/prisma/**", "src/lib/minio/**"]
 }

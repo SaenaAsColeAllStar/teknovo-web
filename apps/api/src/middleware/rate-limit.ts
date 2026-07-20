@@ -1,6 +1,5 @@
-import type { MiddlewareHandler } from "hono";
-
-import { errJson, type AppEnv } from "../lib/http";
+import type { Context, MiddlewareHandler } from "hono";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 type Bucket = { count: number; resetAt: number };
 
@@ -46,11 +45,19 @@ function pruneIfNeeded(): void {
   for (const key of keys) buckets.delete(key);
 }
 
+function rateLimitedJson(
+  c: Context,
+  message: string,
+  status: ContentfulStatusCode = 429,
+) {
+  return c.json({ ok: false as const, error: { code: "RATE_LIMITED", message } }, status);
+}
+
 /**
- * Simple sliding-window rate limit keyed by CF-Connecting-IP.
- * Returns 429 JSON when exceeded.
+ * Simple sliding-window rate limit keyed by CF-Connecting-IP / X-Forwarded-For.
+ * Returns 429 JSON when exceeded. Runtime-agnostic (Worker + Node).
  */
-export function rateLimit(opts: RateLimitOptions): MiddlewareHandler<AppEnv> {
+export function rateLimit(opts: RateLimitOptions): MiddlewareHandler {
   return async (c, next) => {
     const now = Date.now();
     const ip = clientIp(c);
@@ -73,11 +80,9 @@ export function rateLimit(opts: RateLimitOptions): MiddlewareHandler<AppEnv> {
 
     if (bucket.count > opts.limit) {
       c.header("Retry-After", String(retryAfterSec));
-      return errJson(
+      return rateLimitedJson(
         c,
-        "RATE_LIMITED",
         `Terlalu banyak permintaan. Coba lagi dalam ${retryAfterSec} detik.`,
-        429,
       );
     }
 

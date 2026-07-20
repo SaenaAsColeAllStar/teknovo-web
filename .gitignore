@@ -37,6 +37,7 @@ yarn-error.log*
 .env.local
 .env.*.local
 .dev.vars
+apps/api/.env
 
 # vercel / cloudflare
 .vercel

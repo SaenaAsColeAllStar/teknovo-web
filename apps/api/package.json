@@ -5,21 +5,45 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
+    "dev:node": "tsx watch src/server.ts",
     "deploy": "wrangler deploy",
     "typecheck": "tsc --noEmit",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "test": "vitest run",
     "d1:migrate:local": "wrangler d1 migrations apply teknovo-article --local",
-    "d1:migrate:remote": "wrangler d1 migrations apply teknovo-article --remote"
+    "d1:migrate:remote": "wrangler d1 migrations apply teknovo-article --remote",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "minio:ensure-bucket": "tsx scripts/ensure-minio-bucket.ts",
+    "start:node": "tsx src/server.ts",
+    "start:pm2": "pm2 start ecosystem.config.cjs"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.700.0",
+    "@aws-sdk/s3-request-presigner": "^3.700.0",
     "@clerk/backend": "^2.29.0",
+    "@hono/node-server": "^1.13.0",
+    "@prisma/client": "^6.0.0",
     "@teknovo/shared": "workspace:*",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^5.0.0",
     "hono": "^4.9.0",
     "isomorphic-dompurify": "^2.26.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^5.20260717.1",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "prisma": "^6.0.0",
+    "tsx": "^4.19.0",
     "typescript": "^5",
     "vitest": "^3.2.4",
     "wrangler": "^4.112.0"

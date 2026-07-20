@@ -5,8 +5,11 @@
   "packageManager": "pnpm@10.34.5",
   "scripts": {
     "dev:api": "pnpm --filter @teknovo/api dev",
+    "dev:api:node": "pnpm --filter @teknovo/api dev:node",
     "dev:cms": "pnpm --filter @teknovo/cms dev",
     "dev:web": "pnpm --filter @teknovo/web dev",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
     "build:api": "pnpm --filter @teknovo/api exec wrangler deploy --dry-run --outdir=/tmp/teknovo-api-dry 2>/dev/null || true",
     "build:cms": "pnpm --filter @teknovo/cms build",
     "build:web": "pnpm --filter @teknovo/web build",
@@ -70,5 +73,12 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "wrangler": "^4.112.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "prisma",
+      "@prisma/client",
+      "@prisma/engines"
+    ]
   }
 }

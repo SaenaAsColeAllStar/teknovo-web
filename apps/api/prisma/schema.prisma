@@ -1,0 +1,194 @@
+// Tenant content schema — mirrors D1 migrations 0001–0004 (apps/api/migrations).
+// Worker Free path still uses D1 until Fase 7 cutover.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BeritaStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ArtikelStatus {
+  DRAFT
+  REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum SiteContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EkskulKategori {
+  TEKNOLOGI
+  OLAHRAGA
+  AKADEMIK
+  SENI
+}
+
+model Kategori {
+  id          String   @id @default(uuid()) @db.Uuid
+  nama        String
+  slug        String   @unique
+  deskripsi   String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  berita   Berita[]
+  artikel  ArtikelSiswa[]
+
+  @@map("kategori")
+}
+
+model Berita {
+  id              String       @id @default(uuid()) @db.Uuid
+  judul           String
+  slug            String       @unique
+  ringkasan       String?
+  konten          String       @default("")
+  coverUrl        String?      @map("cover_url")
+  status          BeritaStatus @default(DRAFT)
+  kategoriId      String?      @map("kategori_id") @db.Uuid
+  metaTitle       String?      @map("meta_title")
+  metaDescription String?      @map("meta_description")
+  ogImageUrl      String?      @map("og_image_url")
+  canonicalUrl    String?      @map("canonical_url")
+  metaKeywords    String?      @map("meta_keywords")
+  penulisId       String?      @map("penulis_id")
+  penulisNama     String?      @map("penulis_nama")
+  publishedAt     DateTime?    @map("published_at")
+  /// Denormalized list key: COALESCE(published_at, created_at)
+  sortAt          DateTime?    @map("sort_at")
+  createdAt       DateTime     @default(now()) @map("created_at")
+  updatedAt       DateTime     @updatedAt @map("updated_at")
+
+  kategori Kategori? @relation(fields: [kategoriId], references: [id], onDelete: SetNull)
+
+  @@index([status, sortAt(sort: Desc)], map: "idx_berita_status_sort_at")
+  @@index([kategoriId], map: "idx_berita_kategori_id")
+  @@map("berita")
+}
+
+model ArtikelSiswa {
+  id              String        @id @default(uuid()) @db.Uuid
+  judul           String
+  slug            String        @unique
+  ringkasan       String?
+  konten          String        @default("")
+  coverUrl        String?       @map("cover_url")
+  status          ArtikelStatus @default(DRAFT)
+  kategoriId      String?       @map("kategori_id") @db.Uuid
+  penulisId       String        @map("penulis_id")
+  penulisNama     String?       @map("penulis_nama")
+  penulisKelas    String?       @map("penulis_kelas")
+  rejectedReason  String?       @map("rejected_reason")
+  submittedAt     DateTime?     @map("submitted_at")
+  publishedAt     DateTime?     @map("published_at")
+  metaTitle       String?       @map("meta_title")
+  metaDescription String?       @map("meta_description")
+  ogImageUrl      String?       @map("og_image_url")
+  canonicalUrl    String?       @map("canonical_url")
+  metaKeywords    String?       @map("meta_keywords")
+  /// Denormalized list key: COALESCE(submitted_at, updated_at)
+  sortAt          DateTime?     @map("sort_at")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  kategori Kategori? @relation(fields: [kategoriId], references: [id], onDelete: SetNull)
+
+  @@index([status, sortAt(sort: Desc)], map: "idx_artikel_status_sort_at")
+  @@index([penulisId, status], map: "idx_artikel_penulis_status")
+  @@index([kategoriId], map: "idx_artikel_kategori_id")
+  @@map("artikel_siswa")
+}
+
+model Fasilitas {
+  id             String            @id @default(uuid()) @db.Uuid
+  slug           String            @unique
+  title          String
+  navLabel       String            @map("nav_label")
+  description    String            @default("")
+  coverUrl       String?           @map("cover_url")
+  highlightsJson Json              @default("[]") @map("highlights_json")
+  paragraphsJson Json              @default("[]") @map("paragraphs_json")
+  extrasJson     Json              @default("{}") @map("extras_json")
+  sortOrder      Int               @default(0) @map("sort_order")
+  showInNav      Boolean           @default(true) @map("show_in_nav")
+  status         SiteContentStatus @default(DRAFT)
+  publishedAt    DateTime?         @map("published_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, sortOrder], map: "idx_fasilitas_status_sort")
+  @@map("fasilitas")
+}
+
+model Ekstrakurikuler {
+  id                        String            @id @default(uuid()) @db.Uuid
+  slug                      String            @unique
+  name                      String
+  detail                    String            @default("")
+  fullDescription           String            @default("") @map("full_description")
+  kategori                  EkskulKategori
+  previewUrl                String?           @map("preview_url")
+  relatedAchievementsJson   Json              @default("[]") @map("related_achievements_json")
+  jadwalRingkas             String?           @map("jadwal_ringkas")
+  lokasiLatihan             String?           @map("lokasi_latihan")
+  pembinaNama               String?           @map("pembina_nama")
+  sortOrder                 Int               @default(0) @map("sort_order")
+  status                    SiteContentStatus @default(DRAFT)
+  publishedAt               DateTime?         @map("published_at")
+  createdAt                 DateTime          @default(now()) @map("created_at")
+  updatedAt                 DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, sortOrder], map: "idx_ekstrakurikuler_status_sort")
+  @@map("ekstrakurikuler")
+}
+
+model Prestasi {
+  id            String            @id @default(uuid()) @db.Uuid
+  judul         String
+  penyelenggara String            @default("")
+  tanggalIso    DateTime          @map("tanggal_iso") @db.Date
+  siswaLabel    String            @default("") @map("siswa_label")
+  ringkasan     String            @default("")
+  fileUrl       String            @map("file_url")
+  sortOrder     Int               @default(0) @map("sort_order")
+  status        SiteContentStatus @default(DRAFT)
+  publishedAt   DateTime?         @map("published_at")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, sortOrder, tanggalIso(sort: Desc)], map: "idx_prestasi_status_sort_tanggal")
+  @@map("prestasi")
+}
+
+model SiteMedia {
+  mediaKey  String   @id @map("media_key")
+  label     String
+  category  String   @default("landing")
+  url       String
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  @@index([category], map: "idx_site_media_category")
+  @@map("site_media")
+}
+
+model Pengaturan {
+  id        String   @id @db.Uuid
+  payload   Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("pengaturan")
+}

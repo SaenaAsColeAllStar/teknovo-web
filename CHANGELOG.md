@@ -12,6 +12,15 @@ Rentang: **2026-07-18** → **2026-07-19** (`4587528` … `0d337b7`).
 
 ## [Unreleased]
 
+### Added — API Node foundation (PRP Fase 1–2)
+
+- Dual-runtime API foundation for VPS path (Express + Hono + Prisma + MinIO) **without** removing Worker + D1 + R2 production.
+- `docker-compose.yml`: PostgreSQL (`127.0.0.1:5434`) + MinIO (`9010`/`9011`).
+- Prisma schema + migration `init_tenant_content` mirroring D1 tables; seed kategori + pengaturan.
+- MinIO helpers (`putObject` / `getObject` / `deleteObject` / `listObjects` / `objectUrl`) + bucket ensure script.
+- Node entry `apps/api/src/server.ts`: CORS, 8MB JSON, request-id / security headers / rate limits, graceful shutdown, `GET /api/health` checks Prisma + MinIO.
+- PM2 `ecosystem.config.cjs`; scripts `dev:node`, `prisma:*`, `minio:ensure-bucket`.
+
 ### Fix — publik ekskul/prestasi/fasilitas tanpa mock
 
 - `getEkskulPublikCards` / prestasi / fasilitas: API kosong, gagal, atau 429 → `[]` (bukan inventori mock).

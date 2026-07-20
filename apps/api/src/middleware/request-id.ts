@@ -1,9 +1,11 @@
 import type { MiddlewareHandler } from "hono";
-import type { AppEnv } from "../lib/http";
 
 const HEADER = "X-Request-Id";
 
-export const requestIdMiddleware: MiddlewareHandler<AppEnv> = async (c, next) => {
+/** Works for Worker `AppEnv` and Node `NodeAppEnv` (shared `requestId` variable). */
+export const requestIdMiddleware: MiddlewareHandler<{
+  Variables: { requestId: string };
+}> = async (c, next) => {
   const incoming = c.req.header(HEADER)?.trim();
   const id =
     incoming && incoming.length <= 128
