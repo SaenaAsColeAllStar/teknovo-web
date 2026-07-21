@@ -7,20 +7,20 @@ import type {
   EkstrakurikulerListItem,
   SiteContentStatus,
 } from "@teknovo/shared";
-import { asStringArray, toIso, toIsoRequired } from "./map-helpers";
+import {
+  asLayoutConfig,
+  asStringArray,
+  layoutConfigJson,
+  toIso,
+  toIsoRequired,
+  mapReviewFields,
+  publishedAtForStatus
+} from "./map-helpers";
 import { isUuid } from "../ids";
 
 export type { EkstrakurikulerWriteInput } from "../d1/ekstrakurikuler-repo";
 import type { EkstrakurikulerWriteInput } from "../d1/ekstrakurikuler-repo";
 
-function publishedAtFor(
-  status: SiteContentStatus,
-  previous: Date | null,
-): Date | null {
-  if (status === "PUBLISHED") return previous ?? new Date();
-  if (status === "DRAFT") return null;
-  return previous;
-}
 
 function mapList(row: EkstrakurikulerModel): EkstrakurikulerListItem {
   return {
@@ -32,6 +32,7 @@ function mapList(row: EkstrakurikulerModel): EkstrakurikulerListItem {
     previewUrl: row.previewUrl,
     sortOrder: row.sortOrder,
     status: row.status,
+    ...mapReviewFields(row),
     publishedAt: toIso(row.publishedAt),
   };
 }
@@ -44,6 +45,7 @@ function mapFull(row: EkstrakurikulerModel): Ekstrakurikuler {
     jadwalRingkas: row.jadwalRingkas,
     lokasiLatihan: row.lokasiLatihan,
     pembinaNama: row.pembinaNama,
+    layoutConfig: asLayoutConfig(row.layoutConfig),
     createdAt: toIsoRequired(row.createdAt),
     updatedAt: toIsoRequired(row.updatedAt),
   };
@@ -126,7 +128,7 @@ export async function prismaCreateEkstrakurikuler(
   prisma: PrismaClient,
   input: EkstrakurikulerWriteInput,
 ): Promise<Ekstrakurikuler> {
-  const publishedAt = publishedAtFor(input.status, null);
+  const publishedAt = publishedAtForStatus(input.status, null);
   const row = await prisma.ekstrakurikuler.create({
     data: {
       slug: input.slug,
@@ -139,6 +141,7 @@ export async function prismaCreateEkstrakurikuler(
       jadwalRingkas: input.jadwalRingkas || null,
       lokasiLatihan: input.lokasiLatihan || null,
       pembinaNama: input.pembinaNama || null,
+      layoutConfig: layoutConfigJson(input.layoutConfig),
       sortOrder: input.sortOrder ?? 0,
       status: input.status,
       publishedAt,
@@ -154,7 +157,7 @@ export async function prismaUpdateEkstrakurikuler(
 ): Promise<Ekstrakurikuler | null> {
   const existing = await prisma.ekstrakurikuler.findUnique({ where: { id } });
   if (!existing) return null;
-  const publishedAt = publishedAtFor(input.status, existing.publishedAt);
+  const publishedAt = publishedAtForStatus(input.status, existing.publishedAt);
   const row = await prisma.ekstrakurikuler.update({
     where: { id },
     data: {
@@ -168,6 +171,7 @@ export async function prismaUpdateEkstrakurikuler(
       jadwalRingkas: input.jadwalRingkas || null,
       lokasiLatihan: input.lokasiLatihan || null,
       pembinaNama: input.pembinaNama || null,
+      layoutConfig: layoutConfigJson(input.layoutConfig),
       sortOrder: input.sortOrder ?? 0,
       status: input.status,
       publishedAt,

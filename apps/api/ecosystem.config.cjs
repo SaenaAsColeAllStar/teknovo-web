@@ -7,12 +7,12 @@ const path = require("node:path");
 
 const logDir =
   process.env.TEKNOVO_API_LOG_DIR ||
-  path.join(__dirname, "..", "..", "logs", "teknovo-api");
+  path.join(__dirname, "..", "..", "logs", "teknovo-cms-api");
 
 module.exports = {
   apps: [
     {
-      name: "teknovo-api",
+      name: "teknovo-cms-api",
       cwd: __dirname,
       // CommonJS bootstrap loads Express `src/server.ts` via tsx (aaPanel-friendly).
       script: "pm2-entry.cjs",
@@ -26,6 +26,8 @@ module.exports = {
         ENVIRONMENT: "production",
         // 8787 reserved by teknovo-wa-bridge on this VPS (aaPanel).
         PORT: 8788,
+        CMS_ORIGIN: "https://cms.smkteknovo.sch.id",
+        WEB_ORIGIN: "https://smkteknovo.sch.id",
       },
       log_date_format: "YYYY-MM-DD HH:mm:ss Z",
       error_file: path.join(logDir, "err.log"),

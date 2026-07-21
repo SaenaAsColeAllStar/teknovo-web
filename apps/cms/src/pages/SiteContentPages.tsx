@@ -5,6 +5,9 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 import { useCmsRole } from "@/components/dashboard/CmsRoleProvider";
+import { SortableContentRows, SortableHandleHeader } from "@/components/dashboard/site-content/SortableContentRows";
+import { CoverImageDropzone } from "@/components/dashboard/media/CoverImageDropzone";
+import { FormSkeleton, TableSkeleton } from "@/components/ui/loading-skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -41,8 +44,14 @@ import {
   type PrestasiListItem,
 } from "@/lib/api-client";
 
+import { SiteContentReviewNoteBanner, SiteContentSubmitButton } from "../components/dashboard/moderasi/SiteContentSubmitButton";
+import {
+  DEFAULT_SITE_CONTENT_LAYOUT_CONFIG,
+  SiteContentLayoutConfigFields,
+} from "../components/dashboard/SiteContentLayoutConfigFields";
 import { useCmsGetToken } from "../lib/use-cms-get-token";
 import { onRouterRefresh } from "../shims/next-navigation";
+import type { SiteContentLayoutConfig } from "@teknovo/shared";
 
 const selectClassName =
   "flex h-10 w-full rounded-none border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20";
@@ -128,12 +137,13 @@ export function FasilitasListPage() {
         </Card>
       ) : null}
       {loading ? (
-        <p className="text-sm text-[color:var(--color-body)]">Memuat…</p>
+        <TableSkeleton rows={6} cols={6} />
       ) : (
         <div className="overflow-x-auto border border-[color:var(--color-border)] bg-white">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)]">
               <tr>
+                {canManageSiteContent ? <SortableHandleHeader /> : null}
                 <th className="px-4 py-3 font-medium">Judul</th>
                 <th className="px-4 py-3 font-medium">Nav</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -142,35 +152,65 @@ export function FasilitasListPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b border-[color:var(--color-border)] last:border-0"
-                >
-                  <td className="px-4 py-3">
-                    <div className="font-medium text-[color:var(--color-heading)]">
-                      {row.title}
-                    </div>
-                    <div className="text-xs text-[color:var(--color-body)]">
-                      /fasilitas/{row.slug}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    {row.showInNav ? row.navLabel : "—"}
-                  </td>
-                  <td className="px-4 py-3">{row.status}</td>
-                  <td className="px-4 py-3 tabular-nums">{row.sortOrder}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Button asChild size="sm" variant="secondary">
-                      <Link to={`/fasilitas/${row.id}/edit`}>Edit</Link>
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+              <SortableContentRows
+                entity="fasilitas"
+                items={items}
+                setItems={setItems}
+                getToken={getToken}
+                enabled={canManageSiteContent && items.length > 0}
+              >
+                {(row, handle) => (
+                  <>
+                    {handle ? (
+                      <td className="px-2 py-3 align-middle">{handle}</td>
+                    ) : null}
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-[color:var(--color-heading)]">
+                        {row.title}
+                      </div>
+                      <div className="text-xs text-[color:var(--color-body)]">
+                        /fasilitas/{row.slug}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {row.showInNav ? row.navLabel : "—"}
+                    </td>
+                    <td className="px-4 py-3">{row.status}</td>
+                    <td className="px-4 py-3 tabular-nums">{row.sortOrder}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button asChild size="sm" variant="secondary">
+                          <Link to={`/fasilitas/${row.id}/edit`}>Edit</Link>
+                        </Button>
+                        {canManageSiteContent ? (
+                          <SiteContentSubmitButton
+                            entity="fasilitas"
+                            id={row.id}
+                            status={row.status}
+                            onDone={() =>
+                              setItems((prev) =>
+                                prev.map((x) =>
+                                  x.id === row.id
+                                    ? {
+                                        ...x,
+                                        status: "PENDING_REVIEW" as const,
+                                        reviewNote: null,
+                                      }
+                                    : x,
+                                ),
+                              )
+                            }
+                          />
+                        ) : null}
+                      </div>
+                    </td>
+                  </>
+                )}
+              </SortableContentRows>
               {items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={canManageSiteContent ? 6 : 5}
                     className="px-4 py-8 text-center text-[color:var(--color-body)]"
                   >
                     Belum ada fasilitas. Buat entri pertama atau seed dari data
@@ -205,9 +245,12 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
   const [paragraphs, setParagraphs] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [showInNav, setShowInNav] = useState(true);
-  const [status, setStatus] = useState<"DRAFT" | "PUBLISHED" | "ARCHIVED">(
-    "DRAFT",
-  );
+  const [layoutConfig, setLayoutConfig] = useState<SiteContentLayoutConfig>({
+    ...DEFAULT_SITE_CONTENT_LAYOUT_CONFIG,
+  });
+  const [status, setStatus] = useState<
+    "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "ARCHIVED"
+  >("DRAFT");
 
   useEffect(() => {
     if (!isLoaded || mode !== "edit" || !id) return;
@@ -229,6 +272,7 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
         setParagraphs(arrayToLines(row.paragraphs));
         setSortOrder(row.sortOrder);
         setShowInNav(row.showInNav);
+        setLayoutConfig(row.layoutConfig ?? { ...DEFAULT_SITE_CONTENT_LAYOUT_CONFIG });
         setStatus(row.status);
       } catch (err) {
         if (!cancelled) {
@@ -260,6 +304,7 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
       highlights: linesToArray(highlights),
       paragraphs: linesToArray(paragraphs),
       extras: initial?.extras ?? {},
+      layoutConfig,
       sortOrder,
       showInNav,
       status: nextStatus,
@@ -310,7 +355,7 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
   }
 
   if (loading) {
-    return <p className="text-sm text-[color:var(--color-body)]">Memuat…</p>;
+    return <FormSkeleton />;
   }
 
   return (
@@ -381,13 +426,11 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="f-cover">Cover URL</Label>
-            <Input
-              id="f-cover"
+            <Label>Cover</Label>
+            <CoverImageDropzone
               value={coverUrl}
+              onChange={setCoverUrl}
               disabled={!canManageSiteContent}
-              onChange={(e) => setCoverUrl(e.target.value)}
-              placeholder="https://…"
             />
           </div>
           <div className="space-y-2">
@@ -433,7 +476,9 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
                 }
               >
                 <option value="DRAFT">DRAFT</option>
+                <option value="PENDING_REVIEW">PENDING_REVIEW</option>
                 <option value="PUBLISHED">PUBLISHED</option>
+                <option value="REJECTED">REJECTED</option>
                 <option value="ARCHIVED">ARCHIVED</option>
               </select>
             </div>
@@ -447,6 +492,17 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
               Tampil di navbar
             </label>
           </div>
+          <SiteContentLayoutConfigFields
+            value={layoutConfig}
+            onChange={setLayoutConfig}
+            disabled={!canManageSiteContent}
+          />
+          {mode === "edit" && initial ? (
+            <SiteContentReviewNoteBanner
+              status={status}
+              reviewNote={initial.reviewNote}
+            />
+          ) : null}
           {canManageSiteContent ? (
             <div className="flex flex-wrap gap-2 pt-2">
               <Button type="submit" disabled={busy} variant="secondary">
@@ -459,6 +515,16 @@ export function FasilitasFormPage({ mode }: { mode: "create" | "edit" }) {
               >
                 Publikasikan
               </Button>
+              {mode === "edit" && id ? (
+                <SiteContentSubmitButton
+                  entity="fasilitas"
+                  id={id}
+                  status={status}
+                  disabled={busy}
+                  size="default"
+                  onDone={() => setStatus("PENDING_REVIEW")}
+                />
+              ) : null}
               {mode === "edit" ? (
                 <Button
                   type="button"
@@ -533,12 +599,13 @@ export function EkstrakurikulerListPage() {
       </div>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {loading ? (
-        <p className="text-sm text-[color:var(--color-body)]">Memuat…</p>
+        <TableSkeleton rows={6} cols={5} />
       ) : (
         <div className="overflow-x-auto border border-[color:var(--color-border)] bg-white">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)]">
               <tr>
+                {canManageSiteContent ? <SortableHandleHeader /> : null}
                 <th className="px-4 py-3 font-medium">Nama</th>
                 <th className="px-4 py-3 font-medium">Kategori</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -546,25 +613,57 @@ export function EkstrakurikulerListPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b border-[color:var(--color-border)] last:border-0"
-                >
-                  <td className="px-4 py-3 font-medium">{row.name}</td>
-                  <td className="px-4 py-3">{row.kategori}</td>
-                  <td className="px-4 py-3">{row.status}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Button asChild size="sm" variant="secondary">
-                      <Link to={`/ekstrakurikuler/${row.id}/edit`}>Edit</Link>
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+              <SortableContentRows
+                entity="ekstrakurikuler"
+                items={items}
+                setItems={setItems}
+                getToken={getToken}
+                enabled={canManageSiteContent && items.length > 0}
+              >
+                {(row, handle) => (
+                  <>
+                    {handle ? (
+                      <td className="px-2 py-3 align-middle">{handle}</td>
+                    ) : null}
+                    <td className="px-4 py-3 font-medium">{row.name}</td>
+                    <td className="px-4 py-3">{row.kategori}</td>
+                    <td className="px-4 py-3">{row.status}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button asChild size="sm" variant="secondary">
+                          <Link to={`/ekstrakurikuler/${row.id}/edit`}>
+                            Edit
+                          </Link>
+                        </Button>
+                        {canManageSiteContent ? (
+                          <SiteContentSubmitButton
+                            entity="ekstrakurikuler"
+                            id={row.id}
+                            status={row.status}
+                            onDone={() =>
+                              setItems((prev) =>
+                                prev.map((x) =>
+                                  x.id === row.id
+                                    ? {
+                                        ...x,
+                                        status: "PENDING_REVIEW" as const,
+                                        reviewNote: null,
+                                      }
+                                    : x,
+                                ),
+                              )
+                            }
+                          />
+                        ) : null}
+                      </div>
+                    </td>
+                  </>
+                )}
+              </SortableContentRows>
               {items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={canManageSiteContent ? 5 : 4}
                     className="px-4 py-8 text-center text-[color:var(--color-body)]"
                   >
                     Belum ada unit ekstrakurikuler.
@@ -605,9 +704,12 @@ export function EkstrakurikulerFormPage({
   const [lokasiLatihan, setLokasiLatihan] = useState("");
   const [pembinaNama, setPembinaNama] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
-  const [status, setStatus] = useState<"DRAFT" | "PUBLISHED" | "ARCHIVED">(
-    "DRAFT",
-  );
+  const [layoutConfig, setLayoutConfig] = useState<SiteContentLayoutConfig>({
+    ...DEFAULT_SITE_CONTENT_LAYOUT_CONFIG,
+  });
+  const [status, setStatus] = useState<
+    "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "ARCHIVED"
+  >("DRAFT");
 
   useEffect(() => {
     if (!isLoaded || mode !== "edit" || !id) return;
@@ -630,6 +732,7 @@ export function EkstrakurikulerFormPage({
         setLokasiLatihan(row.lokasiLatihan ?? "");
         setPembinaNama(row.pembinaNama ?? "");
         setSortOrder(row.sortOrder);
+        setLayoutConfig(row.layoutConfig ?? { ...DEFAULT_SITE_CONTENT_LAYOUT_CONFIG });
         setStatus(row.status);
         setSlugLocked(true);
       } finally {
@@ -655,6 +758,7 @@ export function EkstrakurikulerFormPage({
       jadwalRingkas,
       lokasiLatihan,
       pembinaNama,
+      layoutConfig,
       sortOrder,
       status: nextStatus,
     };
@@ -693,7 +797,7 @@ export function EkstrakurikulerFormPage({
   }
 
   if (loading) {
-    return <p className="text-sm text-[color:var(--color-body)]">Memuat…</p>;
+    return <FormSkeleton />;
   }
 
   return (
@@ -769,11 +873,11 @@ export function EkstrakurikulerFormPage({
           />
         </div>
         <div className="space-y-2">
-          <Label>Preview URL</Label>
-          <Input
+          <Label>Preview</Label>
+          <CoverImageDropzone
             value={previewUrl}
+            onChange={setPreviewUrl}
             disabled={!canManageSiteContent}
-            onChange={(e) => setPreviewUrl(e.target.value)}
           />
         </div>
         <div className="space-y-2">
@@ -830,11 +934,18 @@ export function EkstrakurikulerFormPage({
               onChange={(e) => setStatus(e.target.value as typeof status)}
             >
               <option value="DRAFT">DRAFT</option>
+              <option value="PENDING_REVIEW">PENDING_REVIEW</option>
               <option value="PUBLISHED">PUBLISHED</option>
+              <option value="REJECTED">REJECTED</option>
               <option value="ARCHIVED">ARCHIVED</option>
             </select>
           </div>
         </div>
+        <SiteContentLayoutConfigFields
+          value={layoutConfig}
+          onChange={setLayoutConfig}
+          disabled={!canManageSiteContent}
+        />
         {canManageSiteContent ? (
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={busy} variant="secondary">
@@ -847,6 +958,16 @@ export function EkstrakurikulerFormPage({
             >
               Publikasikan
             </Button>
+            {mode === "edit" && id ? (
+              <SiteContentSubmitButton
+                entity="ekstrakurikuler"
+                id={id}
+                status={status}
+                disabled={busy}
+                size="default"
+                onDone={() => setStatus("PENDING_REVIEW")}
+              />
+            ) : null}
             {mode === "edit" ? (
               <Button
                 type="button"
@@ -920,12 +1041,13 @@ export function PrestasiListPage() {
       </div>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
       {loading ? (
-        <p className="text-sm text-[color:var(--color-body)]">Memuat…</p>
+        <TableSkeleton rows={6} cols={5} />
       ) : (
         <div className="overflow-x-auto border border-[color:var(--color-border)] bg-white">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)]">
               <tr>
+                {canManageSiteContent ? <SortableHandleHeader /> : null}
                 <th className="px-4 py-3 font-medium">Judul</th>
                 <th className="px-4 py-3 font-medium">Siswa/Tim</th>
                 <th className="px-4 py-3 font-medium">Status</th>
@@ -933,25 +1055,55 @@ export function PrestasiListPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b border-[color:var(--color-border)] last:border-0"
-                >
-                  <td className="px-4 py-3 font-medium">{row.judul}</td>
-                  <td className="px-4 py-3">{row.siswaLabel}</td>
-                  <td className="px-4 py-3">{row.status}</td>
-                  <td className="px-4 py-3 text-right">
-                    <Button asChild size="sm" variant="secondary">
-                      <Link to={`/prestasi/${row.id}/edit`}>Edit</Link>
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+              <SortableContentRows
+                entity="prestasi"
+                items={items}
+                setItems={setItems}
+                getToken={getToken}
+                enabled={canManageSiteContent && items.length > 0}
+              >
+                {(row, handle) => (
+                  <>
+                    {handle ? (
+                      <td className="px-2 py-3 align-middle">{handle}</td>
+                    ) : null}
+                    <td className="px-4 py-3 font-medium">{row.judul}</td>
+                    <td className="px-4 py-3">{row.siswaLabel}</td>
+                    <td className="px-4 py-3">{row.status}</td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex flex-wrap justify-end gap-2">
+                        <Button asChild size="sm" variant="secondary">
+                          <Link to={`/prestasi/${row.id}/edit`}>Edit</Link>
+                        </Button>
+                        {canManageSiteContent ? (
+                          <SiteContentSubmitButton
+                            entity="prestasi"
+                            id={row.id}
+                            status={row.status}
+                            onDone={() =>
+                              setItems((prev) =>
+                                prev.map((x) =>
+                                  x.id === row.id
+                                    ? {
+                                        ...x,
+                                        status: "PENDING_REVIEW" as const,
+                                        reviewNote: null,
+                                      }
+                                    : x,
+                                ),
+                              )
+                            }
+                          />
+                        ) : null}
+                      </div>
+                    </td>
+                  </>
+                )}
+              </SortableContentRows>
               {items.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={4}
+                    colSpan={canManageSiteContent ? 5 : 4}
                     className="px-4 py-8 text-center text-[color:var(--color-body)]"
                   >
                     Belum ada prestasi.
@@ -983,9 +1135,12 @@ export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
   const [ringkasan, setRingkasan] = useState("");
   const [fileUrl, setFileUrl] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
-  const [status, setStatus] = useState<"DRAFT" | "PUBLISHED" | "ARCHIVED">(
-    "DRAFT",
-  );
+  const [layoutConfig, setLayoutConfig] = useState<SiteContentLayoutConfig>({
+    ...DEFAULT_SITE_CONTENT_LAYOUT_CONFIG,
+  });
+  const [status, setStatus] = useState<
+    "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "ARCHIVED"
+  >("DRAFT");
 
   useEffect(() => {
     if (!isLoaded || mode !== "edit" || !id) return;
@@ -1004,6 +1159,7 @@ export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
         setRingkasan(row.ringkasan);
         setFileUrl(row.fileUrl);
         setSortOrder(row.sortOrder);
+        setLayoutConfig(row.layoutConfig ?? { ...DEFAULT_SITE_CONTENT_LAYOUT_CONFIG });
         setStatus(row.status);
       } finally {
         if (!cancelled) setLoading(false);
@@ -1024,6 +1180,7 @@ export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
       siswaLabel,
       ringkasan,
       fileUrl,
+      layoutConfig,
       sortOrder,
       status: nextStatus,
     };
@@ -1062,7 +1219,7 @@ export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
   }
 
   if (loading) {
-    return <p className="text-sm text-[color:var(--color-body)]">Memuat…</p>;
+    return <FormSkeleton />;
   }
 
   return (
@@ -1127,12 +1284,16 @@ export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
           />
         </div>
         <div className="space-y-2">
-          <Label>URL dokumentasi / gambar</Label>
-          <Input
+          <Label>Dokumentasi / gambar</Label>
+          <CoverImageDropzone
             value={fileUrl}
+            onChange={setFileUrl}
             disabled={!canManageSiteContent}
-            onChange={(e) => setFileUrl(e.target.value)}
-            placeholder="https://…"
+            accept={{
+              "image/*": [".png", ".jpg", ".jpeg", ".webp", ".gif"],
+              "application/pdf": [".pdf"],
+            }}
+            label="Seret gambar/PDF ke sini, atau klik untuk unggah"
           />
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -1154,11 +1315,18 @@ export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
               onChange={(e) => setStatus(e.target.value as typeof status)}
             >
               <option value="DRAFT">DRAFT</option>
+              <option value="PENDING_REVIEW">PENDING_REVIEW</option>
               <option value="PUBLISHED">PUBLISHED</option>
+              <option value="REJECTED">REJECTED</option>
               <option value="ARCHIVED">ARCHIVED</option>
             </select>
           </div>
         </div>
+        <SiteContentLayoutConfigFields
+          value={layoutConfig}
+          onChange={setLayoutConfig}
+          disabled={!canManageSiteContent}
+        />
         {canManageSiteContent ? (
           <div className="flex flex-wrap gap-2">
             <Button type="submit" disabled={busy} variant="secondary">
@@ -1171,6 +1339,16 @@ export function PrestasiFormPage({ mode }: { mode: "create" | "edit" }) {
             >
               Publikasikan
             </Button>
+            {mode === "edit" && id ? (
+              <SiteContentSubmitButton
+                entity="prestasi"
+                id={id}
+                status={status}
+                disabled={busy}
+                size="default"
+                onDone={() => setStatus("PENDING_REVIEW")}
+              />
+            ) : null}
             {mode === "edit" ? (
               <Button
                 type="button"

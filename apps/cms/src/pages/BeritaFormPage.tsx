@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { BeritaForm } from "@/components/dashboard/berita/BeritaForm";
 import { Button } from "@/components/ui/button";
+import { FormSkeleton } from "@/components/ui/loading-skeleton";
 import {
   ApiClientError,
   fetchBeritaById,
@@ -87,9 +88,7 @@ export function BeritaFormPage({ mode }: { mode: "create" | "edit" }) {
         </div>
       ) : null}
 
-      {loading ? (
-        <p className="text-sm text-[color:var(--color-body)]">Memuat…</p>
-      ) : null}
+      {loading ? <FormSkeleton /> : null}
 
       {!loading && !error && mode === "create" ? (
         <BeritaForm mode="create" kategori={kategori} />

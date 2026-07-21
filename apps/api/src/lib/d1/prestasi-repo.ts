@@ -31,6 +31,9 @@ function mapList(row: PrestasiRow): PrestasiListItem {
     fileUrl: row.file_url,
     sortOrder: row.sort_order,
     status: row.status,
+    reviewedBy: null,
+    reviewedAt: null,
+    reviewNote: null,
     publishedAt: row.published_at,
   };
 }
@@ -38,6 +41,13 @@ function mapList(row: PrestasiRow): PrestasiListItem {
 function mapFull(row: PrestasiRow): Prestasi {
   return {
     ...mapList(row),
+    layoutConfig: {
+      showHero: true,
+      showFeatures: true,
+      showHours: true,
+      showStats: false,
+      layoutTemplate: "default",
+    },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -50,6 +60,7 @@ export type PrestasiWriteInput = {
   siswaLabel: string;
   ringkasan: string;
   fileUrl: string;
+  layoutConfig?: import("@teknovo/shared").SiteContentLayoutConfig;
   sortOrder?: number;
   status: SiteContentStatus;
 };
@@ -59,7 +70,13 @@ function publishedAtFor(
   previous: string | null,
 ): string | null {
   if (status === "PUBLISHED") return previous ?? nowIso();
-  if (status === "DRAFT") return null;
+  if (
+    status === "DRAFT" ||
+    status === "PENDING_REVIEW" ||
+    status === "REJECTED"
+  ) {
+    return null;
+  }
   return previous;
 }
 

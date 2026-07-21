@@ -63,6 +63,27 @@ export default defineConfig(({ mode }) => {
           find: "@teknovo/shared",
           replacement: path.resolve(root, "../../packages/shared/src/index.ts"),
         },
+        // Shared `src/` imports resolve from repo root; pin CMS-only packages.
+        {
+          find: "react-dropzone",
+          replacement: path.join(root, "node_modules/react-dropzone"),
+        },
+        {
+          find: "@dnd-kit/core",
+          replacement: path.join(root, "node_modules/@dnd-kit/core"),
+        },
+        {
+          find: "@dnd-kit/sortable",
+          replacement: path.join(root, "node_modules/@dnd-kit/sortable"),
+        },
+        {
+          find: "@dnd-kit/utilities",
+          replacement: path.join(root, "node_modules/@dnd-kit/utilities"),
+        },
+        {
+          find: "framer-motion",
+          replacement: path.join(root, "node_modules/framer-motion"),
+        },
         { find: "@", replacement: repoSrc },
       ],
     },

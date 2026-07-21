@@ -55,9 +55,41 @@ export const kategoriFormSchema = z.object({
 
 export type KategoriFormValues = z.infer<typeof kategoriFormSchema>;
 
-const siteContentStatus = z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]);
+const siteContentStatus = z.enum([
+  "DRAFT",
+  "PENDING_REVIEW",
+  "PUBLISHED",
+  "REJECTED",
+  "ARCHIVED",
+]);
+
+export const siteContentRejectSchema = z.object({
+  note: z.string().min(1).max(2000),
+});
+
+export type SiteContentRejectValues = z.infer<typeof siteContentRejectSchema>;
 
 const optionalUrl = z.string().url().optional().or(z.literal(""));
+
+export const siteContentLayoutConfigSchema = z
+  .object({
+    showHero: z.boolean().default(true),
+    showFeatures: z.boolean().default(true),
+    showHours: z.boolean().default(true),
+    showStats: z.boolean().default(false),
+    layoutTemplate: z.string().min(1).max(60).default("default"),
+  })
+  .default({
+    showHero: true,
+    showFeatures: true,
+    showHours: true,
+    showStats: false,
+    layoutTemplate: "default",
+  });
+
+export type SiteContentLayoutConfigValues = z.infer<
+  typeof siteContentLayoutConfigSchema
+>;
 
 export const fasilitasFormSchema = z.object({
   title: z.string().min(2).max(160),
@@ -134,6 +166,7 @@ export const fasilitasFormSchema = z.object({
         .optional(),
     })
     .default({}),
+  layoutConfig: siteContentLayoutConfigSchema,
   sortOrder: z.number().int().min(0).max(9999).default(0),
   showInNav: z.boolean().default(true),
   status: siteContentStatus,
@@ -156,6 +189,7 @@ export const ekstrakurikulerFormSchema = z.object({
   jadwalRingkas: z.string().max(200).optional().or(z.literal("")),
   lokasiLatihan: z.string().max(200).optional().or(z.literal("")),
   pembinaNama: z.string().max(120).optional().or(z.literal("")),
+  layoutConfig: siteContentLayoutConfigSchema,
   sortOrder: z.number().int().min(0).max(9999).default(0),
   status: siteContentStatus,
 });
@@ -171,11 +205,156 @@ export const prestasiFormSchema = z.object({
   siswaLabel: z.string().min(1).max(160),
   ringkasan: z.string().min(1).max(800),
   fileUrl: z.string().url(),
+  layoutConfig: siteContentLayoutConfigSchema,
   sortOrder: z.number().int().min(0).max(9999).default(0),
   status: siteContentStatus,
 });
 
 export type PrestasiFormValues = z.infer<typeof prestasiFormSchema>;
+
+const siteContentSlug = z
+  .string()
+  .min(2)
+  .max(120)
+  .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+
+export const kurikulumFormSchema = z.object({
+  judul: z.string().min(2).max(200),
+  slug: siteContentSlug,
+  deskripsi: z.string().min(1).max(8000),
+  coverUrl: optionalUrl,
+  dokumenUrl: optionalUrl,
+  tahunAjaran: z.string().min(1).max(40),
+  jurusan: z.array(z.string().min(1).max(120)).max(20).default([]),
+  strukturKurikulum: z.unknown().nullable().optional(),
+  layoutConfig: siteContentLayoutConfigSchema,
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+  showInNav: z.boolean().default(true),
+  status: siteContentStatus,
+});
+
+export type KurikulumFormValues = z.infer<typeof kurikulumFormSchema>;
+
+export const programSekolahFormSchema = z.object({
+  judul: z.string().min(2).max(200),
+  slug: siteContentSlug,
+  deskripsi: z.string().min(1).max(8000),
+  coverUrl: optionalUrl,
+  ikon: z.string().max(500).optional().or(z.literal("")),
+  kategori: z.enum(["AKADEMIK", "NON_AKADEMIK", "KEAGAMAAN"]),
+  highlightItems: z.array(z.string().min(1).max(200)).max(20).default([]),
+  layoutConfig: siteContentLayoutConfigSchema,
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+  showInNav: z.boolean().default(true),
+  status: siteContentStatus,
+});
+
+export type ProgramSekolahFormValues = z.infer<typeof programSekolahFormSchema>;
+
+export const programJurusanFormSchema = z.object({
+  nama: z.string().min(2).max(200),
+  slug: siteContentSlug,
+  singkatan: z.string().min(1).max(20),
+  deskripsi: z.string().min(1).max(8000),
+  coverUrl: optionalUrl,
+  ikon: z.string().max(500).optional().or(z.literal("")),
+  prospekKerja: z.array(z.string().min(1).max(200)).max(30).default([]),
+  kompetensiDasar: z.array(z.string().min(1).max(200)).max(30).default([]),
+  fasilitas: z.array(z.string().min(1).max(200)).max(30).default([]),
+  jumlahSiswa: z.number().int().min(0).max(100000).nullable().optional(),
+  linkPendaftaran: optionalUrl,
+  layoutConfig: siteContentLayoutConfigSchema,
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+  showInNav: z.boolean().default(true),
+  status: siteContentStatus,
+});
+
+export type ProgramJurusanFormValues = z.infer<typeof programJurusanFormSchema>;
+
+export const tenagaPengajarFormSchema = z.object({
+  nama: z.string().min(2).max(160),
+  slug: siteContentSlug,
+  nip: z.string().max(40).optional().or(z.literal("")),
+  fotoUrl: optionalUrl,
+  jabatan: z.string().min(1).max(160),
+  bidangKeahlian: z.string().max(200).optional().or(z.literal("")),
+  mataPelajaran: z.array(z.string().min(1).max(120)).max(30).default([]),
+  pendidikan: z.string().max(200).optional().or(z.literal("")),
+  pengalaman: z.string().max(8000).optional().or(z.literal("")),
+  kontakEmail: z
+    .string()
+    .email()
+    .max(120)
+    .optional()
+    .or(z.literal("")),
+  mediaSosial: z.record(z.string(), z.string().max(500)).nullable().optional(),
+  layoutConfig: siteContentLayoutConfigSchema,
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+  showInNav: z.boolean().default(true),
+  status: siteContentStatus,
+});
+
+export type TenagaPengajarFormValues = z.infer<typeof tenagaPengajarFormSchema>;
+
+const kontakJamOperasionalSchema = z.object({
+  hari: z.string().min(1).max(80),
+  buka: z.string().min(1).max(40),
+  tutup: z.string().min(1).max(40),
+});
+
+export const kontakFormSchema = z.object({
+  label: z.string().min(2).max(160),
+  slug: siteContentSlug,
+  alamatLengkap: z.string().min(1).max(4000),
+  telepon: z.array(z.string().min(1).max(40)).max(10).default([]),
+  email: z.array(z.string().email().max(120)).max(10).default([]),
+  whatsapp: z.string().max(40).optional().or(z.literal("")),
+  googleMapsUrl: optionalUrl,
+  googleMapsEmbed: z.string().max(8000).optional().or(z.literal("")),
+  jamOperasional: z
+    .array(kontakJamOperasionalSchema)
+    .max(14)
+    .nullable()
+    .optional(),
+  mediaSosial: z.record(z.string(), z.string().max(500)).nullable().optional(),
+  layoutConfig: siteContentLayoutConfigSchema,
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+  showInNav: z.boolean().default(true),
+  status: siteContentStatus,
+});
+
+export type KontakFormValues = z.infer<typeof kontakFormSchema>;
+
+export const pengumumanFormSchema = z.object({
+  judul: z.string().min(2).max(200),
+  slug: siteContentSlug,
+  konten: z.string().min(1).max(20000),
+  tipe: z.enum(["INFO", "WARNING", "URGENT"]).default("INFO"),
+  bannerUrl: optionalUrl,
+  tanggalMulai: z.string().max(40).nullable().optional().or(z.literal("")),
+  tanggalAkhir: z.string().max(40).nullable().optional().or(z.literal("")),
+  isSticky: z.boolean().default(false),
+  layoutConfig: siteContentLayoutConfigSchema,
+  sortOrder: z.number().int().min(0).max(9999).default(0),
+  status: siteContentStatus,
+});
+
+export type PengumumanFormValues = z.infer<typeof pengumumanFormSchema>;
+
+/** Batch sortOrder update for site-content list drag-and-drop. */
+export const siteContentReorderSchema = z.object({
+  items: z
+    .array(
+      z.object({
+        id: z.string().uuid(),
+        sortOrder: z.number().int().min(0).max(9999),
+      }),
+    )
+    .min(1)
+    .max(200),
+});
+
+export type SiteContentReorderValues = z.infer<typeof siteContentReorderSchema>;
 
 export const siteMediaPatchSchema = z.object({
   url: z.string().url(),

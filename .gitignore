@@ -63,3 +63,4 @@ cert.pem
 *.tsbuildinfo
 next-env.d.ts
 cloudflare-env.d.ts
+ops/uptime-kuma/data/

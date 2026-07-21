@@ -10,6 +10,7 @@ import {
 } from "@/lib/fasilitas-landing-content";
 
 function apiToLanding(item: Fasilitas): FasilitasLandingItem {
+  const layout = item.layoutConfig;
   return {
     slug: item.slug as FasilitasSlug,
     title: item.title,
@@ -17,10 +18,10 @@ function apiToLanding(item: Fasilitas): FasilitasLandingItem {
     coverSrc: item.coverUrl ?? "",
     highlights: item.highlights,
     paragraphs: item.paragraphs,
-    features: item.extras.features,
-    hours: item.extras.hours,
+    features: layout?.showFeatures === false ? undefined : item.extras.features,
+    hours: layout?.showHours === false ? undefined : item.extras.hours,
     services: item.extras.services,
-    stats: item.extras.stats,
+    stats: layout?.showStats ? item.extras.stats : undefined,
     pathwaySteps: item.extras.pathwaySteps,
     quote: item.extras.quote,
     splitNarrative: item.extras.splitNarrative,

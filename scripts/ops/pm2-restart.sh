@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Graceful reload / restart of teknovo-api (PM2 cluster).
+# Graceful reload / restart of teknovo-cms-api (PM2).
 #   bash scripts/ops/pm2-restart.sh          # reload (zero-downtime when possible)
 #   bash scripts/ops/pm2-restart.sh hard     # restart (brief disconnect)
 set -euo pipefail
 
 REPO_ROOT="${REPO_ROOT:-/www/wwwroot/eduos-teknovo/teknovo-web}"
 API_DIR="${REPO_ROOT}/apps/api"
+PM2_APP_NAME="${PM2_APP_NAME:-teknovo-cms-api}"
 MODE="${1:-reload}"
 
 if ! command -v pm2 >/dev/null 2>&1; then
@@ -20,10 +21,10 @@ case "$MODE" in
     pm2 reload ecosystem.config.cjs --update-env || pm2 start ecosystem.config.cjs
     ;;
   hard|restart)
-    pm2 restart teknovo-api --update-env || pm2 start ecosystem.config.cjs
+    pm2 restart "$PM2_APP_NAME" --update-env || pm2 start ecosystem.config.cjs
     ;;
   stop)
-    pm2 stop teknovo-api
+    pm2 stop "$PM2_APP_NAME"
     ;;
   *)
     echo "Usage: $0 [reload|hard|stop]" >&2
@@ -32,4 +33,4 @@ case "$MODE" in
 esac
 
 pm2 save || true
-pm2 status teknovo-api
+pm2 status "$PM2_APP_NAME"

@@ -32,6 +32,10 @@ export async function getAnalyticsOverview(
     artikelReview: Number(row.artikel_review),
     artikelPublished: Number(row.artikel_published),
     kategoriTotal: Number(row.kategori_total),
+    siteContentPending: 0,
+    pengumumanTotal: 0,
+    beritaPerBulan: [],
+    recentActivity: [],
     source: "api",
   };
 }

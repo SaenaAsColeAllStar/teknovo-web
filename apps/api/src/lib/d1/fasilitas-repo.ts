@@ -3,8 +3,10 @@ import type {
   Fasilitas,
   FasilitasExtras,
   FasilitasListItem,
+  SiteContentLayoutConfig,
   SiteContentStatus,
 } from "@teknovo/shared";
+import { DEFAULT_SITE_CONTENT_LAYOUT_CONFIG } from "@teknovo/shared";
 
 type FasilitasRow = {
   id: string;
@@ -53,6 +55,9 @@ function mapList(row: FasilitasRow): FasilitasListItem {
     sortOrder: row.sort_order,
     showInNav: row.show_in_nav === 1,
     status: row.status,
+    reviewedBy: null,
+    reviewedAt: null,
+    reviewNote: null,
     publishedAt: row.published_at,
   };
 }
@@ -63,6 +68,7 @@ function mapFull(row: FasilitasRow): Fasilitas {
     highlights: parseJsonArray(row.highlights_json),
     paragraphs: parseJsonArray(row.paragraphs_json),
     extras: parseExtras(row.extras_json),
+    layoutConfig: { ...DEFAULT_SITE_CONTENT_LAYOUT_CONFIG },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -77,6 +83,7 @@ export type FasilitasWriteInput = {
   highlights?: string[];
   paragraphs?: string[];
   extras?: FasilitasExtras;
+  layoutConfig?: SiteContentLayoutConfig;
   sortOrder?: number;
   showInNav?: boolean;
   status: SiteContentStatus;
@@ -87,7 +94,13 @@ function publishedAtFor(
   previous: string | null,
 ): string | null {
   if (status === "PUBLISHED") return previous ?? nowIso();
-  if (status === "DRAFT") return null;
+  if (
+    status === "DRAFT" ||
+    status === "PENDING_REVIEW" ||
+    status === "REJECTED"
+  ) {
+    return null;
+  }
   return previous;
 }
 

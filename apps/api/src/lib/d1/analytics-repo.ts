@@ -27,6 +27,10 @@ export async function d1AnalyticsOverview(
     artikelReview,
     artikelPublished,
     kategoriTotal,
+    siteContentPending: 0,
+    pengumumanTotal: 0,
+    beritaPerBulan: [],
+    recentActivity: [],
     source: "api",
   };
 }

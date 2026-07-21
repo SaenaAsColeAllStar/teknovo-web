@@ -7,9 +7,11 @@ import { toast } from "sonner";
 import { useCmsRole } from "@/components/dashboard/CmsRoleProvider";
 import { BeritaListRefresh } from "@/components/dashboard/berita/BeritaListRefresh";
 import { Button } from "@/components/ui/button";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { TableSkeleton } from "@/components/ui/loading-skeleton";
 import { ApiClientError, fetchBeritaListCms } from "@/lib/api-client";
 import type { BeritaListItem, BeritaStatus } from "@/types/berita";
+import { Newspaper } from "lucide-react";
 
 import { useCmsGetToken } from "../lib/use-cms-get-token";
 import { onRouterRefresh } from "../shims/next-navigation";
@@ -101,27 +103,31 @@ export function BeritaListPage() {
       </div>
 
       {error ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tidak dapat memuat berita</CardTitle>
-            <CardDescription>{error}</CardDescription>
-          </CardHeader>
-        </Card>
+        <EmptyState
+          icon={Newspaper}
+          title="Tidak dapat memuat berita"
+          description={error}
+        />
       ) : null}
+
+      {loading ? <TableSkeleton rows={6} cols={5} /> : null}
 
       {!error && !loading && items.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Belum ada berita</CardTitle>
-            <CardDescription>
-              Belum ada entri. Klik <strong>Berita baru</strong> untuk menulis
-              pengumuman atau kegiatan sekolah.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <EmptyState
+          icon={Newspaper}
+          title="Belum ada berita"
+          description="Belum ada entri. Klik Berita baru untuk menulis kegiatan sekolah."
+          action={
+            canWrite ? (
+              <Button asChild size="sm">
+                <Link to="/berita/baru">Berita baru</Link>
+              </Button>
+            ) : undefined
+          }
+        />
       ) : null}
 
-      {!error && items.length > 0 ? (
+      {!error && !loading && items.length > 0 ? (
         <div className="overflow-x-auto border border-[color:var(--color-border)] bg-white">
           <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-[color:var(--color-border)] bg-[color:var(--color-neutral-soft)] text-[color:var(--color-body)]">

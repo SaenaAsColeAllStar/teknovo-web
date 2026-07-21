@@ -4,20 +4,21 @@ import type {
   FasilitasListItem,
   SiteContentStatus,
 } from "@teknovo/shared";
-import { asExtras, asStringArray, toIso, toIsoRequired } from "./map-helpers";
+import {
+  asExtras,
+  asLayoutConfig,
+  asStringArray,
+  layoutConfigJson,
+  toIso,
+  toIsoRequired,
+  mapReviewFields,
+  publishedAtForStatus
+} from "./map-helpers";
 import { isUuid } from "../ids";
 
 export type { FasilitasWriteInput } from "../d1/fasilitas-repo";
 import type { FasilitasWriteInput } from "../d1/fasilitas-repo";
 
-function publishedAtFor(
-  status: SiteContentStatus,
-  previous: Date | null,
-): Date | null {
-  if (status === "PUBLISHED") return previous ?? new Date();
-  if (status === "DRAFT") return null;
-  return previous;
-}
 
 function mapList(row: FasilitasModel): FasilitasListItem {
   return {
@@ -30,6 +31,7 @@ function mapList(row: FasilitasModel): FasilitasListItem {
     sortOrder: row.sortOrder,
     showInNav: row.showInNav,
     status: row.status,
+    ...mapReviewFields(row),
     publishedAt: toIso(row.publishedAt),
   };
 }
@@ -40,6 +42,7 @@ function mapFull(row: FasilitasModel): Fasilitas {
     highlights: asStringArray(row.highlightsJson),
     paragraphs: asStringArray(row.paragraphsJson),
     extras: asExtras(row.extrasJson),
+    layoutConfig: asLayoutConfig(row.layoutConfig),
     createdAt: toIsoRequired(row.createdAt),
     updatedAt: toIsoRequired(row.updatedAt),
   };
@@ -109,7 +112,7 @@ export async function prismaCreateFasilitas(
   prisma: PrismaClient,
   input: FasilitasWriteInput,
 ): Promise<Fasilitas> {
-  const publishedAt = publishedAtFor(input.status, null);
+  const publishedAt = publishedAtForStatus(input.status, null);
   const row = await prisma.fasilitas.create({
     data: {
       slug: input.slug,
@@ -120,6 +123,7 @@ export async function prismaCreateFasilitas(
       highlightsJson: input.highlights ?? [],
       paragraphsJson: input.paragraphs ?? [],
       extrasJson: input.extras ?? {},
+      layoutConfig: layoutConfigJson(input.layoutConfig),
       sortOrder: input.sortOrder ?? 0,
       showInNav: input.showInNav !== false,
       status: input.status,
@@ -136,7 +140,7 @@ export async function prismaUpdateFasilitas(
 ): Promise<Fasilitas | null> {
   const existing = await prisma.fasilitas.findUnique({ where: { id } });
   if (!existing) return null;
-  const publishedAt = publishedAtFor(input.status, existing.publishedAt);
+  const publishedAt = publishedAtForStatus(input.status, existing.publishedAt);
   const row = await prisma.fasilitas.update({
     where: { id },
     data: {
@@ -148,6 +152,7 @@ export async function prismaUpdateFasilitas(
       highlightsJson: input.highlights ?? [],
       paragraphsJson: input.paragraphs ?? [],
       extrasJson: input.extras ?? {},
+      layoutConfig: layoutConfigJson(input.layoutConfig),
       sortOrder: input.sortOrder ?? 0,
       showInNav: input.showInNav !== false,
       status: input.status,

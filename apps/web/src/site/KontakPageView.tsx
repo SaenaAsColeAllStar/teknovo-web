@@ -1,5 +1,6 @@
 "use client";
 
+import type { Kontak } from "@teknovo/shared";
 import type { ReactElement } from "react";
 
 import { PublicPageHero } from "@/components/features/landing/PublicPageHero";
@@ -9,13 +10,17 @@ import { KONTAK_HERO_EYEBROW, KONTAK_PAGE_TITLE } from "@/lib/kontak-landing-con
 import { publicPageSectionContactClassName } from "@/lib/public-section-styles";
 
 /** Kontak page body — mirrors Next `(site)/kontak/page`. */
-export function KontakPageView(): ReactElement {
+export function KontakPageView({
+  items = [],
+}: {
+  items?: Kontak[];
+}): ReactElement {
   return (
     <MotionInView as="section" className={publicPageSectionContactClassName}>
       <div className="public-site-container">
         <PublicPageHero eyebrow={KONTAK_HERO_EYEBROW} title={KONTAK_PAGE_TITLE} />
         <div className="mt-16 sm:mt-20">
-          <PublicContactSection />
+          <PublicContactSection items={items} />
         </div>
       </div>
     </MotionInView>

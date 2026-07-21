@@ -2,6 +2,7 @@ import { useUser } from "@clerk/react";
 import {
   FilePlus2,
   Image as ImageIcon,
+  Megaphone,
   Newspaper,
   PenLine,
   ShieldCheck,
@@ -9,9 +10,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { AnalyticsBigWidget } from "@/components/dashboard/AnalyticsBigWidget";
 import { DashboardAnalytics } from "@/components/dashboard/DashboardAnalytics";
-import { TrafficHeatmapWidget } from "@/components/dashboard/TrafficHeatmapWidget";
 import { useCmsRole } from "@/components/dashboard/CmsRoleProvider";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,8 +25,14 @@ import { CMS_ROLE_LABEL } from "@teknovo/shared";
 /** Mirrors `src/app/(dashboard)/dashboard/page.tsx`, resolved client-side for the SPA. */
 export function OverviewPage() {
   const { user } = useUser();
-  const { role, canWrite, canWriteArtikel, canViewModerasi, canAccessBeritaSekolah } =
-    useCmsRole();
+  const {
+    role,
+    canWrite,
+    canWriteArtikel,
+    canViewModerasi,
+    canAccessBeritaSekolah,
+    canManageSiteContent,
+  } = useCmsRole();
   const nama = user?.fullName || user?.primaryEmailAddress?.emailAddress || "Editor";
   const isSiswa = role === "siswa";
 
@@ -52,41 +57,6 @@ export function OverviewPage() {
         />
       ) : null}
 
-      {/* Preview widgets — sample data; wire to analytics API later. */}
-      <section className="space-y-3" aria-labelledby="traffic-analytics-heading">
-        <div>
-          <h2
-            id="traffic-analytics-heading"
-            className="text-lg font-semibold text-[color:var(--color-heading)]"
-          >
-            Ringkasan lalu lintas
-          </h2>
-          <p className="mt-1 text-xs text-[color:var(--color-body-subtle)]">
-            Pratinjau widget analitik (data contoh — belum tersambung ke API).
-          </p>
-        </div>
-        <div className="overflow-x-auto pb-1">
-          <AnalyticsBigWidget />
-        </div>
-      </section>
-
-      <section className="space-y-3" aria-labelledby="traffic-heatmap-heading">
-        <div>
-          <h2
-            id="traffic-heatmap-heading"
-            className="text-lg font-semibold text-[color:var(--color-heading)]"
-          >
-            Heatmap sesi
-          </h2>
-          <p className="mt-1 text-xs text-[color:var(--color-body-subtle)]">
-            Kepadatan lalu lintas per setengah jam (data contoh).
-          </p>
-        </div>
-        <div className="overflow-x-auto pb-1">
-          <TrafficHeatmapWidget />
-        </div>
-      </section>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {canAccessBeritaSekolah ? (
           <Card>
@@ -94,11 +64,27 @@ export function OverviewPage() {
               <CardTitle className="flex items-center gap-2 text-base">
                 <Newspaper className="size-4" /> Berita
               </CardTitle>
-              <CardDescription>Pengumuman & kegiatan resmi</CardDescription>
+              <CardDescription>Kegiatan & liputan resmi</CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild size="sm" variant="secondary">
                 <Link to="/berita">Kelola</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+
+        {canManageSiteContent ? (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Megaphone className="size-4" /> Pengumuman
+              </CardTitle>
+              <CardDescription>Banner info, sticky, jadwal tayang</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild size="sm" variant="secondary">
+                <Link to="/pengumuman">Kelola</Link>
               </Button>
             </CardContent>
           </Card>

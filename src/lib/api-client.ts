@@ -926,6 +926,10 @@ export async function fetchCmsAnalytics(
           artikelReview: artikel.filter((a) => a.status === "REVIEW").length,
           artikelPublished: artikel.filter((a) => a.status === "PUBLISHED").length,
           kategoriTotal: kategoriAll.meta?.total ?? kategori.length,
+          siteContentPending: 0,
+          pengumumanTotal: 0,
+          beritaPerBulan: [],
+          recentActivity: [],
           source: "aggregate" as const,
         };
       } catch {
@@ -947,6 +951,10 @@ function emptyAnalytics(
     artikelReview: 0,
     artikelPublished: 0,
     kategoriTotal: 0,
+    siteContentPending: 0,
+    pengumumanTotal: 0,
+    beritaPerBulan: [],
+    recentActivity: [],
     source,
   };
 }
@@ -963,6 +971,24 @@ export type {
   Prestasi,
   PrestasiListItem,
   PrestasiFormValues,
+  Kurikulum,
+  KurikulumListItem,
+  KurikulumFormValues,
+  ProgramSekolah,
+  ProgramSekolahListItem,
+  ProgramSekolahFormValues,
+  ProgramJurusan,
+  ProgramJurusanListItem,
+  ProgramJurusanFormValues,
+  TenagaPengajar,
+  TenagaPengajarListItem,
+  TenagaPengajarFormValues,
+  Kontak,
+  KontakListItem,
+  KontakFormValues,
+  Pengumuman,
+  PengumumanListItem,
+  PengumumanFormValues,
   SiteMediaItem,
   SiteMediaPatchValues,
 } from "@teknovo/shared";
@@ -971,6 +997,12 @@ export {
   fasilitasFormSchema,
   ekstrakurikulerFormSchema,
   prestasiFormSchema,
+  kurikulumFormSchema,
+  programSekolahFormSchema,
+  programJurusanFormSchema,
+  tenagaPengajarFormSchema,
+  kontakFormSchema,
+  pengumumanFormSchema,
   siteMediaPatchSchema,
 } from "@teknovo/shared";
 
@@ -984,6 +1016,24 @@ import type {
   Prestasi,
   PrestasiListItem,
   PrestasiFormValues,
+  Kurikulum,
+  KurikulumListItem,
+  KurikulumFormValues,
+  ProgramSekolah,
+  ProgramSekolahListItem,
+  ProgramSekolahFormValues,
+  ProgramJurusan,
+  ProgramJurusanListItem,
+  ProgramJurusanFormValues,
+  TenagaPengajar,
+  TenagaPengajarListItem,
+  TenagaPengajarFormValues,
+  Kontak,
+  KontakListItem,
+  KontakFormValues,
+  Pengumuman,
+  PengumumanListItem,
+  PengumumanFormValues,
   SiteMediaPatchValues,
 } from "@teknovo/shared";
 
@@ -1086,6 +1136,105 @@ export async function deleteFasilitas(
   token: string,
 ): Promise<void> {
   await request<void>(`/v1/fasilitas/${id}`, { method: "DELETE", token });
+}
+
+/* ─── Site content approval workflow ─────────────────────────────── */
+
+export type SiteContentEntityPath =
+  | "fasilitas"
+  | "ekstrakurikuler"
+  | "prestasi"
+  | "kurikulum"
+  | "program-sekolah"
+  | "program-jurusan"
+  | "tenaga-pengajar"
+  | "kontak"
+  | "pengumuman";
+
+export type SiteContentPendingItem = {
+  entity: SiteContentEntityPath;
+  id: string;
+  title: string;
+  slug: string | null;
+  status: "PENDING_REVIEW";
+  updatedAt: string;
+  editPath: string;
+};
+
+export type SiteContentApprovalResult = {
+  id: string;
+  status: string;
+  title: string;
+  reviewedBy?: string | null;
+  reviewedAt?: string | null;
+  publishedAt?: string | null;
+  reviewNote?: string | null;
+};
+
+export async function fetchSiteContentPendingReview(
+  token: string,
+): Promise<SiteContentPendingItem[]> {
+  const data = await request<
+    ApiOk<{ items: SiteContentPendingItem[]; entities: string[] }>
+  >("/v1/site-content/pending-review", { token, cache: "no-store" });
+  return data.data.items;
+}
+
+export async function submitSiteContentForReview(
+  entity: SiteContentEntityPath,
+  id: string,
+  token: string,
+): Promise<SiteContentApprovalResult> {
+  const data = await request<ApiOk<SiteContentApprovalResult>>(
+    `/v1/${entity}/${id}/submit`,
+    { method: "POST", token },
+  );
+  return data.data;
+}
+
+export async function approveSiteContentReview(
+  entity: SiteContentEntityPath,
+  id: string,
+  token: string,
+): Promise<SiteContentApprovalResult> {
+  const data = await request<ApiOk<SiteContentApprovalResult>>(
+    `/v1/${entity}/${id}/approve`,
+    { method: "POST", token },
+  );
+  return data.data;
+}
+
+export async function rejectSiteContentReview(
+  entity: SiteContentEntityPath,
+  id: string,
+  token: string,
+  note: string,
+): Promise<SiteContentApprovalResult> {
+  const data = await request<ApiOk<SiteContentApprovalResult>>(
+    `/v1/${entity}/${id}/reject`,
+    {
+      method: "POST",
+      token,
+      body: JSON.stringify({ note }),
+    },
+  );
+  return data.data;
+}
+
+export async function reorderSiteContent(
+  entity: SiteContentEntityPath,
+  items: { id: string; sortOrder: number }[],
+  token: string,
+): Promise<{ updated: number }> {
+  const data = await request<ApiOk<{ updated: number }>>(
+    `/v1/${entity}/reorder`,
+    {
+      method: "POST",
+      token,
+      body: JSON.stringify({ items }),
+    },
+  );
+  return data.data;
 }
 
 export async function fetchEkstrakurikulerFullOrNull(): Promise<
@@ -1237,6 +1386,444 @@ export async function updatePrestasi(
 
 export async function deletePrestasi(id: string, token: string): Promise<void> {
   await request<void>(`/v1/prestasi/${id}`, { method: "DELETE", token });
+}
+
+/* ─── Kurikulum ──────────────────────────────────────────────────── */
+
+export async function fetchKurikulumListCms(
+  token: string,
+  params?: { page?: number; limit?: number; status?: string },
+): Promise<ApiListResponse<KurikulumListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return request<ApiListResponse<KurikulumListItem>>(
+    `/v1/kurikulum${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchKurikulumById(
+  id: string,
+  token: string,
+): Promise<Kurikulum> {
+  const data = await request<ApiOk<Kurikulum>>(`/v1/kurikulum/id/${id}`, {
+    token,
+    cache: "no-store",
+  });
+  return data.data;
+}
+
+export async function createKurikulum(
+  values: KurikulumFormValues,
+  token: string,
+): Promise<Kurikulum> {
+  const data = await request<ApiOk<Kurikulum>>("/v1/kurikulum", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updateKurikulum(
+  id: string,
+  values: KurikulumFormValues,
+  token: string,
+): Promise<Kurikulum> {
+  const data = await request<ApiOk<Kurikulum>>(`/v1/kurikulum/${id}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function deleteKurikulum(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/kurikulum/${id}`, { method: "DELETE", token });
+}
+
+/* ─── Program sekolah ────────────────────────────────────────────── */
+
+export async function fetchProgramSekolahListCms(
+  token: string,
+  params?: { page?: number; limit?: number; status?: string },
+): Promise<ApiListResponse<ProgramSekolahListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return request<ApiListResponse<ProgramSekolahListItem>>(
+    `/v1/program-sekolah${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchProgramSekolahById(
+  id: string,
+  token: string,
+): Promise<ProgramSekolah> {
+  const data = await request<ApiOk<ProgramSekolah>>(
+    `/v1/program-sekolah/id/${id}`,
+    { token, cache: "no-store" },
+  );
+  return data.data;
+}
+
+export async function createProgramSekolah(
+  values: ProgramSekolahFormValues,
+  token: string,
+): Promise<ProgramSekolah> {
+  const data = await request<ApiOk<ProgramSekolah>>("/v1/program-sekolah", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updateProgramSekolah(
+  id: string,
+  values: ProgramSekolahFormValues,
+  token: string,
+): Promise<ProgramSekolah> {
+  const data = await request<ApiOk<ProgramSekolah>>(
+    `/v1/program-sekolah/${id}`,
+    {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(values),
+    },
+  );
+  return data.data;
+}
+
+export async function deleteProgramSekolah(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/program-sekolah/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+/* ─── Program jurusan ────────────────────────────────────────────── */
+
+export async function fetchProgramJurusanListCms(
+  token: string,
+  params?: { page?: number; limit?: number; status?: string },
+): Promise<ApiListResponse<ProgramJurusanListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return request<ApiListResponse<ProgramJurusanListItem>>(
+    `/v1/program-jurusan${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchProgramJurusanById(
+  id: string,
+  token: string,
+): Promise<ProgramJurusan> {
+  const data = await request<ApiOk<ProgramJurusan>>(
+    `/v1/program-jurusan/id/${id}`,
+    { token, cache: "no-store" },
+  );
+  return data.data;
+}
+
+export async function createProgramJurusan(
+  values: ProgramJurusanFormValues,
+  token: string,
+): Promise<ProgramJurusan> {
+  const data = await request<ApiOk<ProgramJurusan>>("/v1/program-jurusan", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updateProgramJurusan(
+  id: string,
+  values: ProgramJurusanFormValues,
+  token: string,
+): Promise<ProgramJurusan> {
+  const data = await request<ApiOk<ProgramJurusan>>(
+    `/v1/program-jurusan/${id}`,
+    {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(values),
+    },
+  );
+  return data.data;
+}
+
+export async function deleteProgramJurusan(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/program-jurusan/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+/* ─── Tenaga pengajar ────────────────────────────────────────────── */
+
+export async function fetchTenagaPengajarListCms(
+  token: string,
+  params?: { page?: number; limit?: number; status?: string },
+): Promise<ApiListResponse<TenagaPengajarListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return request<ApiListResponse<TenagaPengajarListItem>>(
+    `/v1/tenaga-pengajar${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchTenagaPengajarById(
+  id: string,
+  token: string,
+): Promise<TenagaPengajar> {
+  const data = await request<ApiOk<TenagaPengajar>>(
+    `/v1/tenaga-pengajar/id/${id}`,
+    { token, cache: "no-store" },
+  );
+  return data.data;
+}
+
+export async function createTenagaPengajar(
+  values: TenagaPengajarFormValues,
+  token: string,
+): Promise<TenagaPengajar> {
+  const data = await request<ApiOk<TenagaPengajar>>("/v1/tenaga-pengajar", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updateTenagaPengajar(
+  id: string,
+  values: TenagaPengajarFormValues,
+  token: string,
+): Promise<TenagaPengajar> {
+  const data = await request<ApiOk<TenagaPengajar>>(
+    `/v1/tenaga-pengajar/${id}`,
+    {
+      method: "PATCH",
+      token,
+      body: JSON.stringify(values),
+    },
+  );
+  return data.data;
+}
+
+export async function deleteTenagaPengajar(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/tenaga-pengajar/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+/* ─── Kontak ─────────────────────────────────────────────────────── */
+
+export async function fetchKontakListCms(
+  token: string,
+  params?: { page?: number; limit?: number; status?: string },
+): Promise<ApiListResponse<KontakListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return request<ApiListResponse<KontakListItem>>(
+    `/v1/kontak${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchKontakListPublished(
+  params?: { page?: number; limit?: number },
+): Promise<ApiListResponse<KontakListItem>> {
+  const qs = new URLSearchParams();
+  qs.set("status", "PUBLISHED");
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  return request<ApiListResponse<KontakListItem>>(
+    `/v1/kontak?${qs}`,
+    { next: { revalidate: 60, tags: ["kontak"] } },
+  );
+}
+
+/** Published kontak list. Unreachable / error → null (SSG-safe). */
+export async function fetchKontakListPublishedOrNull(params?: {
+  page?: number;
+  limit?: number;
+}): Promise<KontakListItem[] | null> {
+  try {
+    const data = await fetchKontakListPublished(params);
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+/** Full published kontak by slug. 404 → null; other errors → undefined. */
+export async function fetchKontakBySlugOrNull(
+  slug: string,
+): Promise<Kontak | null | undefined> {
+  try {
+    const data = await request<ApiOk<Kontak>>(`/v1/kontak/${slug}`, {
+      next: { revalidate: 60, tags: [`kontak:${slug}`] },
+    });
+    return data.data;
+  } catch (err) {
+    if (err instanceof ApiClientError && err.status === 404) return null;
+    return undefined;
+  }
+}
+
+export async function fetchKontakById(
+  id: string,
+  token: string,
+): Promise<Kontak> {
+  const data = await request<ApiOk<Kontak>>(`/v1/kontak/id/${id}`, {
+    token,
+    cache: "no-store",
+  });
+  return data.data;
+}
+
+export async function createKontak(
+  values: KontakFormValues,
+  token: string,
+): Promise<Kontak> {
+  const data = await request<ApiOk<Kontak>>("/v1/kontak", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updateKontak(
+  id: string,
+  values: KontakFormValues,
+  token: string,
+): Promise<Kontak> {
+  const data = await request<ApiOk<Kontak>>(`/v1/kontak/${id}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function deleteKontak(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/kontak/${id}`, {
+    method: "DELETE",
+    token,
+  });
+}
+
+/* ─── Pengumuman ─────────────────────────────────────────────────── */
+
+export async function fetchPengumumanListCms(
+  token: string,
+  params?: { page?: number; limit?: number; status?: string },
+): Promise<ApiListResponse<PengumumanListItem>> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.status) qs.set("status", params.status);
+  const q = qs.toString();
+  return request<ApiListResponse<PengumumanListItem>>(
+    `/v1/pengumuman${q ? `?${q}` : ""}`,
+    { token, cache: "no-store" },
+  );
+}
+
+export async function fetchPengumumanListPublished(
+  params?: { page?: number; limit?: number },
+): Promise<ApiListResponse<PengumumanListItem>> {
+  const qs = new URLSearchParams();
+  qs.set("status", "PUBLISHED");
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  return request<ApiListResponse<PengumumanListItem>>(
+    `/v1/pengumuman?${qs}`,
+    { next: { revalidate: 60, tags: ["pengumuman"] } },
+  );
+}
+
+export async function fetchPengumumanById(
+  id: string,
+  token: string,
+): Promise<Pengumuman> {
+  const data = await request<ApiOk<Pengumuman>>(`/v1/pengumuman/id/${id}`, {
+    token,
+    cache: "no-store",
+  });
+  return data.data;
+}
+
+export async function createPengumuman(
+  values: PengumumanFormValues,
+  token: string,
+): Promise<Pengumuman> {
+  const data = await request<ApiOk<Pengumuman>>("/v1/pengumuman", {
+    method: "POST",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function updatePengumuman(
+  id: string,
+  values: PengumumanFormValues,
+  token: string,
+): Promise<Pengumuman> {
+  const data = await request<ApiOk<Pengumuman>>(`/v1/pengumuman/${id}`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify(values),
+  });
+  return data.data;
+}
+
+export async function deletePengumuman(
+  id: string,
+  token: string,
+): Promise<void> {
+  await request<void>(`/v1/pengumuman/${id}`, {
+    method: "DELETE",
+    token,
+  });
 }
 
 export async function fetchSiteMediaCatalog(

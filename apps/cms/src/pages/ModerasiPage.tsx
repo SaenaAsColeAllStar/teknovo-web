@@ -6,9 +6,16 @@ import { BeritaListRefresh } from "@/components/dashboard/berita/BeritaListRefre
 import { ModerasiQueue } from "@/components/dashboard/moderasi/ModerasiQueue";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ApiClientError, fetchArtikelSiswaListCms } from "@/lib/api-client";
+import { TableSkeleton } from "@/components/ui/loading-skeleton";
+import {
+  ApiClientError,
+  fetchArtikelSiswaListCms,
+  fetchSiteContentPendingReview,
+  type SiteContentPendingItem,
+} from "@/lib/api-client";
 import type { ArtikelSiswaListItem } from "@/types/artikel-siswa";
 
+import { SiteContentModerasiQueue } from "../components/dashboard/moderasi/SiteContentModerasiQueue";
 import { useCmsGetToken } from "../lib/use-cms-get-token";
 import { onRouterRefresh } from "../shims/next-navigation";
 
@@ -17,32 +24,57 @@ export function ModerasiPage() {
   const { getToken, isLoaded } = useCmsGetToken();
   const { canModerate } = useCmsRole();
   const [items, setItems] = useState<ArtikelSiswaListItem[]>([]);
+  const [siteItems, setSiteItems] = useState<SiteContentPendingItem[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [siteError, setSiteError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [siteLoading, setSiteLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoaded) return;
     let cancelled = false;
     async function load() {
       setLoading(true);
+      setSiteLoading(true);
       setError(null);
+      setSiteError(null);
       try {
         const token = await getToken();
         if (!token) throw new ApiClientError("Sesi Clerk tidak tersedia", 401);
-        const res = await fetchArtikelSiswaListCms(token, {
-          page: 1,
-          limit: 50,
-          status: "REVIEW",
-        });
-        if (!cancelled) setItems(res.data);
+        const [artikelRes, pending] = await Promise.all([
+          fetchArtikelSiswaListCms(token, {
+            page: 1,
+            limit: 50,
+            status: "REVIEW",
+          }),
+          fetchSiteContentPendingReview(token).catch((err) => {
+            if (!cancelled) {
+              setSiteError(
+                err instanceof ApiClientError
+                  ? err.message
+                  : "Gagal memuat antrian konten situs.",
+              );
+            }
+            return [] as SiteContentPendingItem[];
+          }),
+        ]);
+        if (!cancelled) {
+          setItems(artikelRes.data);
+          setSiteItems(pending);
+        }
       } catch (err) {
         if (!cancelled) {
           setError(
-            err instanceof ApiClientError ? err.message : "Gagal memuat antrian moderasi.",
+            err instanceof ApiClientError
+              ? err.message
+              : "Gagal memuat antrian moderasi.",
           );
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setSiteLoading(false);
+        }
       }
     }
     void load();
@@ -54,14 +86,15 @@ export function ModerasiPage() {
   }, [getToken, isLoaded]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-[color:var(--color-heading)]">
             Moderasi
           </h1>
           <p className="text-sm text-[color:var(--color-body)]">
-            Antrian artikel siswa yang menunggu persetujuan Super Admin.
+            Antrian artikel siswa dan konten situs yang menunggu persetujuan Super
+            Admin.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -82,18 +115,48 @@ export function ModerasiPage() {
         </div>
       ) : null}
 
-      {error ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Tidak dapat memuat antrian</CardTitle>
-            <CardDescription>{error}</CardDescription>
-          </CardHeader>
-        </Card>
-      ) : !loading ? (
-        <ModerasiQueue items={items} />
-      ) : (
-        <p className="text-sm text-[color:var(--color-body)]">Memuat…</p>
-      )}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-[color:var(--color-heading)]">
+          Konten situs
+        </h2>
+        <p className="text-sm text-[color:var(--color-body)]">
+          Fasilitas, ekstrakurikuler, prestasi, kurikulum, program, tenaga
+          pengajar, dan kontak dengan status PENDING_REVIEW.
+        </p>
+        {siteError ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Tidak dapat memuat antrian konten</CardTitle>
+              <CardDescription>{siteError}</CardDescription>
+            </CardHeader>
+          </Card>
+        ) : siteLoading ? (
+          <TableSkeleton rows={5} cols={4} />
+        ) : (
+          <SiteContentModerasiQueue
+            key={siteItems.map((i) => i.id).join(",")}
+            items={siteItems}
+          />
+        )}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-[color:var(--color-heading)]">
+          Artikel siswa
+        </h2>
+        {error ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Tidak dapat memuat antrian artikel</CardTitle>
+              <CardDescription>{error}</CardDescription>
+            </CardHeader>
+          </Card>
+        ) : !loading ? (
+          <ModerasiQueue items={items} />
+        ) : (
+          <TableSkeleton rows={5} cols={4} />
+        )}
+      </section>
     </div>
   );
 }

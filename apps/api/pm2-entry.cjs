@@ -16,6 +16,6 @@ const { register } = require("tsx/cjs/api");
 register();
 const { startNodeServer } = require("./src/server.ts");
 startNodeServer().catch((err) => {
-  console.error("[teknovo-api] failed to start:", err);
+  console.error("[teknovo-cms-api] failed to start:", err);
   process.exit(1);
 });

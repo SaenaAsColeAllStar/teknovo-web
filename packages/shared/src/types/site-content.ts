@@ -1,6 +1,35 @@
 /** Shared CMS content types — fasilitas / ekstrakurikuler / prestasi / site media. */
 
-export type SiteContentStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+export type SiteContentStatus =
+  | "DRAFT"
+  | "PENDING_REVIEW"
+  | "PUBLISHED"
+  | "REJECTED"
+  | "ARCHIVED";
+
+/** Review metadata shared by all site-content entities. */
+export type SiteContentReviewFields = {
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+};
+
+/** Section visibility + template for public page rendering. */
+export type SiteContentLayoutConfig = {
+  showHero: boolean;
+  showFeatures: boolean;
+  showHours: boolean;
+  showStats: boolean;
+  layoutTemplate: "default" | string;
+};
+
+export const DEFAULT_SITE_CONTENT_LAYOUT_CONFIG: SiteContentLayoutConfig = {
+  showHero: true,
+  showFeatures: true,
+  showHours: true,
+  showStats: false,
+  layoutTemplate: "default",
+};
 
 export type FasilitasFeaturePillar = {
   id: string;
@@ -42,6 +71,9 @@ export type FasilitasListItem = {
   sortOrder: number;
   showInNav: boolean;
   status: SiteContentStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
   publishedAt: string | null;
 };
 
@@ -49,6 +81,7 @@ export type Fasilitas = FasilitasListItem & {
   highlights: string[];
   paragraphs: string[];
   extras: FasilitasExtras;
+  layoutConfig: SiteContentLayoutConfig;
   createdAt: string;
   updatedAt: string;
 };
@@ -64,6 +97,9 @@ export type EkstrakurikulerListItem = {
   previewUrl: string | null;
   sortOrder: number;
   status: SiteContentStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
   publishedAt: string | null;
 };
 
@@ -73,6 +109,7 @@ export type Ekstrakurikuler = EkstrakurikulerListItem & {
   jadwalRingkas: string | null;
   lokasiLatihan: string | null;
   pembinaNama: string | null;
+  layoutConfig: SiteContentLayoutConfig;
   createdAt: string;
   updatedAt: string;
 };
@@ -87,10 +124,14 @@ export type PrestasiListItem = {
   fileUrl: string;
   sortOrder: number;
   status: SiteContentStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
   publishedAt: string | null;
 };
 
 export type Prestasi = PrestasiListItem & {
+  layoutConfig: SiteContentLayoutConfig;
   createdAt: string;
   updatedAt: string;
 };
@@ -102,4 +143,177 @@ export type SiteMediaItem = {
   url: string;
   updatedAt: string;
   updatedBy: string | null;
+};
+
+export type KurikulumListItem = {
+  id: string;
+  slug: string;
+  judul: string;
+  deskripsi: string;
+  coverUrl: string | null;
+  tahunAjaran: string;
+  sortOrder: number;
+  showInNav: boolean;
+  status: SiteContentStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedAt: string | null;
+};
+
+export type Kurikulum = KurikulumListItem & {
+  dokumenUrl: string | null;
+  jurusan: string[];
+  strukturKurikulum: unknown | null;
+  layoutConfig: SiteContentLayoutConfig;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProgramSekolahKategori =
+  | "AKADEMIK"
+  | "NON_AKADEMIK"
+  | "KEAGAMAAN";
+
+export type ProgramSekolahListItem = {
+  id: string;
+  slug: string;
+  judul: string;
+  deskripsi: string;
+  coverUrl: string | null;
+  ikon: string | null;
+  kategori: ProgramSekolahKategori;
+  sortOrder: number;
+  showInNav: boolean;
+  status: SiteContentStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedAt: string | null;
+};
+
+export type ProgramSekolah = ProgramSekolahListItem & {
+  highlightItems: string[];
+  layoutConfig: SiteContentLayoutConfig;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ProgramJurusanListItem = {
+  id: string;
+  slug: string;
+  nama: string;
+  singkatan: string;
+  deskripsi: string;
+  coverUrl: string | null;
+  ikon: string | null;
+  sortOrder: number;
+  showInNav: boolean;
+  status: SiteContentStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedAt: string | null;
+};
+
+export type ProgramJurusan = ProgramJurusanListItem & {
+  prospekKerja: string[];
+  kompetensiDasar: string[];
+  fasilitas: string[];
+  jumlahSiswa: number | null;
+  linkPendaftaran: string | null;
+  layoutConfig: SiteContentLayoutConfig;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TenagaPengajarMediaSosial = Record<string, string>;
+
+export type TenagaPengajarListItem = {
+  id: string;
+  slug: string;
+  nama: string;
+  fotoUrl: string | null;
+  jabatan: string;
+  bidangKeahlian: string | null;
+  sortOrder: number;
+  showInNav: boolean;
+  status: SiteContentStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedAt: string | null;
+};
+
+export type TenagaPengajar = TenagaPengajarListItem & {
+  nip: string | null;
+  mataPelajaran: string[];
+  pendidikan: string | null;
+  pengalaman: string | null;
+  kontakEmail: string | null;
+  mediaSosial: TenagaPengajarMediaSosial | null;
+  layoutConfig: SiteContentLayoutConfig;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type KontakJamOperasional = {
+  hari: string;
+  buka: string;
+  tutup: string;
+};
+
+export type KontakMediaSosial = Record<string, string>;
+
+export type KontakListItem = {
+  id: string;
+  slug: string;
+  label: string;
+  alamatLengkap: string;
+  telepon: string[];
+  email: string[];
+  whatsapp: string | null;
+  sortOrder: number;
+  showInNav: boolean;
+  status: SiteContentStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedAt: string | null;
+};
+
+export type Kontak = KontakListItem & {
+  googleMapsUrl: string | null;
+  googleMapsEmbed: string | null;
+  jamOperasional: KontakJamOperasional[] | null;
+  mediaSosial: KontakMediaSosial | null;
+  layoutConfig: SiteContentLayoutConfig;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PengumumanTipe = "INFO" | "WARNING" | "URGENT";
+
+export type PengumumanListItem = {
+  id: string;
+  slug: string;
+  judul: string;
+  tipe: PengumumanTipe;
+  bannerUrl: string | null;
+  tanggalMulai: string | null;
+  tanggalAkhir: string | null;
+  isSticky: boolean;
+  sortOrder: number;
+  status: SiteContentStatus;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  publishedAt: string | null;
+};
+
+export type Pengumuman = PengumumanListItem & {
+  konten: string;
+  layoutConfig: SiteContentLayoutConfig;
+  createdAt: string;
+  updatedAt: string;
 };

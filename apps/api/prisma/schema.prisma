@@ -25,7 +25,9 @@ enum ArtikelStatus {
 
 enum SiteContentStatus {
   DRAFT
+  PENDING_REVIEW
   PUBLISHED
+  REJECTED
   ARCHIVED
 }
 
@@ -34,6 +36,18 @@ enum EkskulKategori {
   OLAHRAGA
   AKADEMIK
   SENI
+}
+
+enum ProgramSekolahKategori {
+  AKADEMIK
+  NON_AKADEMIK
+  KEAGAMAAN
+}
+
+enum PengumumanTipe {
+  INFO
+  WARNING
+  URGENT
 }
 
 model Kategori {
@@ -122,9 +136,13 @@ model Fasilitas {
   highlightsJson Json              @default("[]") @map("highlights_json")
   paragraphsJson Json              @default("[]") @map("paragraphs_json")
   extrasJson     Json              @default("{}") @map("extras_json")
+  layoutConfig   Json              @default("{\"showHero\":true,\"showFeatures\":true,\"showHours\":true,\"showStats\":false,\"layoutTemplate\":\"default\"}") @map("layout_config")
   sortOrder      Int               @default(0) @map("sort_order")
   showInNav      Boolean           @default(true) @map("show_in_nav")
   status         SiteContentStatus @default(DRAFT)
+  reviewedBy     String?           @map("reviewed_by")
+  reviewedAt     DateTime?         @map("reviewed_at")
+  reviewNote     String?           @map("review_note")
   publishedAt    DateTime?         @map("published_at")
   createdAt      DateTime          @default(now()) @map("created_at")
   updatedAt      DateTime          @updatedAt @map("updated_at")
@@ -145,8 +163,12 @@ model Ekstrakurikuler {
   jadwalRingkas             String?           @map("jadwal_ringkas")
   lokasiLatihan             String?           @map("lokasi_latihan")
   pembinaNama               String?           @map("pembina_nama")
+  layoutConfig              Json              @default("{\"showHero\":true,\"showFeatures\":true,\"showHours\":true,\"showStats\":false,\"layoutTemplate\":\"default\"}") @map("layout_config")
   sortOrder                 Int               @default(0) @map("sort_order")
   status                    SiteContentStatus @default(DRAFT)
+  reviewedBy                String?           @map("reviewed_by")
+  reviewedAt                DateTime?         @map("reviewed_at")
+  reviewNote                String?           @map("review_note")
   publishedAt               DateTime?         @map("published_at")
   createdAt                 DateTime          @default(now()) @map("created_at")
   updatedAt                 DateTime          @updatedAt @map("updated_at")
@@ -163,14 +185,175 @@ model Prestasi {
   siswaLabel    String            @default("") @map("siswa_label")
   ringkasan     String            @default("")
   fileUrl       String            @map("file_url")
+  layoutConfig  Json              @default("{\"showHero\":true,\"showFeatures\":true,\"showHours\":true,\"showStats\":false,\"layoutTemplate\":\"default\"}") @map("layout_config")
   sortOrder     Int               @default(0) @map("sort_order")
   status        SiteContentStatus @default(DRAFT)
+  reviewedBy    String?           @map("reviewed_by")
+  reviewedAt    DateTime?         @map("reviewed_at")
+  reviewNote    String?           @map("review_note")
   publishedAt   DateTime?         @map("published_at")
   createdAt     DateTime          @default(now()) @map("created_at")
   updatedAt     DateTime          @updatedAt @map("updated_at")
 
   @@index([status, sortOrder, tanggalIso(sort: Desc)], map: "idx_prestasi_status_sort_tanggal")
   @@map("prestasi")
+}
+
+model Kurikulum {
+  id                 String            @id @default(uuid()) @db.Uuid
+  judul              String
+  slug               String            @unique
+  deskripsi          String            @default("") @db.Text
+  coverUrl           String?           @map("cover_url")
+  dokumenUrl         String?           @map("dokumen_url")
+  tahunAjaran        String            @map("tahun_ajaran")
+  jurusan            String[]          @default([])
+  strukturKurikulum  Json?             @map("struktur_kurikulum")
+  layoutConfig       Json              @default("{\"showHero\":true,\"showFeatures\":true,\"showHours\":true,\"showStats\":false,\"layoutTemplate\":\"default\"}") @map("layout_config")
+  sortOrder          Int               @default(0) @map("sort_order")
+  showInNav          Boolean           @default(true) @map("show_in_nav")
+  status             SiteContentStatus @default(DRAFT)
+  reviewedBy         String?           @map("reviewed_by")
+  reviewedAt         DateTime?         @map("reviewed_at")
+  reviewNote         String?           @map("review_note")
+  publishedAt        DateTime?         @map("published_at")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, sortOrder], map: "idx_kurikulum_status_sort")
+  @@map("kurikulum")
+}
+
+model ProgramSekolah {
+  id              String                  @id @default(uuid()) @db.Uuid
+  judul           String
+  slug            String                  @unique
+  deskripsi       String                  @default("") @db.Text
+  coverUrl        String?                 @map("cover_url")
+  ikon            String?
+  kategori        ProgramSekolahKategori
+  highlightItems  String[]                @default([]) @map("highlight_items")
+  layoutConfig    Json                    @default("{\"showHero\":true,\"showFeatures\":true,\"showHours\":true,\"showStats\":false,\"layoutTemplate\":\"default\"}") @map("layout_config")
+  sortOrder       Int                     @default(0) @map("sort_order")
+  showInNav       Boolean                 @default(true) @map("show_in_nav")
+  status          SiteContentStatus       @default(DRAFT)
+  reviewedBy      String?                 @map("reviewed_by")
+  reviewedAt      DateTime?               @map("reviewed_at")
+  reviewNote      String?                 @map("review_note")
+  publishedAt     DateTime?               @map("published_at")
+  createdAt       DateTime                @default(now()) @map("created_at")
+  updatedAt       DateTime                @updatedAt @map("updated_at")
+
+  @@index([status, sortOrder], map: "idx_program_sekolah_status_sort")
+  @@map("program_sekolah")
+}
+
+model ProgramJurusan {
+  id               String            @id @default(uuid()) @db.Uuid
+  nama             String
+  slug             String            @unique
+  singkatan        String
+  deskripsi        String            @default("") @db.Text
+  coverUrl         String?           @map("cover_url")
+  ikon             String?
+  prospekKerja     String[]          @default([]) @map("prospek_kerja")
+  kompetensiDasar  String[]          @default([]) @map("kompetensi_dasar")
+  fasilitas        String[]          @default([])
+  jumlahSiswa      Int?              @map("jumlah_siswa")
+  linkPendaftaran  String?           @map("link_pendaftaran")
+  layoutConfig     Json              @default("{\"showHero\":true,\"showFeatures\":true,\"showHours\":true,\"showStats\":false,\"layoutTemplate\":\"default\"}") @map("layout_config")
+  sortOrder        Int               @default(0) @map("sort_order")
+  showInNav        Boolean           @default(true) @map("show_in_nav")
+  status           SiteContentStatus @default(DRAFT)
+  reviewedBy       String?           @map("reviewed_by")
+  reviewedAt       DateTime?         @map("reviewed_at")
+  reviewNote       String?           @map("review_note")
+  publishedAt      DateTime?         @map("published_at")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, sortOrder], map: "idx_program_jurusan_status_sort")
+  @@map("program_jurusan")
+}
+
+model TenagaPengajar {
+  id              String            @id @default(uuid()) @db.Uuid
+  nama            String
+  slug            String            @unique
+  nip             String?
+  fotoUrl         String?           @map("foto_url")
+  jabatan         String
+  bidangKeahlian  String?           @map("bidang_keahlian")
+  mataPelajaran   String[]          @default([]) @map("mata_pelajaran")
+  pendidikan      String?
+  pengalaman      String?           @db.Text
+  kontakEmail     String?           @map("kontak_email")
+  mediaSosial     Json?             @map("media_sosial")
+  layoutConfig    Json              @default("{\"showHero\":true,\"showFeatures\":true,\"showHours\":true,\"showStats\":false,\"layoutTemplate\":\"default\"}") @map("layout_config")
+  sortOrder       Int               @default(0) @map("sort_order")
+  showInNav       Boolean           @default(true) @map("show_in_nav")
+  status          SiteContentStatus @default(DRAFT)
+  reviewedBy      String?           @map("reviewed_by")
+  reviewedAt      DateTime?         @map("reviewed_at")
+  reviewNote      String?           @map("review_note")
+  publishedAt     DateTime?         @map("published_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, sortOrder], map: "idx_tenaga_pengajar_status_sort")
+  @@map("tenaga_pengajar")
+}
+
+model Kontak {
+  id              String            @id @default(uuid()) @db.Uuid
+  label           String
+  slug            String            @unique
+  alamatLengkap   String            @map("alamat_lengkap") @db.Text
+  telepon         String[]          @default([])
+  email           String[]          @default([])
+  whatsapp        String?
+  googleMapsUrl   String?           @map("google_maps_url")
+  googleMapsEmbed String?           @map("google_maps_embed") @db.Text
+  jamOperasional  Json?             @map("jam_operasional")
+  mediaSosial     Json?             @map("media_sosial")
+  layoutConfig    Json              @default("{\"showHero\":true,\"showFeatures\":true,\"showHours\":true,\"showStats\":false,\"layoutTemplate\":\"default\"}") @map("layout_config")
+  sortOrder       Int               @default(0) @map("sort_order")
+  showInNav       Boolean           @default(true) @map("show_in_nav")
+  status          SiteContentStatus @default(PUBLISHED)
+  reviewedBy      String?           @map("reviewed_by")
+  reviewedAt      DateTime?         @map("reviewed_at")
+  reviewNote      String?           @map("review_note")
+  publishedAt     DateTime?         @map("published_at")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, sortOrder], map: "idx_kontak_status_sort")
+  @@map("kontak")
+}
+
+model Pengumuman {
+  id           String            @id @default(uuid()) @db.Uuid
+  judul        String
+  slug         String            @unique
+  konten       String            @default("") @db.Text
+  tipe         PengumumanTipe    @default(INFO)
+  bannerUrl    String?           @map("banner_url")
+  tanggalMulai DateTime?         @map("tanggal_mulai")
+  tanggalAkhir DateTime?         @map("tanggal_akhir")
+  isSticky     Boolean           @default(false) @map("is_sticky")
+  layoutConfig Json              @default("{\"showHero\":true,\"showFeatures\":true,\"showHours\":true,\"showStats\":false,\"layoutTemplate\":\"default\"}") @map("layout_config")
+  sortOrder    Int               @default(0) @map("sort_order")
+  status       SiteContentStatus @default(DRAFT)
+  reviewedBy   String?           @map("reviewed_by")
+  reviewedAt   DateTime?         @map("reviewed_at")
+  reviewNote   String?           @map("review_note")
+  publishedAt  DateTime?         @map("published_at")
+  createdAt    DateTime          @default(now()) @map("created_at")
+  updatedAt    DateTime          @updatedAt @map("updated_at")
+
+  @@index([status, sortOrder], map: "idx_pengumuman_status_sort")
+  @@index([isSticky, status], map: "idx_pengumuman_sticky_status")
+  @@map("pengumuman")
 }
 
 model SiteMedia {

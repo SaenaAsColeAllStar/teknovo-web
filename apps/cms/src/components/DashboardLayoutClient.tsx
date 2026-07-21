@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 
 import { CmsApplicationNavbar } from "./CmsApplicationNavbar";
 import { CmsApplicationSidenav } from "./CmsApplicationSidenav";
+import { CmsCommandPalette } from "./CmsCommandPalette";
+import { CmsPageTransition } from "./CmsPageTransition";
 
 /**
  * Client-side counterpart of `src/app/(dashboard)/dashboard/layout.tsx` — the Next.js
@@ -157,10 +159,13 @@ export function DashboardLayoutClient() {
                 Peran: {CMS_ROLE_LABEL[role]}
               </p>
               <CmsReadOnlyBanner />
-              <Outlet />
+              <CmsPageTransition>
+                <Outlet />
+              </CmsPageTransition>
             </main>
           </div>
         </div>
+        <CmsCommandPalette />
       </div>
     </CmsRoleProvider>
   );

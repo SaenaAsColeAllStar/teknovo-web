@@ -9,20 +9,16 @@ import {
   toDateOnly,
   toIso,
   toIsoRequired,
+  asLayoutConfig,
+  layoutConfigJson,
+  mapReviewFields,
+  publishedAtForStatus
 } from "./map-helpers";
 import { isUuid } from "../ids";
 
 export type { PrestasiWriteInput } from "../d1/prestasi-repo";
 import type { PrestasiWriteInput } from "../d1/prestasi-repo";
 
-function publishedAtFor(
-  status: SiteContentStatus,
-  previous: Date | null,
-): Date | null {
-  if (status === "PUBLISHED") return previous ?? new Date();
-  if (status === "DRAFT") return null;
-  return previous;
-}
 
 function mapList(row: PrestasiModel): PrestasiListItem {
   return {
@@ -35,6 +31,7 @@ function mapList(row: PrestasiModel): PrestasiListItem {
     fileUrl: row.fileUrl,
     sortOrder: row.sortOrder,
     status: row.status,
+    ...mapReviewFields(row),
     publishedAt: toIso(row.publishedAt),
   };
 }
@@ -42,6 +39,7 @@ function mapList(row: PrestasiModel): PrestasiListItem {
 function mapFull(row: PrestasiModel): Prestasi {
   return {
     ...mapList(row),
+    layoutConfig: asLayoutConfig(row.layoutConfig),
     createdAt: toIsoRequired(row.createdAt),
     updatedAt: toIsoRequired(row.updatedAt),
   };
@@ -98,7 +96,7 @@ export async function prismaCreatePrestasi(
   prisma: PrismaClient,
   input: PrestasiWriteInput,
 ): Promise<Prestasi> {
-  const publishedAt = publishedAtFor(input.status, null);
+  const publishedAt = publishedAtForStatus(input.status, null);
   const row = await prisma.prestasi.create({
     data: {
       judul: input.judul,
@@ -107,6 +105,7 @@ export async function prismaCreatePrestasi(
       siswaLabel: input.siswaLabel,
       ringkasan: input.ringkasan,
       fileUrl: input.fileUrl,
+      layoutConfig: layoutConfigJson(input.layoutConfig),
       sortOrder: input.sortOrder ?? 0,
       status: input.status,
       publishedAt,
@@ -122,7 +121,7 @@ export async function prismaUpdatePrestasi(
 ): Promise<Prestasi | null> {
   const existing = await prisma.prestasi.findUnique({ where: { id } });
   if (!existing) return null;
-  const publishedAt = publishedAtFor(input.status, existing.publishedAt);
+  const publishedAt = publishedAtForStatus(input.status, existing.publishedAt);
   const row = await prisma.prestasi.update({
     where: { id },
     data: {
@@ -132,6 +131,7 @@ export async function prismaUpdatePrestasi(
       siswaLabel: input.siswaLabel,
       ringkasan: input.ringkasan,
       fileUrl: input.fileUrl,
+      layoutConfig: layoutConfigJson(input.layoutConfig),
       sortOrder: input.sortOrder ?? 0,
       status: input.status,
       publishedAt,

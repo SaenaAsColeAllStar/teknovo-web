@@ -9,6 +9,7 @@ import {
   Info,
   Layers,
   LayoutDashboard,
+  Megaphone,
   Newspaper,
   PenLine,
   Settings,
@@ -114,6 +115,23 @@ function childIcon(id: string): ReactNode {
   ) {
     return <Building2 className="size-3.5 shrink-0 opacity-70" aria-hidden />;
   }
+  if (
+    id === "kurikulum" ||
+    id === "kurikulum-baru" ||
+    id === "program-sekolah" ||
+    id === "program-sekolah-baru" ||
+    id === "program-jurusan" ||
+    id === "program-jurusan-baru" ||
+    id === "tenaga-pengajar" ||
+    id === "tenaga-pengajar-baru" ||
+    id === "kontak" ||
+    id === "kontak-baru"
+  ) {
+    return <BookOpen className="size-3.5 shrink-0 opacity-70" aria-hidden />;
+  }
+  if (id === "pengumuman" || id === "pengumuman-baru") {
+    return <Megaphone className="size-3.5 shrink-0 opacity-70" aria-hidden />;
+  }
   return <FileText className="size-3.5 shrink-0 opacity-70" aria-hidden />;
 }
 
@@ -217,6 +235,12 @@ export function CmsApplicationSidenav({
   const profilChildren: NavChild[] = [];
   if (canManageSiteContent) {
     profilChildren.push(
+      { id: "pengumuman", label: "Pengumuman", href: "/pengumuman" },
+      {
+        id: "pengumuman-baru",
+        label: "Pengumuman baru",
+        href: "/pengumuman/baru",
+      },
       { id: "fasilitas", label: "Fasilitas", href: "/fasilitas" },
       {
         id: "fasilitas-baru",
@@ -234,6 +258,48 @@ export function CmsApplicationSidenav({
         id: "prestasi-baru",
         label: "Prestasi baru",
         href: "/prestasi/baru",
+      },
+      { id: "kurikulum", label: "Kurikulum", href: "/kurikulum" },
+      {
+        id: "kurikulum-baru",
+        label: "Kurikulum baru",
+        href: "/kurikulum/baru",
+      },
+      {
+        id: "program-sekolah",
+        label: "Program sekolah",
+        href: "/program-sekolah",
+      },
+      {
+        id: "program-sekolah-baru",
+        label: "Program baru",
+        href: "/program-sekolah/baru",
+      },
+      {
+        id: "program-jurusan",
+        label: "Program jurusan",
+        href: "/program-jurusan",
+      },
+      {
+        id: "program-jurusan-baru",
+        label: "Jurusan baru",
+        href: "/program-jurusan/baru",
+      },
+      {
+        id: "tenaga-pengajar",
+        label: "Tenaga pengajar",
+        href: "/tenaga-pengajar",
+      },
+      {
+        id: "tenaga-pengajar-baru",
+        label: "Pengajar baru",
+        href: "/tenaga-pengajar/baru",
+      },
+      { id: "kontak", label: "Kontak", href: "/kontak" },
+      {
+        id: "kontak-baru",
+        label: "Kontak baru",
+        href: "/kontak/baru",
       },
     );
   }

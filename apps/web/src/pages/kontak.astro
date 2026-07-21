@@ -5,8 +5,11 @@ import {
   KONTAK_PAGE_LEDE,
   KONTAK_PAGE_TITLE,
 } from "@/lib/kontak-landing-content";
+import { getPublishedKontakItems } from "@/services/kontak-publik";
+
+const items = await getPublishedKontakItems();
 ---
 
 <BaseLayout title={KONTAK_PAGE_TITLE} description={KONTAK_PAGE_LEDE}>
-  <KontakPageView client:load />
+  <KontakPageView client:load items={items} />
 </BaseLayout>

@@ -17,6 +17,7 @@ import type {
 } from "react-hook-form";
 import { toast } from "sonner";
 
+import { SerpPreview } from "@/components/dashboard/seo/SerpPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +36,9 @@ type Props = {
   errors: FieldErrors<any>;
   kategoriNama?: string | null;
   siteBaseUrl?: string;
+  /** When true, parent stopped auto-fill after a manual SEO edit. */
+  seoManuallyEdited?: boolean;
+  onSeoManualEdit?: () => void;
 };
 
 function CharCount({
@@ -65,7 +69,7 @@ function CharCount({
 
 /**
  * SEO fieldset shared by berita & artikel siswa forms.
- * "Generate metadata" fills fields from judul/ringkasan/konten via @teknovo/shared.
+ * Auto-fill is owned by the parent form; manual Generate still available.
  */
 export function ArticleSeoFields({
   kind,
@@ -76,10 +80,14 @@ export function ArticleSeoFields({
   errors,
   kategoriNama,
   siteBaseUrl = "https://smkteknovo.sch.id",
+  seoManuallyEdited,
+  onSeoManualEdit,
 }: Props) {
   const metaTitle = watch("metaTitle") ?? "";
   const metaDescription = watch("metaDescription") ?? "";
   const metaKeywords = watch("metaKeywords") ?? "";
+  const slug = watch("slug") ?? "";
+  const canonicalUrl = watch("canonicalUrl") ?? "";
 
   function onGenerate() {
     const judul = watch("judul")?.trim() || "";
@@ -107,16 +115,24 @@ export function ArticleSeoFields({
     toast.success("Metadata SEO digenerate — boleh diedit sebelum simpan.");
   }
 
+  const markManual = () => {
+    onSeoManualEdit?.();
+  };
+
+  const serpUrl =
+    canonicalUrl ||
+    (slug
+      ? `${siteBaseUrl}/berita/${kind === "artikel" ? "artikel" : "kegiatan"}/${slug}`
+      : siteBaseUrl);
+
   return (
-    <fieldset className="space-y-4 border border-[color:var(--color-border)] p-4">
-      <legend className="px-1 text-sm font-semibold text-[color:var(--color-brand)]">
-        SEO & metadata
-      </legend>
+    <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="max-w-xl text-xs text-[color:var(--color-body-subtle)]">
-          Kosongkan untuk memakai judul / ringkasan / cover sebagai fallback
-          publik. Generate memakai judul, ringkasan, konten, dan kategori
-          (batas Google: judul ~50–60, deskripsi ~150–160).
+          {seoManuallyEdited
+            ? "Auto-fill SEO dimatikan karena field diedit manual. Klik Generate untuk mengisi ulang."
+            : "SEO diisi otomatis saat judul/ringkasan berubah. Edit manual menghentikan auto-fill."}{" "}
+          Batas Google: judul ~50–60, deskripsi ~150–160.
         </p>
         <Button
           type="button"
@@ -128,6 +144,12 @@ export function ArticleSeoFields({
           Generate metadata
         </Button>
       </div>
+
+      <SerpPreview
+        title={metaTitle || watch("judul") || ""}
+        url={serpUrl}
+        description={metaDescription || watch("ringkasan") || ""}
+      />
 
       <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -147,7 +169,7 @@ export function ArticleSeoFields({
           id="metaTitle"
           disabled={disabled}
           maxLength={SEO_META_TITLE_MAX}
-          {...register("metaTitle")}
+          {...register("metaTitle", { onChange: markManual })}
         />
       </div>
 
@@ -172,7 +194,7 @@ export function ArticleSeoFields({
           maxLength={SEO_META_DESCRIPTION_MAX}
           disabled={disabled}
           className="flex min-h-[5rem] w-full rounded-none border border-[color:var(--color-border)] bg-white px-3 py-2 text-sm text-[color:var(--color-heading)] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[color:var(--color-brand)]/20 disabled:opacity-50"
-          {...register("metaDescription")}
+          {...register("metaDescription", { onChange: markManual })}
         />
       </div>
 
@@ -195,7 +217,7 @@ export function ArticleSeoFields({
           disabled={disabled}
           maxLength={SEO_META_KEYWORDS_MAX}
           placeholder="berita sekolah, TEKNOVO, …"
-          {...register("metaKeywords")}
+          {...register("metaKeywords", { onChange: markManual })}
         />
       </div>
 
@@ -206,7 +228,7 @@ export function ArticleSeoFields({
             id="ogImageUrl"
             disabled={disabled}
             placeholder="https://… (kosong = cover)"
-            {...register("ogImageUrl")}
+            {...register("ogImageUrl", { onChange: markManual })}
           />
           {typeof errors.ogImageUrl?.message === "string" ? (
             <p className="text-xs text-[color:var(--color-danger)]">
@@ -220,7 +242,7 @@ export function ArticleSeoFields({
             id="canonicalUrl"
             disabled={disabled}
             placeholder="https://… (opsional)"
-            {...register("canonicalUrl")}
+            {...register("canonicalUrl", { onChange: markManual })}
           />
           {typeof errors.canonicalUrl?.message === "string" ? (
             <p className="text-xs text-[color:var(--color-danger)]">
@@ -229,6 +251,6 @@ export function ArticleSeoFields({
           ) : null}
         </div>
       </div>
-    </fieldset>
+    </div>
   );
 }

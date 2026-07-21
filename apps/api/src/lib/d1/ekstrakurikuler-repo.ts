@@ -44,6 +44,9 @@ function mapList(row: EkstraRow): EkstrakurikulerListItem {
     previewUrl: row.preview_url,
     sortOrder: row.sort_order,
     status: row.status,
+    reviewedBy: null,
+    reviewedAt: null,
+    reviewNote: null,
     publishedAt: row.published_at,
   };
 }
@@ -56,6 +59,13 @@ function mapFull(row: EkstraRow): Ekstrakurikuler {
     jadwalRingkas: row.jadwal_ringkas,
     lokasiLatihan: row.lokasi_latihan,
     pembinaNama: row.pembina_nama,
+    layoutConfig: {
+      showHero: true,
+      showFeatures: true,
+      showHours: true,
+      showStats: false,
+      layoutTemplate: "default",
+    },
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -72,6 +82,7 @@ export type EkstrakurikulerWriteInput = {
   jadwalRingkas?: string;
   lokasiLatihan?: string;
   pembinaNama?: string;
+  layoutConfig?: import("@teknovo/shared").SiteContentLayoutConfig;
   sortOrder?: number;
   status: SiteContentStatus;
 };
@@ -81,7 +92,13 @@ function publishedAtFor(
   previous: string | null,
 ): string | null {
   if (status === "PUBLISHED") return previous ?? nowIso();
-  if (status === "DRAFT") return null;
+  if (
+    status === "DRAFT" ||
+    status === "PENDING_REVIEW" ||
+    status === "REJECTED"
+  ) {
+    return null;
+  }
   return previous;
 }
 

@@ -1,0 +1,17 @@
+# Uptime Kuma — monitor teknovo-cms-api (and other hosts).
+# Start:  docker compose -f ops/uptime-kuma/docker-compose.yml up -d
+# Stop:   docker compose -f ops/uptime-kuma/docker-compose.yml down
+# UI:     http://SERVER_IP:3001  (set admin password on first visit)
+#
+# network_mode: host so monitors can reach host PM2 on 127.0.0.1:8788
+
+services:
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: teknovo-uptime-kuma
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./data:/app/data
+    environment:
+      - UPTIME_KUMA_PORT=3001

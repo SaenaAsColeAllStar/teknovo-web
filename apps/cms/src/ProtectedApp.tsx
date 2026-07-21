@@ -20,6 +20,24 @@ import { PengaturanPage } from "./pages/PengaturanPage";
 import { PenggunaPage } from "./pages/PenggunaPage";
 import { PlatformPage } from "./pages/PlatformPage";
 import {
+  KurikulumFormPage,
+  KurikulumListPage,
+  ProgramJurusanFormPage,
+  ProgramJurusanListPage,
+  ProgramSekolahFormPage,
+  ProgramSekolahListPage,
+  TenagaPengajarFormPage,
+  TenagaPengajarListPage,
+} from "./pages/AkademikSiteContentPages";
+import {
+  KontakFormPage,
+  KontakListPage,
+} from "./pages/KontakSiteContentPages";
+import {
+  PengumumanFormPage,
+  PengumumanListPage,
+} from "./pages/PengumumanSiteContentPages";
+import {
   EkstrakurikulerFormPage,
   EkstrakurikulerListPage,
   FasilitasFormPage,
@@ -85,6 +103,57 @@ export function ProtectedApp() {
           <Route path="prestasi" element={<PrestasiListPage />} />
           <Route path="prestasi/baru" element={<PrestasiFormPage mode="create" />} />
           <Route path="prestasi/:id/edit" element={<PrestasiFormPage mode="edit" />} />
+          <Route path="kurikulum" element={<KurikulumListPage />} />
+          <Route
+            path="kurikulum/baru"
+            element={<KurikulumFormPage mode="create" />}
+          />
+          <Route
+            path="kurikulum/:id/edit"
+            element={<KurikulumFormPage mode="edit" />}
+          />
+          <Route path="program-sekolah" element={<ProgramSekolahListPage />} />
+          <Route
+            path="program-sekolah/baru"
+            element={<ProgramSekolahFormPage mode="create" />}
+          />
+          <Route
+            path="program-sekolah/:id/edit"
+            element={<ProgramSekolahFormPage mode="edit" />}
+          />
+          <Route path="program-jurusan" element={<ProgramJurusanListPage />} />
+          <Route
+            path="program-jurusan/baru"
+            element={<ProgramJurusanFormPage mode="create" />}
+          />
+          <Route
+            path="program-jurusan/:id/edit"
+            element={<ProgramJurusanFormPage mode="edit" />}
+          />
+          <Route path="tenaga-pengajar" element={<TenagaPengajarListPage />} />
+          <Route
+            path="tenaga-pengajar/baru"
+            element={<TenagaPengajarFormPage mode="create" />}
+          />
+          <Route
+            path="tenaga-pengajar/:id/edit"
+            element={<TenagaPengajarFormPage mode="edit" />}
+          />
+          <Route path="kontak" element={<KontakListPage />} />
+          <Route path="kontak/baru" element={<KontakFormPage mode="create" />} />
+          <Route
+            path="kontak/:id/edit"
+            element={<KontakFormPage mode="edit" />}
+          />
+          <Route path="pengumuman" element={<PengumumanListPage />} />
+          <Route
+            path="pengumuman/baru"
+            element={<PengumumanFormPage mode="create" />}
+          />
+          <Route
+            path="pengumuman/:id/edit"
+            element={<PengumumanFormPage mode="edit" />}
+          />
           <Route path="media" element={<MediaPage />} />
           <Route path="pengguna" element={<PenggunaPage />} />
           <Route path="platform" element={<PlatformPage />} />

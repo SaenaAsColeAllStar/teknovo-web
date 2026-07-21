@@ -46,7 +46,11 @@ function RequiredMark(): ReactElement {
   );
 }
 
-export function LandingContactForm(): ReactElement {
+export function LandingContactForm({
+  contactEmail = PUBLIK_CONTACT_EMAIL,
+}: {
+  contactEmail?: string;
+}): ReactElement {
   const {
     register,
     handleSubmit,
@@ -99,7 +103,7 @@ export function LandingContactForm(): ReactElement {
     const body = encodeURIComponent(
       `${data.message}\n\n---\nNama: ${data.name}\nEmail: ${data.email}\n${phoneLine}`,
     );
-    const mailtoUrl = `mailto:${PUBLIK_CONTACT_EMAIL}?subject=${subject}&body=${body}`;
+    const mailtoUrl = `mailto:${contactEmail}?subject=${subject}&body=${body}`;
     window.open(mailtoUrl, "_self");
     reset();
     setTurnstileToken(null);

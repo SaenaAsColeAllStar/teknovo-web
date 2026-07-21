@@ -133,6 +133,11 @@ const BY_SLUG_BUILDERS: Record<FasilitasSlug, () => DiamondSplitBandPair> = {
   "lms-sekolah": lmsDiamondBands,
 };
 
-export function getFasilitasDiamondBands(slug: FasilitasSlug): DiamondSplitBandPair {
-  return BY_SLUG_BUILDERS[slug]();
+export function getFasilitasDiamondBands(
+  slug: FasilitasSlug | string,
+): DiamondSplitBandPair {
+  const builder = BY_SLUG_BUILDERS[slug as FasilitasSlug];
+  // CMS may publish slugs outside the hardcoded landing set (e.g. lab-komputer).
+  if (!builder) return BY_SLUG_BUILDERS["laboratorium-komputer"]();
+  return builder();
 }

@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { Newspaper, PenLine, ShieldCheck, Tags } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -21,6 +22,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { StatCardsSkeleton } from "@/components/ui/loading-skeleton";
 import {
   fetchCmsAnalytics,
   isApiConfigured,
@@ -36,6 +38,10 @@ const empty: CmsAnalyticsOverview = {
   artikelReview: 0,
   artikelPublished: 0,
   kategoriTotal: 0,
+  siteContentPending: 0,
+  pengumumanTotal: 0,
+  beritaPerBulan: [],
+  recentActivity: [],
   source: "unavailable",
 };
 
@@ -76,20 +82,27 @@ export function DashboardAnalytics({
     return () => {
       cancelled = true;
     };
-    // Mount once auth is ready; fetchCmsAnalytics dedupes concurrent chrome calls.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid getToken identity churn
   }, [apiReady, isLoaded]);
 
   const chartData = useMemo(
-    () => [
-      { name: "Berita terbit", value: data.beritaPublished },
-      { name: "Berita draf", value: data.beritaDraft },
-      { name: "Berita arsip", value: data.beritaArchived },
-      { name: "Artikel terbit", value: data.artikelPublished },
-      { name: "Menunggu review", value: data.artikelReview },
-    ],
+    () =>
+      data.beritaPerBulan.length > 0
+        ? data.beritaPerBulan.map((b) => ({
+            name: b.bulan,
+            value: b.jumlah,
+          }))
+        : [
+            { name: "Berita terbit", value: data.beritaPublished },
+            { name: "Berita draf", value: data.beritaDraft },
+            { name: "Berita arsip", value: data.beritaArchived },
+            { name: "Artikel terbit", value: data.artikelPublished },
+            { name: "Menunggu review", value: data.artikelReview },
+          ],
     [data],
   );
+
+  const pendingTotal = data.artikelReview + data.siteContentPending;
 
   const sourceLabel =
     data.source === "api"
@@ -109,48 +122,84 @@ export function DashboardAnalytics({
             {loading ? "Memuat…" : sourceLabel}
           </p>
         </div>
-        {canViewModerasi && data.artikelReview > 0 ? (
+        {canViewModerasi && pendingTotal > 0 ? (
           <Button asChild size="sm" variant="secondary">
             <Link href="/dashboard/moderasi">
-              {data.artikelReview} menunggu moderasi
+              {pendingTotal} menunggu moderasi
             </Link>
           </Button>
         ) : null}
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {(
-          [
-            canAccessBerita
-              ? (["Berita", data.beritaTotal] as const)
-              : null,
-            ["Artikel siswa", data.artikelTotal] as const,
-            ["Menunggu review", data.artikelReview] as const,
-            ["Kategori", data.kategoriTotal] as const,
-          ] as const
-        )
-          .filter(Boolean)
-          .map((row) => {
-            const [label, value] = row!;
-            return (
-              <Card key={label}>
-                <CardHeader className="pb-2">
-                  <CardDescription>{label}</CardDescription>
-                  <CardTitle className="text-2xl tabular-nums">
-                    {loading ? "—" : value}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-            );
-          })}
-      </div>
+      {loading ? (
+        <StatCardsSkeleton count={4} />
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {(
+            [
+              canAccessBerita
+                ? {
+                    label: "Berita",
+                    value: data.beritaTotal,
+                    icon: Newspaper,
+                  }
+                : null,
+              {
+                label: "Artikel siswa",
+                value: data.artikelTotal,
+                icon: PenLine,
+              },
+              {
+                label: "Menunggu review",
+                value: pendingTotal,
+                icon: ShieldCheck,
+                badge: pendingTotal > 0,
+              },
+              {
+                label: "Kategori",
+                value: data.kategoriTotal,
+                icon: Tags,
+              },
+            ] as const
+          )
+            .filter(Boolean)
+            .map((row) => {
+              const item = row!;
+              const Icon = item.icon;
+              return (
+                <Card key={item.label}>
+                  <CardHeader className="pb-2">
+                    <CardDescription className="flex items-center gap-1.5">
+                      <Icon className="size-3.5" aria-hidden />
+                      {item.label}
+                      {"badge" in item && item.badge ? (
+                        <span className="ml-auto rounded-sm bg-[color:var(--color-brand)]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--color-brand)]">
+                          antrian
+                        </span>
+                      ) : null}
+                    </CardDescription>
+                    <CardTitle className="text-2xl tabular-nums">
+                      {item.value}
+                    </CardTitle>
+                  </CardHeader>
+                </Card>
+              );
+            })}
+        </div>
+      )}
 
       {canAccessBerita ? (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Status konten</CardTitle>
+            <CardTitle className="text-base">
+              {data.beritaPerBulan.length > 0
+                ? "Berita per bulan"
+                : "Status konten"}
+            </CardTitle>
             <CardDescription>
-              Perbandingan cepat berita sekolah dan artikel siswa.
+              {data.beritaPerBulan.length > 0
+                ? "Jumlah berita dibuat dalam 6 bulan terakhir."
+                : "Perbandingan cepat berita sekolah dan artikel siswa."}
             </CardDescription>
           </CardHeader>
           <CardContent className="h-56 w-full">
@@ -171,6 +220,40 @@ export function DashboardAnalytics({
                   : "Konfigurasi VITE_API_URL belum tersedia."}
               </p>
             )}
+          </CardContent>
+        </Card>
+      ) : null}
+
+      {!loading && data.recentActivity.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Aktivitas terbaru</CardTitle>
+            <CardDescription>
+              Perubahan berita dan artikel terbaru dari database.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="divide-y divide-[color:var(--color-border)]">
+              {data.recentActivity.map((item, idx) => (
+                <li
+                  key={`${item.time}-${idx}`}
+                  className="flex flex-wrap items-baseline justify-between gap-2 py-2 text-sm"
+                >
+                  <span className="text-[color:var(--color-heading)]">
+                    <span className="mr-2 text-xs uppercase text-[color:var(--color-body-subtle)]">
+                      {item.type}
+                    </span>
+                    {item.label}
+                  </span>
+                  <time
+                    className="text-xs tabular-nums text-[color:var(--color-body-subtle)]"
+                    dateTime={item.time}
+                  >
+                    {new Date(item.time).toLocaleString("id-ID")}
+                  </time>
+                </li>
+              ))}
+            </ul>
           </CardContent>
         </Card>
       ) : null}
